@@ -1,0 +1,34 @@
+<div class="theme-switch-wrapper" style="margin-left: 20px;">
+    <label class="theme-switch" for="checkbox" style="cursor: pointer; display: flex; align-items: center; gap: 10px;">
+        <input type="checkbox" id="checkbox" style="display:none;" />
+        <div class="mode-icon" id="mode-icon" style="color: var(--mauve); font-size: 1.2rem;">
+            <i class="fas fa-moon"></i>
+        </div>
+    </label>
+</div>
+
+<script>
+    const toggleSwitch = document.querySelector('#checkbox');
+    const currentTheme = localStorage.getItem('theme');
+    const icon = document.querySelector('#mode-icon');
+
+    if (currentTheme) {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (currentTheme === 'dark') {
+            toggleSwitch.checked = true;
+            icon.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+    }
+
+    toggleSwitch.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            icon.innerHTML = '<i class="fas fa-sun"></i>';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+            icon.innerHTML = '<i class="fas fa-moon"></i>';
+        }
+    });
+</script>

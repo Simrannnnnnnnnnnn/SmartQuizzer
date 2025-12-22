@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="welcome-card p-5 text-center" style="background: white; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <h2 class="mb-2 text-muted">Quiz Complete! 🏁</h2>
+        <h1 class="display-5 font-weight-bold mb-4">Quiz Analytics 📊</h1>
+        
+        <div class="row mt-4 align-items-center">
+            <div class="col-md-5 mb-4">
+                <div style="position: relative; height:280px; width:100%">
+                    <canvas id="accuracyChart"></canvas>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        <h2 class="mb-0 fw-bold">{{ score }}</h2>
+                        <small class="text-muted">/ {{ total }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7 text-start">
+                <div class="p-4 rounded-4 bg-light border">
+                    {% set percent = (score / total * 100) if total > 0 else 0 %}
+                    
+                    <h3 class="fw-bold">
+                        {% if percent >= 80 %} 🌟 Excellent! Mastery Achieved.
+                        {% elif percent >= 50 %} 👍 Good Effort. Getting There!
+                        {% else %} 📚 Keep Learning & Growing.
+                        {% endif %}
+                    </h3>
+                    <p class="lead text-secondary">You scored {{ percent|round(1) }}% on this session.</p>
+                    <hr>
+                    
+                    <h5 class="fw-bold mb-3">Revision Roadmap 🗺️</h5>
+                    <div class="suggestion-box p-3 rounded bg-white border-start border-warning border-5 shadow-sm">
+                        {% if percent >= 80 %}
+                            <p class="mb-1"><strong>Action:</strong> You have a strong grasp! Try a <strong>Topic-based</strong> generation next to challenge yourself with new facts.</p>
+                        {% elif percent >= 50 %}
+                            <p class="mb-1"><strong>Action:</strong> We noticed some gaps. Re-read the <strong>summary sections</strong> of your document to clarify confusing concepts.</p>
+                        {% else %}
+                            <p class="mb-1"><strong>Action:</strong> It's time for a deep dive. Review your source material again and try generating <strong>only 3 MCQs</strong> to master the basics first.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <a href="{{ url_for('routes.dashboard') }}" class="sunshine-btn flex-grow-1 text-center">New Quiz</a>
+                        <a href="{{ url_for('routes.library') }}" class="btn btn-outline-dark rounded-pill px-4 fw-bold">Library</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .score-circle { width: 120px; height: 120px; border: 6px solid #ffcc00; border-radius: 50%; background: #fffdf2; }
+    .rounded-4 { border-radius: 20px !important; }
+    .suggestion-box { font-size: 0.95rem; line-height: 1.5; }
+</style>
+
+<script>
+    const scoreData = {{ score | default(0) | tojson }};
+    const totalData = {{ total | default(0) | tojson }};
+    const incorrectData = totalData - scoreData;
+
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    
+    if (totalData > 0) {
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Incorrect'],
+                datasets: [{
+                    data: [scoreData, incorrectData],
+                    backgroundColor: ['#ffcc00', '#f1f1f1'],
+                    hoverOffset: 4,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false } // Hide legend to keep it clean
+                },
+                cutout: '80%',
+                borderRadius: 10
+            }
+        });
+    } else {
+        ctx.font = "16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("No quiz data found.", 100, 100);
+    }
+</script>
+{% endblock %}

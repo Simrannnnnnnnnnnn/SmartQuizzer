@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <h1 class="display-4 font-weight-bold" style="color: #ffcc00; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">SmartQuizzer 🚀</h1>
+    <p class="lead mb-5 text-muted">Create personalized quizzes in seconds using AI.</p>
+    
+    <form action="{{ url_for('routes.handle_generation') }}" method="POST" enctype="multipart/form-data" id="quizForm">
+        
+        <h5 class="mb-4 text-secondary">Step 1: Choose Your Source 📚</h5>
+        
+        <div class="d-flex justify-content-center align-items-center gap-4 mb-5 flex-wrap">
+            <label class="source-card text-center p-3 border rounded shadow-sm">
+                <input type="radio" name="source_type" value="pdf" onclick="updateInput('pdf')" required hidden>
+                <div class="icon-display">📄</div>
+                <b class="d-block mt-2">Upload PDF</b>
+            </label>
+
+            <label class="source-card text-center p-3 border rounded shadow-sm">
+                <input type="radio" name="source_type" value="text" onclick="updateInput('text')" hidden>
+                <div class="icon-display">✍️</div>
+                <b class="d-block mt-2">Raw Text</b>
+            </label>
+
+            <label class="source-card text-center p-3 border rounded shadow-sm">
+                <input type="radio" name="source_type" value="topic" onclick="updateInput('topic')" hidden>
+                <div class="icon-display">💡</div>
+                <b class="d-block mt-2">Topic Name</b>
+            </label>
+        </div>
+
+        <div id="dynamicArea" class="mb-5 mx-auto" style="max-width: 600px; min-height: 120px;">
+             <p class="text-muted border p-4 rounded bg-light border-dashed">Select a source above to begin your journey!</p>
+        </div>
+
+        <h5 class="mb-4 text-secondary">Step 2: Configure Quiz ⚙️</h5>
+        <div class="row justify-content-center p-4 bg-white rounded shadow-sm mx-auto mb-5 border config-panel" style="max-width: 850px;">
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Question Type</label>
+                <select name="quiz_format" class="form-select custom-select">
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="theory">Short Answers</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">How many questions?</label>
+                <input type="number" name="count" class="form-control" value="5" min="1" max="20">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Mode</label>
+                <select name="quiz_goal" class="form-select custom-select" onchange="updateBtnText(this.value)">
+                    <option value="quiz">Live Quiz Mode</option>
+                    <option value="questions">Save to Library</option>
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="sunshine-btn w-50 py-3 mb-5" id="genBtn">
+            <span id="btnText">Generate Quiz</span>
+            <div id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+        </button>
+    </form>
+</div>
+
+<style>
+    .source-card { 
+        width: 180px; 
+        transition: all 0.3s ease; 
+        border: 2px solid #f0f0f0 !important; 
+        border-radius: 20px; 
+        background: white;
+        cursor: pointer;
+    }
+    .source-card:hover { 
+        transform: translateY(-8px); 
+        border-color: #ffcc00 !important; 
+        box-shadow: 0 12px 20px rgba(255,179,0,0.15) !important;
+    }
+    /* Style for when radio is checked */
+    .source-card:has(input:checked) { 
+        border-color: #ffcc00 !important; 
+        background: #fffcf0 !important; 
+        border-width: 3px !important;
+        box-shadow: 0 0 15px rgba(255,204,0,0.3) !important;
+    }
+    .icon-display {
+        font-size: 3.5rem;
+    }
+    .config-panel {
+        border-radius: 25px;
+    }
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    .custom-select {
+        border-radius: 10px;
+    }
+</style>
+
+<script>
+function updateInput(val) {
+    const area = document.getElementById('dynamicArea');
+    if(val === 'pdf') {
+        area.innerHTML = `
+            <div class="alert alert-warning py-2 small">File must be under 5MB</div>
+            <input type="file" name="pdf_file" class="form-control shadow-sm" accept=".pdf" required>`;
+    } else if(val === 'text') {
+        area.innerHTML = `
+            <textarea name="raw_text" class="form-control shadow-sm" rows="5" 
+            placeholder="Paste your study notes or article here..." required></textarea>`;
+    } else {
+        area.innerHTML = `
+            <input type="text" name="topic_name" class="form-control shadow-sm" 
+            placeholder="e.g. Quantum Physics basics" required>`;
+    }
+}
+
+function updateBtnText(val) {
+    const btnText = document.getElementById('btnText');
+    btnText.innerText = (val === 'quiz') ? "Generate Quiz" : "Generate Questions";
+}
+
+document.getElementById('quizForm').onsubmit = function() {
+    const btn = document.getElementById('genBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    
+    // Disable to prevent double-click
+    btn.disabled = true;
+    btn.style.opacity = "0.8";
+    btnText.innerText = "AI is working...";
+    spinner.classList.remove('d-none');
+};
+</script>
+{% endblock %}

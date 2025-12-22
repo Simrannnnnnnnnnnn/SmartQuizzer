@@ -1,0 +1,24 @@
+<div id="explanation-drawer" class="explanation-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 500px; background: white; border-radius: 30px; padding: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.2); z-index: 2000;">
+    <div class="explanation-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+        <div style="background: var(--brand-bg); padding: 10px; border-radius: 12px; font-size: 1.5rem;">💡</div>
+        <h4 style="margin: 0; color: var(--brand-midnight); font-size: 1.4rem; font-weight: 800;">Deep Dive Insight</h4>
+    </div>
+    <div class="explanation-body" style="margin-bottom: 30px;">
+        <p id="explanation-content" style="line-height: 1.6; color: #555; font-size: 1rem;">The Theory of Relativity explains how time and space are linked...</p>
+    </div>
+    <button class="btn-main" onclick="closeExplanation()" style="width: 100%; border-radius: 15px;">Continue to Next</button>
+</div>
+
+<div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 1999;"></div>
+
+<script>
+    function showExplanation(text) {
+        document.getElementById('explanation-content').innerText = text;
+        document.getElementById('explanation-drawer').style.display = 'block';
+        document.getElementById('modal-overlay').style.display = 'block';
+    }
+    function closeExplanation() {
+        document.getElementById('explanation-drawer').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+</script>

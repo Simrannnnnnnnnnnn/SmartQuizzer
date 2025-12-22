@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto; animation: fadeIn 0.8s ease-out;">
+    <div class="glass-card" style="text-align: center; border-color: var(--accent-orange);">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🎒</div>
+        <h2 style="color: var(--deep-charcoal); font-weight: 900; margin-bottom: 5px;">Join the Mission!</h2>
+        <p style="opacity: 0.6; margin-bottom: 30px;">Start your AI-powered learning journey today.</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div style="background: #FFE3E3; color: #D12E2E; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.9rem; font-weight: 700;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-weight: 700; font-size: 0.8rem; color: #888; margin-left: 10px;">EMAIL ADDRESS</label>
+                <input type="email" name="email" placeholder="explorer@science.com" required 
+                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #EEE; font-family: inherit; margin-top: 5px; box-sizing: border-box;">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 25px;">
+                <label style="font-weight: 700; font-size: 0.8rem; color: #888; margin-left: 10px;">SECRET PASSWORD</label>
+                <input type="password" name="password" placeholder="••••••••" required 
+                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #EEE; font-family: inherit; margin-top: 5px; box-sizing: border-box;">
+            </div>
+
+            <button type="submit" class="sunshine-btn" style="width: 100%; font-size: 1.1rem; letter-spacing: 1px;">
+                CREATE MY ACCOUNT ✨
+            </button>
+        </form>
+
+        <p style="margin-top: 25px; font-size: 0.9rem;">
+            Already a member? <a href="{{ url_for('routes.login') }}" style="color: var(--primary-gold); font-weight: 900; text-decoration: none;">Log in here</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    input:focus {
+        border-color: var(--primary-gold) !important;
+        outline: none;
+        background-color: #FFFDF5;
+    }
+</style>
+{% endblock %}

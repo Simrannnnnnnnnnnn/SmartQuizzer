@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .hero-section {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
+    }
+    .welcome-card {
+        background: var(--card-white);
+        padding: 60px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--raised);
+        text-align: center;
+        max-width: 600px;
+    }
+    .welcome-card h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: var(--mauve);
+    }
+    .welcome-card p {
+        color: var(--text-sub);
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+    }
+    .auth-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+    }
+    .btn-outline {
+        padding: 16px 32px;
+        border-radius: 50px;
+        border: 2px solid var(--mauve);
+        color: var(--mauve);
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.3s;
+    }
+    .btn-outline:hover {
+        background: var(--mauve);
+        color: white;
+    }
+    .sunshine-btn {
+    background: #ffcc00; /* Brand Orange-Yellow */
+    color: #000 !important;
+    padding: 14px 35px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-decoration: none !important;
+    display: inline-block;
+    margin: 10px;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2);
+}
+
+.sunshine-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
+    background: #ffdb4d;
+}
+</style>
+
+<div class="container text-center" style="padding: 80px 20px;">
+    <h1 style="font-size: 4rem; font-weight: 800; color: #ffcc00;">SmartQuizzer 🚀</h1>
+    <h2 class="mb-5">An Effortless AI-Generated Quiz</h2>
+    
+    <div class="d-flex justify-content-center gap-3 mb-5">
+        <a href="{{ url_for('routes.login') }}" class="sunshine-btn">Login</a>
+        <a href="{{ url_for('routes.signup') }}" class="sunshine-btn">Sign Up</a>
+    </div>
+
+    <img src="https://img.icons8.com/bubbles/200/000000/brainstormy.png" class="mb-5">
+
+    <div class="mx-auto p-5 text-left bg-white shadow-sm" style="max-width: 850px; border-radius: 25px; border: 1px solid #eee;">
+        <h3 class="text-center mb-4">Project Objectives</h3>
+        <ul class="list-unstyled" style="font-size: 1.1rem; line-height: 1.8;">
+            <li>🤖 <b>AI Extraction:</b> Use LLMs (Llama-3) to extract concepts from PDF or Raw Text.</li>
+            <li>✍️ <b>Automatic Generation:</b> Create MCQs and Short Answers with distractors and explanations.</li>
+            <li>📈 <b>Adaptive Engine:</b> Difficulty classification that adjusts based on user performance.</li>
+            <li>💻 <b>Web Application:</b> Streamlined interface for uploading docs and taking quizzes.</li>
+            <li>📊 <b>Rich Analytics:</b> Visualize accuracy, weak topics, and response-time analysis.</li>
+        </ul>
+    </div>
+</div>
+
+
+
+{% endblock %}

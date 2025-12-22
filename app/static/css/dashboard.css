@@ -1,0 +1,45 @@
+.dashboard-wrapper {
+    background: linear-gradient(180deg, #E6A173 0%, #FDF5E6 100%);
+    min-height: 100vh;
+    padding: 60px 10%;
+    text-align: center;
+}
+
+.header-text h1 { color: white; font-size: 2.2rem; margin-bottom: 50px; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+/* Circular Buttons */
+.circle-selection-container, .type-btn-container {
+    display: flex; justify-content: center; gap: 40px; margin-bottom: 50px;
+}
+
+.circle-option, .type-circle-btn {
+    cursor: pointer; transition: 0.3s; width: 150px;
+}
+
+.circle-icon {
+    width: 120px; height: 120px;
+    background: white; border: 4px solid var(--brand-midnight); border-radius: 50%;
+    margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: var(--brand-midnight); font-weight: 800;
+}
+
+.circle-icon.small { width: 90px; height: 90px; }
+
+.circle-option.active .circle-icon, .type-circle-btn.active .circle-icon {
+    background: var(--brand-midnight); color: white; transform: scale(1.1);
+}
+
+/* Counter Input */
+.counter-input {
+    display: inline-flex; background: white; border: 2px solid var(--brand-midnight);
+    border-radius: 12px; overflow: hidden; margin: 20px 0;
+}
+
+.counter-input input { border: none; width: 100px; text-align: center; font-size: 1.2rem; font-weight: 800; }
+.counter-controls button { background: #EEE; border: none; padding: 10px 20px; cursor: pointer; font-size: 1.2rem; }
+
+.final-start-btn {
+    background: var(--brand-midnight); color: white; padding: 18px 60px;
+    border-radius: 12px; border: none; font-weight: 800; font-size: 1.1rem;
+    cursor: pointer; margin-top: 30px;
+}

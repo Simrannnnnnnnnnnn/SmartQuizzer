@@ -1,0 +1,105 @@
+/* ROOT COLORS */
+:root {
+    --brand-icon-gradient: linear-gradient(135deg, #e0a387 0%, #535279 100%);
+    --brand-midnight: #1A2A6C;
+    --brand-cream: #FDF5E6;
+}
+
+/* 1. RESET: Removes white gaps at edges */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 2. HERO SECTION: Changed to your Icon Gradient & Medium Sizing */
+.hero-banner {
+    background: var(--brand-icon-gradient); /* Now matches your gear icon */
+    padding: 50px 10% 120px 10%; /* Reduced padding from 80px/150px */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Wave effect at the bottom */
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px; /* Shorter wave */
+    background: white;
+    clip-path: ellipse(70% 100% at 50% 100%);
+}
+
+/* Medium sizing for Text */
+.hero-content h1 {
+    font-size: 2.5rem; /* Reduced from 3.5rem to be Medium */
+    line-height: 1.2;
+    margin-bottom: 15px;
+    max-width: 500px;
+}
+
+.hero-content p {
+    font-size: 1.1rem; /* Smaller subtext */
+    opacity: 0.9;
+}
+
+/* 3. CARDS SECTION: Shifted slightly to fit the medium UI */
+.auth-section {
+    margin-top: -60px; /* Less overlap */
+    padding: 0 10%;
+    display: flex;
+    gap: 30px;
+    position: relative;
+    z-index: 10;
+}
+
+.login-glass-card {
+    background: white;
+    padding: 30px; /* Reduced from 40px */
+    border-radius: 20px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+    flex: 1.5;
+}
+
+.guest-card {
+    background: var(--brand-cream);
+    border: 2px solid var(--brand-midnight); /* Thinner border */
+    border-radius: 20px;
+    padding: 30px;
+    flex: 1;
+    text-align: center;
+}
+
+/* 4. FEATURE ICONS: Cleaned up grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 40px 10%; /* Reduced padding */
+    background: white;
+}
+
+.feature-item {
+    background: #fdf6f0; /* Soft tint */
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.feature-icon-box {
+    width: 60px; /* Smaller icons */
+    height: 60px;
+    background: var(--brand-icon-gradient);
+    border-radius: 15px;
+    margin: 0 auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

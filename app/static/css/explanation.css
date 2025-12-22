@@ -1,0 +1,88 @@
+/* MODERN GLASSMORPHISM EXPLANATION POP-UP */
+.explanation-modal {
+    /* Positioning */
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: min(420px, 90vw); /* Responsive width */
+    z-index: 1000;
+    
+    /* Glassmorphism Effect */
+    background: rgba(255, 255, 255, 0.85); /* Semi-transparent white */
+    backdrop-filter: blur(16px) saturate(180%); /* The "Frosted" look */
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    
+    /* Border & Shadow */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-top: 6px solid var(--brand-midnight); /* Brand accent anchor */
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(26, 42, 108, 0.15), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    
+    /* Layout */
+    padding: 32px;
+    display: none; /* Controlled by JavaScript */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+}
+
+/* Active State for JS Toggle */
+.explanation-modal.is-visible {
+    display: block;
+    animation: slideInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.explanation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space for a close button if added */
+    margin-bottom: 18px;
+}
+
+.explanation-header h4 {
+    color: var(--brand-midnight);
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Add a small AI icon or lightbulb before the title in CSS */
+.explanation-header h4::before {
+    content: "💡";
+    font-size: 1.3rem;
+}
+
+.explanation-body {
+    color: #475569; /* Slate grey for better readability on glass */
+    font-size: 1rem;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+/* ENTRANCE ANIMATION */
+@keyframes slideInUp {
+    from { 
+        transform: translateY(40px) scale(0.95); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateY(0) scale(1); 
+        opacity: 1; 
+    }
+}
+
+/* ACCESSIBILITY: Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .explanation-modal {
+        animation: fadeIn 0.3s ease forwards !important;
+        transition: none !important;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

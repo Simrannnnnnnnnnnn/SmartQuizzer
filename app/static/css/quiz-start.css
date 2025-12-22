@@ -1,0 +1,25 @@
+.quiz-init-screen {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.pulse-loader {
+    width: 80px;
+    height: 80px;
+    background: var(--brand-midnight);
+    border-radius: 50%;
+    margin: 0 auto 30px;
+    animation: pulse-ring 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.5; }
+}
+
+.start-instruction {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 40px;
+}

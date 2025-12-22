@@ -1,0 +1,219 @@
+/* 1. CORE THEME VARIABLES */
+:root {
+    /* Primary Colors */
+    --mauve: #96787F;         /* Dusty Mauve */
+    --mauve-light: #b5a0a5;
+    --peach-bg: #FDF5F0;      /* Warm Peach-Beige */
+    --card-white: #FFFFFF;
+    
+    /* Text Colors */
+    --text-main: #5a5450;
+    --text-sub: #8c827d;
+
+    /* Neumorphic Shadows (Calculated for Peach-Beige) */
+    --shadow-light: #ffffff;
+    --shadow-dark: #e0d8d3;
+    --raised: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-light);
+    --pressed: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+    
+    /* Global Rounding */
+    --radius-lg: 40px;
+    --radius-md: 25px;
+    --radius-sm: 15px;
+}
+.sunshine-btn {
+    background: #ffcc00;
+    color: #000;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
+    transition: all 0.3s ease;
+    display: inline-block;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sunshine-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(255, 204, 0, 0.5);
+    background: #ffdb4d;
+    color: #000;
+    text-decoration: none;
+}
+/* 2. GLOBAL RESET */
+* {
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+}
+
+body {
+    background-color: var(--peach-bg);
+    color: var(--text-main);
+    font-family: 'Inter', -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* 3. NAVIGATION */
+.navbar {
+    background: rgba(253, 245, 240, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 20px 10%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-logo {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--mauve);
+    text-decoration: none;
+}
+
+.nav-links a {
+    color: var(--text-main);
+    text-decoration: none;
+    margin-left: 30px;
+    font-weight: 600;
+}
+
+.nav-links a:hover {
+    color: var(--mauve);
+}
+
+/* 4. REUSABLE COMPONENTS */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* The "Raised" Card */
+.card {
+    background: var(--card-white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--raised);
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    margin-bottom: 30px;
+}
+
+/* Vibrant Mauve Button */
+.btn-primary {
+    background: var(--mauve);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(150, 120, 127, 0.3);
+    width: 100%;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(150, 120, 127, 0.4);
+    background: var(--mauve-light);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* 5. DASHBOARD SPECIFIC */
+.selection-circle {
+    width: 100px;
+    height: 100px;
+    background: var(--card-white);
+    border-radius: 50%;
+    box-shadow: var(--raised);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 3px solid transparent;
+}
+
+.selection-circle.active {
+    box-shadow: var(--pressed);
+    border-color: var(--mauve);
+}
+
+.selection-circle i {
+    font-size: 1.8rem;
+    color: var(--mauve);
+    margin-bottom: 5px;
+}
+
+/* 6. INPUTS */
+input[type="text"], input[type="email"], input[type="password"], textarea {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: var(--peach-bg);
+    box-shadow: var(--pressed);
+    color: var(--text-main);
+    outline: none;
+    margin-top: 10px;
+}
+
+/* 7. FLASH MESSAGES (Errors) */
+.alert {
+    padding: 15px 25px;
+    border-radius: var(--radius-md);
+    background: #f8d7da;
+    color: #721c24;
+    margin-bottom: 20px;
+    box-shadow: var(--raised);
+    font-weight: 600;
+    border-left: 5px solid #dc3545;
+}
+
+/* 8. QUIZ ELEMENTS */
+.timer-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--card-white);
+    box-shadow: var(--raised);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: var(--mauve);
+    font-size: 1.2rem;
+}
+
+.option-btn {
+    background: var(--card-white);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--raised);
+    margin-bottom: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.option-btn:hover {
+    background: var(--peach-bg);
+}
+
+.option-btn.selected {
+    box-shadow: var(--pressed);
+    color: var(--mauve);
+}
