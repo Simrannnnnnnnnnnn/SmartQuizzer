@@ -48,7 +48,7 @@ SmartQuizzer/
 ```
 ---
 ## ⚙️ Installation & Setup
-```bash
+
 # 1. Clone the repository
 git clone https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git
 cd ai-quiz-generator
@@ -68,14 +68,14 @@ pip install -r requirements.txt
 
 # 5. Run the application
 python main.py
-```
+
 ---
 ## 📬 Contact
-```text
+
 If you have any questions or feedback, feel free to reach out!
 
 * **Name:** Simran Kaur
 * **Email:** [kaur.simran1542@gmail.com](mailto:kaur.simran1542@gmail.com)
 * **GitHub:** [Simrannnnnnnnnnnn](https://github.com/Simrannnnnnnnnnnn)
 * **Project Link:** [SmartQuizzer](https://github.com/Simrannnnnnnnnnnn/SmartQuizzer)
-```
+---
