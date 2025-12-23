@@ -49,24 +49,24 @@ SmartQuizzer/
 ---
 ## ⚙️ Installation & Setup
 
-# 1. Clone the repository
+### 1. Clone the repository
 git clone https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git
 cd ai-quiz-generator
 
-# 2. Create and activate a Virtual Environment
+### 2. Create and activate a Virtual Environment
 python -m venv venv
-# On Windows: venv\Scripts\activate
+#### On Windows: venv\Scripts\activate
 # On Mac/Linux: source venv/bin/activate
 
-# 3. Install dependencies
+### 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set up Environment variables
-# Create a .env file and add your keys:
-# GROQ_API_KEY=your_api_key_here
-# SECRET_KEY=your_secret_key
+### 4. Set up Environment variables
+#### Create a .env file and add your keys:
+#### GROQ_API_KEY=your_api_key_here
+#### SECRET_KEY=your_secret_key
 
-# 5. Run the application
+### 5. Run the application
 python main.py
 
 ---
