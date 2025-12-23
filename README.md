@@ -46,41 +46,34 @@ SmartQuizzer/
 └── .env                #Environment variables (Hidden)
 
 
+---
 
-## **Installation & Setup** 
+## ⚙️ **Installation & Setup** Follow these steps to get the project running on your local machine.
 
-### 1- Clone the repository 
-
-```bash
-git clone [https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git](https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git)
+# 1. Clone the repository
+git clone https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git
 cd ai-quiz-generator
-```
 
-### 2- Create a Virtual Environment
-```bash
+# 2. Create and activate a Virtual Environment
 python -m venv venv
-on mac = source venv/bin/activate  
-On Windows: venv\Scripts\activate
-```
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+# source venv/bin/activate
 
-### 3- Install dependencies
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-### 4- Set up Environment variable 
-create a .env file in the root and add
-```bash
-GROQ_API_KEY=your_api_key_here
-SECRET_KEY=your_secret_key
-```
+# 4. Set up Environment variables
+# Create a .env file and add:
+# GROQ_API_KEY=your_api_key_here
+# SECRET_KEY=your_secret_key
 
-### 5- Run the application
-```bash
+# 5. Run the application
 python main.py
-```
 
+---
 # Contact 
-## Simran Kaur 
-## kaur.simran1542@gmail.com
-## https://github.com/Simrannnnnnnnnnnn/SmartQuizzer
+### Simran Kaur 
+### kaur.simran1542@gmail.com
+### https://github.com/Simrannnnnnnnnnnn/SmartQuizzer
