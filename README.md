@@ -44,11 +44,10 @@ SmartQuizzer/
 ├── main.py             # App entry point
 ├── requirements.txt    # Python dependencies
 └── .env                #Environment variables (Hidden)
-
-
 ---
 
-## ⚙️ **Installation & Setup** Follow these steps to get the project running on your local machine.
+---
+# ⚙️ **Installation & Setup** Follow these steps to get the project running on your local machine.
 
 # 1. Clone the repository
 git clone https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git
@@ -71,9 +70,10 @@ pip install -r requirements.txt
 
 # 5. Run the application
 python main.py
-
+---
 ---
 # Contact 
 ### Simran Kaur 
 ### kaur.simran1542@gmail.com
 ### https://github.com/Simrannnnnnnnnnnn/SmartQuizzer
+---
