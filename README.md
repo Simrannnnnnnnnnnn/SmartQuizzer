@@ -1,4 +1,5 @@
-# 🧠 SmartQuizzer: AI-Powered Quiz Generator
+# 🧠 **SmartQuizzer: AI-Powered Quiz Generator**
+
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-%23430098.svg?style=for-the-badge&logo=render&logoColor=white)
@@ -9,29 +10,29 @@ SmartQuizzer is a full-stack web application designed to help students and educa
 
 ---
 
-## 🚀 Features
+## 🚀 **Features**
 
-- **AI Generation:** Leverages the Groq API (LLM) to generate accurate MCQs with explanations.
-- **Multiple Inputs:** Generate quizzes from text, specific topics, or uploaded PDF files.
-- **User Authentication:** Secure Signup/Login system using Flask-Login.
-- **Personal Library:** Save generated quizzes to a personal dashboard to review or retake later.
-- **Progress Tracking:** Interactive quiz interface with real-time scoring and streak tracking.
-- **Responsive Design:** Mobile-friendly interface built with modern CSS.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Python (Flask)
-- **Frontend:** HTML5, CSS3, JavaScript
-- **Database:** SQLAlchemy (SQLite)
-- **AI Integration:** Groq API / LLM Client
-- **File Processing:** PyPDF
-- **Deployment:** Render
+* **AI Generation:** Leverages the Groq API (LLM) to generate accurate MCQs with explanations.
+* **Multiple Inputs:** Generate quizzes from text, specific topics, or uploaded PDF files.
+* **User Authentication:** Secure Signup/Login system using Flask-Login.
+* **Personal Library:** Save generated quizzes to a personal dashboard to review or retake later.
+* **Progress Tracking:** Interactive quiz interface with real-time scoring and streak tracking.
+* **Responsive Design:** Mobile-friendly interface built with modern CSS.
 
 ---
 
-## 📂 Project Structure
+## 🛠️ **Tech Stack**
+
+* **Backend:** Python (Flask)
+* **Frontend:** HTML5, CSS3, JavaScript
+* **Database:** SQLAlchemy (SQLite)
+* **AI Integration:** Groq API / LLM Client
+* **File Processing:** PyPDF
+* **Deployment:** Render
+
+---
+
+## 📂 **Project Structure**
 
 ```text
 SmartQuizzer/
@@ -43,12 +44,10 @@ SmartQuizzer/
 ├── static/             # CSS, JS, and Images
 ├── main.py             # App entry point
 ├── requirements.txt    # Python dependencies
-└── .env                #Environment variables (Hidden)
+└── .env                # Environment variables (Hidden)
+```
 ---
-
----
-
-# ⚙️ Installation & Setup** Follow these steps to get the project running on your local machine.
+## ⚙️ Installation & Setup
 ```bash
 # 1. Clone the repository
 git clone https://github.com/Simrannnnnnnnnnnn/SmartQuizzer.git
@@ -56,29 +55,27 @@ cd ai-quiz-generator
 
 # 2. Create and activate a Virtual Environment
 python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Mac/Linux:
-# source venv/bin/activate
+# On Windows: venv\Scripts\activate
+# On Mac/Linux: source venv/bin/activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
 # 4. Set up Environment variables
-# Create a .env file and add:
+# Create a .env file and add your keys:
 # GROQ_API_KEY=your_api_key_here
 # SECRET_KEY=your_secret_key
 
 # 5. Run the application
 python main.py
 ```
-
 ---
-# Contact
+## 📬 Contact
 ```text
-if you have any questions or feedback, feel free to reach out! 
-### Name : Simran Kaur 
-### Email : kaur.simran1542@gmail.com
-### Github : Simrannnnnnnnnnnn
-### Project Link : https://github.com/Simrannnnnnnnnnnn/SmartQuizzer
+If you have any questions or feedback, feel free to reach out!
+
+* **Name:** Simran Kaur
+* **Email:** [kaur.simran1542@gmail.com](mailto:kaur.simran1542@gmail.com)
+* **GitHub:** [Simrannnnnnnnnnnn](https://github.com/Simrannnnnnnnnnnn)
+* **Project Link:** [SmartQuizzer](https://github.com/Simrannnnnnnnnnnn/SmartQuizzer)
 ```
