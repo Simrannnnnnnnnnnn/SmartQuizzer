@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div>
             <h1 class="fw-bold" style="color: var(--primary-gold);">✨ Your AI Study Bundle</h1>
-            <p class="text-muted fs-5">Mnemonics, Flashcards, and Shorthand Notes generated for you.</p>
+            <p class="text-muted fs-5">Deep Dive Analysis, Flashcards, and Shorthand Notes generated for you.</p>
         </div>
         <div class="d-flex gap-2">
             <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 shadow-sm border-2">
@@ -22,7 +22,7 @@
             <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
-                    <span class="badge bg-light text-muted border rounded-pill">Click text to toggle summary</span>
+                    <span class="badge bg-light text-muted border rounded-pill">Click logic for quick revision</span>
                 </div>
                 
                 <div class="list-group list-group-flush">
@@ -37,11 +37,7 @@
                                     <span class="fs-6 fw-bold text-dark mt-1">{{ note }}</span>
                                 </div>
                                 <div class="d-flex gap-2 no-print">
-                                    <button class="btn btn-sm btn-soft-primary rounded-pill px-3" 
-                                            onclick="explainLike10(this, '{{ note|e }}')">
-                                        👦 ELI10
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold" 
+                                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm" 
                                             onclick="deepDive(this, '{{ note|e }}')">
                                         🚀 Deep Dive
                                     </button>
@@ -51,7 +47,7 @@
                             <div class="note-detail-content d-none mt-3 pt-3 border-top animate__animated animate__fadeIn">
                                 <div class="p-3 bg-light rounded-4">
                                     <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">
-                                        {{ data.detailed_revision[:250] }}...
+                                        Click Deep Dive for professional analysis.
                                     </p>
                                 </div>
                             </div>
@@ -62,12 +58,9 @@
             </div>
 
             <div class="glass-card p-4 shadow-sm mb-4 border-0 position-relative overflow-hidden border-2" style="background: #FFF9E6;">
-                <div class="position-absolute top-0 end-0 p-3 opacity-10">
-                    <i class="fa-solid fa-brain display-4 text-warning"></i>
-                </div>
                 <h4 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Memory Palace Story</h4>
                 <div class="mnemonic-box p-4 bg-white rounded-4 border-start border-warning border-5 shadow-sm">
-                    <p class="mb-0 italic text-dark fw-bold" style="font-size: 1.1rem; line-height: 1.8; font-style: italic;">
+                    <p class="mb-0 text-dark fw-bold" style="font-size: 1.1rem; line-height: 1.8; font-style: italic;">
                         "{{ data.mnemonic_story }}"
                     </p>
                 </div>
@@ -81,14 +74,13 @@
                         </div>
                         <div>
                             <h5 class="fw-bold mb-0">Mastered the concepts?</h5>
-                            <p class="small mb-0 text-white-50">Generate a 5-question test now.</p>
+                            <p class="small mb-0 text-white-50">Test your knowledge with AI Quiz.</p>
                         </div>
                     </div>
                     <form action="{{ url_for('routes.handle_generation') }}" method="POST">
                         <input type="hidden" name="source_type" value="text">
                         <input type="hidden" name="raw_text" value="{{ data.detailed_revision }}">
                         <input type="hidden" name="count" value="5">
-                        <input type="hidden" name="quiz_goal" value="quiz">
                         <button type="submit" class="btn btn-warning rounded-pill fw-bold px-4 text-dark">Start Quiz</button>
                     </form>
                 </div>
@@ -125,8 +117,6 @@
     :root { --primary-gold: #FFB300; }
     .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
     .glass-card { border-radius: 24px; border: 1px solid #eee; }
-    .btn-soft-primary { background: #E3F2FD; color: #0D47A1; font-weight: 600; }
-    .btn-soft-primary:hover { background: #2196F3; color: white; }
     .icon-circle { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .bullet-point { width: 35px; height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
@@ -142,14 +132,6 @@
     .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
     .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-2px); transition: 0.3s; }
-
-    @media print {
-        .no-print, .btn, form { display: none !important; }
-        .glass-card { box-shadow: none !important; border: 1px solid #000 !important; }
-        .col-lg-5 { display: block !important; width: 100% !important; margin-top: 50px; }
-        .flashcard { height: auto !important; page-break-inside: avoid; border: 1px solid #000 !important; }
-        .flashcard-back { transform: none !important; position: static !important; background: #fff !important; color: #000 !important; border-top: 1px dashed #000; }
-    }
 </style>
 
 <script>
@@ -159,7 +141,6 @@
         detailDiv.classList.toggle('d-none');
     }
 
-    // Naya Deep Dive Logic
     async function deepDive(btn, text) {
         if (window.event) window.event.stopPropagation();
         const card = btn.closest('.note-interactive-card');
@@ -173,62 +154,25 @@
         detailDiv.innerHTML = `
             <div class="p-3 bg-light rounded-4 d-flex align-items-center border">
                 <div class="spinner-grow spinner-grow-sm text-primary me-3"></div>
-                <small class="fw-bold text-dark">AI is performing a deep-dive analysis...</small>
+                <small class="fw-bold text-dark">AI is performing a professional Deep Dive...</small>
             </div>`;
         
         try {
-            const response = await fetch('/extend-concept', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: text })
-            });
-            const result = await response.json();
-            detailDiv.innerHTML = `
-                <div class="p-3 rounded-4 animate__animated animate__fadeIn" style="background: #f0fdf4; border-left: 5px solid #16a34a; border: 1px solid #bdf0cc;">
-                    <strong class="d-block mb-1 text-success"><i class="fa-solid fa-microchip me-2"></i>Deep Dive Explanation:</strong>
-                    <p class="mb-0 text-dark fw-bold" style="font-size: 0.95rem;">${result.explanation}</p>
-                </div>`;
-        } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold">AI is busy. Try again in 5 seconds.</div>`;
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
-    }
-
-    // ELI10 Logic
-    async function explainLike10(btn, text) {
-        if (window.event) window.event.stopPropagation();
-        const card = btn.closest('.note-interactive-card');
-        const detailDiv = card.querySelector('.note-detail-content');
-        detailDiv.classList.remove('d-none');
-        
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-        detailDiv.innerHTML = `
-            <div class="p-3 bg-light rounded-4 d-flex align-items-center border">
-                <div class="spinner-border spinner-border-sm text-warning me-3"></div>
-                <small class="fw-bold">👦 Simplifying for a 10-year old...</small>
-            </div>`;
-        
-        try {
-            const response = await fetch('/simplify', {
+            // Naya route call ho raha hai jo aapne routes.py mein banaya
+            const response = await fetch('/deep-dive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ concept: text })
             });
             const result = await response.json();
-            if (result.simple_text) {
-                detailDiv.innerHTML = `
-                    <div class="p-3 rounded-4 animate__animated animate__fadeIn" style="background: #eef2ff; border-left: 5px solid #4f46e5; border: 1px solid #d0d7ff;">
-                        <strong class="d-block mb-1 text-primary"><i class="fa-solid fa-child me-2"></i>Simple Version:</strong>
-                        <p class="mb-0 text-dark fw-bold" style="font-size: 0.95rem;">${result.simple_text}</p>
-                    </div>`;
-            }
+            
+            detailDiv.innerHTML = `
+                <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border-left: 5px solid #0f172a; border: 1px solid #e2e8f0;">
+                    <strong class="d-block mb-2 text-dark"><i class="fa-solid fa-microchip me-2"></i>Advanced Technical Analysis:</strong>
+                    <p class="mb-0 text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</p>
+                </div>`;
         } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold">AI busy. Try again.</div>`;
+            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold">Deep Dive failed. Try again soon.</div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
