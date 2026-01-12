@@ -3,14 +3,14 @@
 <div class="container-fluid py-4">
     <div class="row g-4 animate__animated animate__fadeIn">
         <div class="col-lg-8">
-            <div class="glass-card h-100 shadow-sm border-0">
+            <div class="glass-card h-100 shadow-sm border-0" style="border: 2px solid #000 !important;">
                 <div class="d-flex align-items-center mb-4">
                     <div class="icon-box me-3 bg-warning bg-opacity-10 p-3 rounded-4">
                         <i class="fa-solid fa-wand-magic-sparkles fs-3 text-warning"></i>
                     </div>
                     <div>
                         <h2 class="fw-bold mb-0" style="color: #000000;">Create New Quiz</h2>
-                        <p class="text-dark small mb-0">Transform your material into a mastery session</p>
+                        <p class="text-dark fw-bold small mb-0">Transform your material into a mastery session</p>
                     </div>
                 </div>
                 
@@ -18,14 +18,14 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark small letter-spacing-1" style="color: #000 !important;">SELECT STUDY MODE</label>
                         <div class="d-flex gap-3">
-                            <div class="flex-fill">
-                                <input type="radio" class="btn-check" name="quiz_goal" id="rev" value="revision" checked>
+                            <div class="flex-fill custom-radio-wrapper">
+                                <input type="radio" class="form-check-input me-2" name="quiz_goal" id="rev" value="revision" checked style="border: 2px solid #000;">
                                 <label class="btn btn-outline-warning w-100 rounded-4 py-3 fw-bold border-2 mode-label" for="rev">
                                     <i class="fa-solid fa-book-open me-2"></i>Revision
                                 </label>
                             </div>
-                            <div class="flex-fill">
-                                <input type="radio" class="btn-check" name="quiz_goal" id="qz" value="quiz">
+                            <div class="flex-fill custom-radio-wrapper">
+                                <input type="radio" class="form-check-input me-2" name="quiz_goal" id="qz" value="quiz" style="border: 2px solid #000;">
                                 <label class="btn btn-outline-danger w-100 rounded-4 py-3 fw-bold border-2 mode-label" for="qz">
                                     <i class="fa-solid fa-stopwatch me-2"></i>Timed Quiz
                                 </label>
@@ -37,10 +37,10 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-dark small letter-spacing-1" style="color: #000 !important;">SOURCE TYPE</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0 rounded-start-4" style="border-color: #000;">
+                                <span class="input-group-text bg-white border-end-0 rounded-start-4" style="border: 2px solid #000;">
                                     <i class="fa-solid fa-layer-group text-warning"></i>
                                 </span>
-                                <select name="source_type" id="source-select" class="form-select border-start-0 rounded-end-4 p-3 border-2 fw-bold" style="border-color: #000; color: #000 !important;">
+                                <select name="source_type" id="source-select" class="form-select border-start-0 rounded-end-4 p-3 border-2 fw-bold" style="border: 2px solid #000; color: #000 !important;">
                                     <option value="pdf">📄 PDF Document</option>
                                     <option value="text">✍️ Raw Text</option>
                                     <option value="topic">🌐 Broad Topic</option>
@@ -50,9 +50,14 @@
                         
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-dark small letter-spacing-1" style="color: #000 !important;">QUESTION COUNT</label>
-                            <input type="range" class="form-range mt-2 custom-range" name="count" id="countRange" min="1" max="15" value="5" oninput="countOutput.value = value">
-                            <div class="text-center fw-bold" style="color: #000 !important; font-size: 1.2rem;">
-                                <output id="countOutput">5</output> <span style="color: #000 !important;">Questions</span>
+                            <div class="px-2">
+                                <input type="range" class="form-range mt-2 custom-range" name="count" id="countRange" min="1" max="15" value="5" oninput="countOutput.value = value">
+                                <div class="d-flex justify-content-between fw-bold text-dark small mt-1">
+                                    <span>1</span><span>5</span><span>10</span><span>15</span>
+                                </div>
+                            </div>
+                            <div class="text-center fw-bold mt-2" style="color: #000 !important; font-size: 1.2rem;">
+                                <span class="badge bg-dark px-3 py-2"><output id="countOutput">5</output> Questions</span>
                             </div>
                         </div>
 
@@ -60,7 +65,7 @@
                             <label class="form-label fw-bold text-dark small" style="color: #000 !important;">UPLOAD DOCUMENT</label>
                             <div class="upload-container position-relative">
                                 <input type="file" name="pdf_file" class="form-control rounded-4 p-4 fw-bold" style="border: 2px dashed #000; background: #fffcf5; color: #000;" required>
-                                <small class="text-dark d-block mt-2 fw-bold"><i class="fa-solid fa-info-circle me-1"></i> Best for textbooks or multi-page notes (PDF max 10MB)</small>
+                                <small class="text-dark d-block mt-2 fw-bold"><i class="fa-solid fa-info-circle me-1"></i> Best for textbooks (PDF max 10MB)</small>
                             </div>
                         </div>
                     </div>
@@ -76,11 +81,11 @@
             <div class="glass-card mb-4 text-center border-0 overflow-hidden position-relative" style="background: #fff; border: 2px solid #000 !important;">
                 <h5 class="fw-bold text-dark position-relative" style="color: #000 !important;">Mistake Bank 🧠</h5>
                 <h1 class="display-3 fw-bold my-2" style="color: #d94111;">{{ mistake_count }}</h1>
-                <p class="small text-dark fw-bold">Focused review needed for these concepts</p>
-                <a href="{{ url_for('routes.review_mistakes') }}" class="btn btn-warning text-dark py-2 px-5 rounded-pill fw-bold shadow-sm">Review Now</a>
+                <p class="small text-dark fw-bold">Focused review needed</p>
+                <a href="{{ url_for('routes.review_mistakes') }}" class="btn btn-warning text-dark py-2 px-5 rounded-pill fw-bold shadow-sm" style="border: 1px solid #000;">Review Now</a>
             </div>
 
-            <div class="glass-card border-0 shadow-sm" style="border: 1px solid #000 !important;">
+            <div class="glass-card border-0 shadow-sm" style="border: 2px solid #000 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="fw-bold mb-0" style="color: #000 !important;">Topic Mastery</h5>
                     <i class="fa-solid fa-chart-line text-success"></i>
@@ -91,7 +96,7 @@
                         <span class="text-dark" style="color: #000 !important;">{{ topic.topic_name }}</span>
                         <span class="badge bg-dark text-white rounded-pill">{{ topic.percentage }}%</span>
                     </div>
-                    <div class="progress rounded-pill shadow-sm" style="height: 12px; background: #e0e0e0;">
+                    <div class="progress rounded-pill shadow-sm" style="height: 12px; background: #e0e0e0; border: 1px solid #ccc;">
                         <div class="progress-bar bg-warning" style="width: {{ topic.percentage }}%"></div>
                     </div>
                 </div>
@@ -103,29 +108,32 @@
 
 <style>
     .glass-card { background: white !important; padding: 2rem; border-radius: 1.5rem; }
-    /* Global black text fix */
-    .text-dark, .text-muted, label, span, h1, h2, h5, p, output { color: #000000 !important; }
+    .text-dark, label, span, h1, h2, h5, p, output { color: #000000 !important; }
     
-    .mode-label { color: #000 !important; transition: 0.3s; }
+    /* Radio Button Fix */
+    .custom-radio-wrapper { display: flex; align-items: center; position: relative; }
+    .form-check-input:checked { background-color: #000; border-color: #000; }
+    
+    .mode-label { color: #000 !important; transition: 0.3s; z-index: 1; }
     .btn-check:checked + .mode-label { 
         background-color: #ffc107 !important; 
         color: #000 !important; 
-        border-color: #000 !important; 
+        border: 3px solid #000 !important; 
     }
     
     .sunshine-btn { 
         background: #ffc107; 
         color: #000 !important; 
-        border: 2px solid #000; 
+        border: 3px solid #000; 
         transition: 0.3s; 
     }
+    .sunshine-btn:hover { transform: scale(1.02); background: #eab308; }
     
-    .custom-range { accent-color: #000; }
-    
-    .form-control, .form-select { 
-        border-color: #000 !important; 
-        color: #000 !important; 
-    }
+    /* Slider Visibility */
+    .custom-range { accent-color: #000; height: 8px; }
+    .custom-range::-webkit-slider-thumb { border: 2px solid #000; }
+
+    .form-control, .form-select { border: 2px solid #000 !important; color: #000 !important; font-weight: bold; }
 </style>
 
 <script>
@@ -142,23 +150,23 @@
             },
             text: {
                 label: 'PASTE YOUR TEXT',
-                html: '<textarea name="raw_text" class="form-control rounded-4 p-3 fw-bold" rows="5" style="border: 2px solid #000; color: #000;" placeholder="Paste textbook paragraphs..." required></textarea>'
+                html: '<textarea name="raw_text" class="form-control rounded-4 p-3 fw-bold" rows="5" style="border: 2px solid #000; color: #000;" placeholder="Paste notes here..." required></textarea>'
             },
             topic: {
                 label: 'ENTER SUBJECT/TOPIC',
-                html: '<input type="text" name="topic_name" class="form-control rounded-pill p-4 fw-bold" style="border: 2px solid #000; color: #000;" placeholder="e.g. Quantum Physics" required>'
+                html: '<input type="text" name="topic_name" class="form-control rounded-pill p-4 fw-bold" style="border: 2px solid #000; color: #000;" placeholder="e.g. Science" required>'
             }
         };
 
         const config = configs[this.value];
-        // Label ko yahan bhi style diya taaki change hone par black hi rahe
         area.innerHTML = `<label class="form-label fw-bold small" style="color: #000 !important;">${config.label}</label>${config.html}`;
     };
 
+    // AI Busy prevention & Loader
     document.getElementById('quiz-form').onsubmit = function() {
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Crafting Questions...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connecting to AI (May take 10s)...';
     };
 </script>
 {% endblock %}
