@@ -66,7 +66,43 @@ def logout():
 # ==========================================
 # DASHBOARD
 # ==========================================
+# ==========================================
+# STUDY HUB (Notes & Summary Generation)
+# ==========================================
 
+@routes_bp.route('/study-hub', methods=['GET', 'POST'])
+@login_required
+def study_hub():
+    if request.method == 'POST':
+        source_type = request.form.get('source_type')
+        content = ""
+        
+        try:
+            if source_type == 'pdf':
+                file = request.files.get('pdf_file')
+                if file:
+                    content = extract_text_from_pdf(file)
+            elif source_type == 'text':
+                content = request.form.get('raw_text')
+            elif source_type == 'topic':
+                content = f"Explain the topic: {request.form.get('topic_name')}"
+
+            if not content:
+                flash("Bhai kuch content toh daal pehle!", "warning")
+                return redirect(url_for('routes.study_hub'))
+
+            # LLM se notes generate karwana
+            # Maan ke chal raha hoon aapke llm_client mein 'generate_study_material' function hai
+            study_bundle = llm.generate_study_material(content)
+            
+            return render_template('study_hub_result.html', data=study_bundle)
+            
+        except Exception as e:
+            flash(f"AI Error: {str(e)}", "danger")
+            return redirect(url_for('routes.study_hub'))
+
+    return render_template('study_hub.html')
+    
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
