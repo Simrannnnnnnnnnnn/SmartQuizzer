@@ -281,37 +281,30 @@ def submit_answer(q_id):
 @routes_bp.route('/results')
 @login_required
 def results():
-    score = session.get('score', 0)
-    total = len(session.get('active_questions', []))
-    accuracy = (score/total*100) if total > 0 else 0
-    
-    # 1. Save Result to DB
-    new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
-    db.session.add(new_res)
-    db.session.commit()
-    
-    # 2. Store for PDF Report
-    session['last_result_id'] = new_res.id
+    try:
+        score = session.get('score', 0)
+        questions = session.get('active_questions', [])
+        total = len(questions)
+        accuracy = (score / total * 100) if total > 0 else 0
+        
+        # Database Save with Safety Catch
+        try:
+            new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
+            db.session.add(new_res)
+            # Streak badhao
+            current_user.streak_count = (current_user.streak_count or 0) + 1
+            db.session.commit()
+        except Exception as db_e:
+            db.session.rollback()
+            print(f"Database Error: {db_e}")
 
-    # 3. Update Mastery Statistics
-    t_name = session.get('quiz_topic', 'General')
-    mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic_name=t_name).first()
-    if not mastery:
-        mastery = TopicMastery(user_id=current_user.id, topic_name=t_name, correct_count=0, total_count=0)
-        db.session.add(mastery)
-    
-    mastery.correct_count = (mastery.correct_count or 0) + score
-    mastery.total_count = (mastery.total_count or 0) + total
-    db.session.commit()
-
-    # 4. Get AI Feedback
-    recommendation = llm.get_ai_recommendation(accuracy)
-
-    return render_template('results.html', 
-                           score=score, 
-                           total=total, 
-                           accuracy=accuracy, 
-                           recommendation=recommendation)
+        return render_template('results.html', 
+                               score=score, 
+                               total=total, 
+                               accuracy=accuracy)
+    except Exception as e:
+        print(f"Result Page Error: {e}")
+        return redirect(url_for('routes.dashboard'))
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
