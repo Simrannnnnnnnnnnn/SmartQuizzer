@@ -147,7 +147,7 @@ def simplify():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
         
-@routes.route('/extend-concept', methods=['POST'])
+@routes_bp.route('/extend-concept', methods=['POST'])
 def extend_concept():
     data = request.get_json()
     topic = data.get('topic')
