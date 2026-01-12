@@ -66,43 +66,7 @@ def logout():
 # ==========================================
 # DASHBOARD
 # ==========================================
-# ==========================================
-# STUDY HUB (Notes & Summary Generation)
-# ==========================================
 
-@routes_bp.route('/study-hub', methods=['GET', 'POST'])
-@login_required
-def study_hub():
-    if request.method == 'POST':
-        source_type = request.form.get('source_type')
-        content = ""
-        
-        try:
-            if source_type == 'pdf':
-                file = request.files.get('pdf_file')
-                if file:
-                    content = extract_text_from_pdf(file)
-            elif source_type == 'text':
-                content = request.form.get('raw_text')
-            elif source_type == 'topic':
-                content = f"Explain the topic: {request.form.get('topic_name')}"
-
-            if not content:
-                flash("Bhai kuch content toh daal pehle!", "warning")
-                return redirect(url_for('routes.study_hub'))
-
-            # LLM se notes generate karwana
-            # Maan ke chal raha hoon aapke llm_client mein 'generate_study_material' function hai
-            study_bundle = llm.generate_study_material(content)
-            
-            return render_template('study_hub_result.html', data=study_bundle)
-            
-        except Exception as e:
-            flash(f"AI Error: {str(e)}", "danger")
-            return redirect(url_for('routes.study_hub'))
-
-    return render_template('study_hub.html')
-    
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
@@ -131,6 +95,41 @@ def dashboard():
                            streak=user_streak)
 
 # ==========================================
+# STUDY HUB (Notes & Summary Generation)
+# ==========================================
+
+@routes_bp.route('/study-hub', methods=['GET', 'POST'])
+@login_required
+def study_hub():
+    if request.method == 'POST':
+        source_type = request.form.get('source_type')
+        content = ""
+        
+        try:
+            if source_type == 'pdf':
+                file = request.files.get('pdf_file')
+                if file:
+                    content = extract_text_from_pdf(file)
+            elif source_type == 'text':
+                content = request.form.get('raw_text')
+            elif source_type == 'topic':
+                content = f"Explain the topic: {request.form.get('topic_name')}"
+
+            if not content:
+                flash("Bhai kuch content toh daal pehle!", "warning")
+                return redirect(url_for('routes.study_hub'))
+
+            study_bundle = llm.generate_study_material(content)
+            
+            return render_template('study_hub_result.html', data=study_bundle)
+            
+        except Exception as e:
+            flash(f"AI Error: {str(e)}", "danger")
+            return redirect(url_for('routes.study_hub'))
+
+    return render_template('study_hub.html')
+
+# ==========================================
 # STUDY TOOLS (Simplification)
 # ==========================================
 
@@ -148,14 +147,18 @@ def simplify():
         return jsonify({"error": str(e)}), 500
         
 @routes_bp.route('/extend-concept', methods=['POST'])
+@login_required
 def extend_concept():
-    data = request.get_json()
-    topic = data.get('topic')
-    
-  
-    explanation = ai_client.extend_notes(topic)
-    
-    return jsonify({"explanation": explanation})
+    try:
+        data = request.get_json()
+        topic = data.get('topic')
+        if not topic:
+            return jsonify({"error": "No topic"}), 400
+        # Fixed ai_client to llm
+        explanation = llm.extend_notes(topic)
+        return jsonify({"explanation": explanation})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ==========================================
 # QUIZ GENERATION LOGIC
@@ -171,7 +174,9 @@ def handle_generation():
     content, mastery_label = "", ""
     try:
         if source_type == 'pdf':
-            content = extract_text_from_pdf(request.files.get('pdf_file'))
+            file = request.files.get('pdf_file')
+            if file:
+                content = extract_text_from_pdf(file)
             mastery_label = 'PDF Review'
         elif source_type == 'text':
             content = request.form.get('raw_text')
@@ -341,11 +346,9 @@ def download_report(res_id):
 def library():
     questions = Question.query.filter_by(user_id=current_user.id).order_by(Question.id.desc()).limit(20).all()
     return render_template('library.html', questions=questions)
+
 @routes_bp.route('/review-mistakes')
 @login_required
 def review_mistakes():
-    # MistakeBank table se user ki galtiyan le kar review template pe bhejna
     mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
-    # Check kar lena file ka naam review.html hai ya review_mistakes.html
     return render_template('review.html', mistakes=mistakes)
-
