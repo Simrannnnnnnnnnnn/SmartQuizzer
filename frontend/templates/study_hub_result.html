@@ -101,12 +101,12 @@
                         <div class="flashcard-inner">
                             <div class="flashcard-front d-flex flex-column align-items-center justify-content-center p-4">
                                 <div class="card-type-tag mb-3">QUESTION</div>
-                                <h5 class="fw-bold text-center px-3">{{ card.front }}</h5>
+                                <h5 class="fw-bold text-center px-3">{{ card.front or card.question }}</h5>
                                 <div class="mt-auto text-muted small"><i class="fa-solid fa-hand-pointer me-2"></i>Flip for Answer</div>
                             </div>
                             <div class="flashcard-back d-flex flex-column align-items-center justify-content-center p-4">
                                 <div class="card-type-tag bg-white text-warning mb-3">EXPLANATION</div>
-                                <p class="text-center fs-6 fw-medium">{{ card.back }}</p>
+                                <p class="text-center fs-6 fw-medium">{{ card.back or card.answer }}</p>
                                 <div class="mt-auto"><i class="fa-solid fa-check-double text-white"></i></div>
                             </div>
                         </div>
@@ -120,13 +120,10 @@
 
 <style>
     :root { --primary-gold: #FFB300; }
-    
-    /* UI Refinements */
     .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
     .glass-card { border-radius: 24px; }
     .btn-soft-primary { background: #E3F2FD; color: #0D47A1; font-weight: 600; }
     .btn-soft-primary:hover { background: #2196F3; color: white; }
-    
     .icon-circle { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .bullet-point { width: 35px; height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
@@ -139,14 +136,10 @@
     .flashcard-back { background: linear-gradient(135deg, #FFB300, #FFD700); color: white; transform: rotateY(180deg); }
     .card-type-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; padding: 4px 12px; background: #f8f9fa; border-radius: 50px; }
 
-    /* Scrollbar */
     .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
-
-    /* Note Card Hover */
     .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,179,0,0.1) !important; }
 
-    /* Print Logic */
     @media print {
         .no-print, .btn, form { display: none !important; }
         .glass-card { box-shadow: none !important; border: 1px solid #ddd !important; }
@@ -155,6 +148,7 @@
         .flashcard-back { transform: none !important; position: static !important; background: #fff !important; color: #000 !important; border-top: 1px dashed #000; }
     }
 </style>
+
 <script>
     function toggleDetail(element) {
         const card = element.closest('.note-interactive-card');
@@ -163,14 +157,12 @@
     }
 
     async function explainLike10(btn, text) {
-        // Event check taaki card flip/toggle na ho button click par
         if (window.event) window.event.stopPropagation();
         
         const card = btn.closest('.note-interactive-card');
         const detailDiv = card.querySelector('.note-detail-content');
-        
-        // Pehle spinner dikhao
         detailDiv.classList.remove('d-none');
+        
         detailDiv.innerHTML = `
             <div class="p-3 bg-light rounded-4 d-flex align-items-center">
                 <div class="spinner-border spinner-border-sm text-warning me-3"></div>
@@ -181,13 +173,10 @@
             const response = await fetch('/simplify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ concept: text }) // Routes.py se match kar raha hai
+                body: JSON.stringify({ concept: text })
             });
-            
             const result = await response.json();
-            
             if (result.simple_text) {
-                // Yahan result.simple_text use karna hai, result.simplified nahi
                 detailDiv.innerHTML = `
                     <div class="p-3 rounded-4 animate__animated animate__fadeIn" style="background: #eef2ff; border-left: 5px solid #4f46e5;">
                         <strong class="d-block mb-1 text-primary"><i class="fa-solid fa-child me-2"></i>Simple Version:</strong>
@@ -197,8 +186,8 @@
                 throw new Error("Empty Response");
             }
         } catch (e) {
-            console.error(e);
             detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4">AI busy. Try again.</div>`;
         }
     }
 </script>
+{% endblock %}
