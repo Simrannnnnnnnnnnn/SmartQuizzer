@@ -2,50 +2,54 @@
 
 {% block content %}
 <div class="container py-5 animate__animated animate__fadeIn">
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div>
             <h1 class="fw-bold" style="color: var(--primary-gold);">✨ Your AI Study Bundle</h1>
-            <p class="text-muted">Mastered through Mnemonics, Flashcards, and Shorthand Notes.</p>
+            <p class="text-muted fs-5">Mnemonics, Flashcards, and Shorthand Notes generated for you.</p>
         </div>
         <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-outline-primary rounded-pill px-4">
-                <i class="fa-solid fa-print me-2"></i>Save PDF
+            <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 shadow-sm">
+                <i class="fa-solid fa-file-pdf me-2"></i>Export PDF
             </button>
-            <a href="{{ url_for('routes.study_hub') }}" class="btn btn-warning text-white rounded-pill px-4">
-                <i class="fa-solid fa-arrow-left me-2"></i>New Session
+            <a href="{{ url_for('routes.study_hub') }}" class="btn btn-warning text-white rounded-pill px-4 shadow-sm fw-bold">
+                <i class="fa-solid fa-plus me-2"></i>New Topic
             </a>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         <div class="col-lg-7">
-            <div class="glass-card p-4 mb-4 border-top-gold shadow-sm">
+            <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0"><i class="fa-solid fa-file-lines text-warning me-2"></i>Shorthand Revision Notes</h4>
-                    <small class="text-muted"><i class="fa-solid fa-mouse-pointer me-1"></i> Click notes to elaborate</small>
+                    <h4 class="fw-bold m-0"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
+                    <span class="badge bg-light text-muted border rounded-pill">Click to expand</span>
                 </div>
                 
                 <div class="list-group list-group-flush">
                     {% for note in data.shorthand_notes %}
                     <div class="list-group-item bg-transparent border-0 mb-3 px-0">
-                        <div class="note-interactive-card p-3 rounded-4 border shadow-sm transition-all" style="background: #fff; cursor: pointer;">
+                        <div class="note-interactive-card p-3 rounded-4 border shadow-sm transition-all bg-white">
                             <div class="d-flex justify-content-between align-items-start">
-                                <div class="d-flex align-items-start flex-grow-1" onclick="toggleDetail(this)">
-                                    <i class="fa-solid fa-circle-check text-success mt-1 me-3"></i>
-                                    <span class="fs-6 fw-bold note-summary">{{ note }}</span>
+                                <div class="d-flex align-items-start flex-grow-1" style="cursor: pointer;" onclick="toggleDetail(this)">
+                                    <div class="bullet-point bg-warning bg-opacity-10 text-warning rounded-circle me-3 mt-1">
+                                        <i class="fa-solid fa-bolt-lightning p-2"></i>
+                                    </div>
+                                    <span class="fs-6 fw-bold text-dark mt-1">{{ note }}</span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 ms-2 flex-shrink-0" 
+                                <button class="btn btn-sm btn-soft-primary rounded-pill px-3 ms-2 no-print" 
                                         onclick="explainLike10(this, '{{ note|e }}')">
-                                    <i class="fa-solid fa-child me-1"></i> ELI10
+                                    👦 ELI10
                                 </button>
                             </div>
                             
                             <div class="note-detail-content d-none mt-3 pt-3 border-top animate__animated animate__fadeIn">
-                                <div class="p-3 bg-light rounded-3">
-                                    <p class="mb-0 text-dark" style="font-size: 0.95rem; line-height: 1.6;">
-                                        {{ data.detailed_revision[:200] }}... <br>
-                                        <small class="text-primary fw-bold mt-2 d-block">Full context mapped from AI Summary.</small>
+                                <div class="p-3 bg-light rounded-4">
+                                    <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">
+                                        {{ data.detailed_revision[:350] }}...
                                     </p>
+                                    <div class="mt-2 text-primary small fw-bold">
+                                        <i class="fa-solid fa-microchip me-1"></i> AI Contextual Deep-Dive
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -54,78 +58,60 @@
                 </div>
             </div>
 
-            <div class="glass-card p-4 shadow-sm mb-4" style="background: #FFFDF5; border-left: 6px solid #FFB300;">
-                <h4 class="fw-bold mb-3"><i class="fa-solid fa-brain text-danger me-2"></i>Memory Palace & Mnemonic</h4>
-                <div class="p-3 bg-white rounded-4 border shadow-sm" style="font-size: 1.1rem; line-height: 1.8; color: #444;">
-                    {{ data.mnemonic_story }}
+            <div class="glass-card p-4 shadow-sm mb-4 border-0 position-relative overflow-hidden" style="background: #FFF9E6;">
+                <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                    <i class="fa-solid fa-brain display-4 text-warning"></i>
+                </div>
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Memory Palace Story</h4>
+                <div class="mnemonic-box p-4 bg-white rounded-4 border-start border-warning border-5 shadow-sm">
+                    <p class="mb-0 italic text-dark" style="font-size: 1.1rem; line-height: 1.8; font-style: italic;">
+                        "{{ data.mnemonic_story }}"
+                    </p>
                 </div>
             </div>
             
-            <div class="glass-card p-4 shadow-sm border-0 mb-4 bg-primary text-white">
+            <div class="glass-card p-4 shadow-sm border-0 mb-4 bg-dark text-white no-print">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="fw-bold mb-1">🚀 Ready for a test?</h5>
-                        <p class="small mb-0 opacity-75">Generate a quiz based on these notes now.</p>
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-warning text-dark me-3">
+                            <i class="fa-solid fa-rocket"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">Mastered the concepts?</h5>
+                            <p class="small mb-0 text-white-50">Generate a 5-question test now.</p>
+                        </div>
                     </div>
                     <form action="{{ url_for('routes.handle_generation') }}" method="POST">
                         <input type="hidden" name="source_type" value="text">
                         <input type="hidden" name="raw_text" value="{{ data.detailed_revision }}">
                         <input type="hidden" name="count" value="5">
                         <input type="hidden" name="quiz_goal" value="quiz">
-                        <button type="submit" class="btn btn-light rounded-pill fw-bold">Start Quiz</button>
+                        <button type="submit" class="btn btn-warning rounded-pill fw-bold px-4">Start Quiz</button>
                     </form>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-5">
-            <h4 class="fw-bold mb-4 text-center"><i class="fa-solid fa-layer-group text-primary me-2"></i>Active Recall Flashcards</h4>
-            <div class="flashcard-stack custom-scrollbar" style="max-height: 800px; overflow-y: auto; padding-right: 10px;">
-                {% for card in data.flashcards %}
-                <div class="flashcard mb-4" onclick="this.classList.toggle('flipped')">
-                    <div class="flashcard-inner">
-                        <div class="flashcard-front d-flex flex-column align-items-center justify-content-center p-4">
-                            <span class="badge rounded-pill bg-light text-dark border mb-3">Concept</span>
-                            <h5 class="fw-bold text-center">{{ card.front }}</h5>
-                            <small class="text-muted mt-3">Click to reveal answer 👆</small>
+            <div class="sticky-top" style="top: 20px;">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-layer-group text-primary me-2"></i>Active Recall</h4>
+                <div class="flashcard-stack custom-scrollbar pe-2" style="max-height: 85vh; overflow-y: auto;">
+                    {% for card in data.flashcards %}
+                    <div class="flashcard mb-4" onclick="this.classList.toggle('flipped')">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front d-flex flex-column align-items-center justify-content-center p-4">
+                                <div class="card-type-tag mb-3">QUESTION</div>
+                                <h5 class="fw-bold text-center px-3">{{ card.front }}</h5>
+                                <div class="mt-auto text-muted small"><i class="fa-solid fa-hand-pointer me-2"></i>Flip for Answer</div>
+                            </div>
+                            <div class="flashcard-back d-flex flex-column align-items-center justify-content-center p-4">
+                                <div class="card-type-tag bg-white text-warning mb-3">EXPLANATION</div>
+                                <p class="text-center fs-6 fw-medium">{{ card.back }}</p>
+                                <div class="mt-auto"><i class="fa-solid fa-check-double text-white"></i></div>
+                            </div>
                         </div>
-                        <div class="flashcard-back d-flex flex-column align-items-center justify-content-center p-4">
-                            <span class="badge rounded-pill bg-white text-warning mb-3">Explanation</span>
-                            <p class="text-center fs-6">{{ card.back }}</p>
-                        </div>
                     </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="glass-card p-5 border-0 shadow-sm text-center bg-white">
-                <h3 class="fw-bold mb-2">🗺️ Your Mastery Roadmap</h3>
-                <p class="text-muted mb-5">Follow these steps to ensure you never forget this topic.</p>
-                
-                <div class="d-flex flex-column flex-lg-row justify-content-around align-items-center gap-4 position-relative">
-                    <div class="roadmap-item">
-                        <div class="step-num shadow-sm">1</div>
-                        <h6 class="fw-bold mt-3">Review Notes</h6>
-                        <p class="small text-muted">Read shorthand notes & expand for details.</p>
-                    </div>
-                    <div class="roadmap-arrow d-none d-lg-block"><i class="fa-solid fa-chevron-right"></i></div>
-                    
-                    <div class="roadmap-item">
-                        <div class="step-num shadow-sm bg-success">2</div>
-                        <h6 class="fw-bold mt-3">Active Recall</h6>
-                        <p class="small text-muted">Go through all flashcards until mastered.</p>
-                    </div>
-                    <div class="roadmap-arrow d-none d-lg-block"><i class="fa-solid fa-chevron-right"></i></div>
-
-                    <div class="roadmap-item">
-                        <div class="step-num shadow-sm bg-primary">3</div>
-                        <h6 class="fw-bold mt-3">Mastery Test</h6>
-                        <p class="small text-muted">Generate a quiz to verify your knowledge.</p>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -134,44 +120,61 @@
 
 <style>
     :root { --primary-gold: #FFB300; }
-    .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
-    .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateX(5px); }
-    .transition-all { transition: all 0.3s ease; }
     
-    /* Existing Flashcard & Roadmap Styles */
-    .roadmap-item { width: 250px; text-align: center; }
-    .step-num { width: 50px; height: 50px; line-height: 50px; background: var(--primary-gold); color: white; border-radius: 50%; margin: 0 auto; font-weight: bold; font-size: 1.2rem; }
-    .roadmap-arrow { font-size: 1.5rem; color: #dee2e6; }
-    .flashcard { perspective: 1000px; height: 250px; cursor: pointer; }
-    .flashcard-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+    /* UI Refinements */
+    .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
+    .glass-card { border-radius: 24px; }
+    .btn-soft-primary { background: #E3F2FD; color: #0D47A1; font-weight: 600; }
+    .btn-soft-primary:hover { background: #2196F3; color: white; }
+    
+    .icon-circle { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .bullet-point { width: 35px; height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+
+    /* Flashcard Styling */
+    .flashcard { perspective: 1200px; height: 280px; cursor: pointer; }
+    .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
     .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
-    .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-    .flashcard-front { background: #ffffff; color: #333; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; }
+    .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border: 1px solid #f0f0f0; }
+    .flashcard-front { background: white; color: #333; }
     .flashcard-back { background: linear-gradient(135deg, #FFB300, #FFD700); color: white; transform: rotateY(180deg); }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .card-type-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; padding: 4px 12px; background: #f8f9fa; border-radius: 50px; }
+
+    /* Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
-    .glass-card { background: rgba(255, 255, 255, 0.95); border-radius: 25px; }
+
+    /* Note Card Hover */
+    .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(255,179,0,0.1) !important; }
+
+    /* Print Logic */
+    @media print {
+        .no-print, .btn, form { display: none !important; }
+        .glass-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        .col-lg-5 { display: block !important; width: 100% !important; margin-top: 50px; }
+        .flashcard { height: auto !important; page-break-inside: avoid; border: 1px solid #000 !important; }
+        .flashcard-back { transform: none !important; position: static !important; background: #fff !important; color: #000 !important; border-top: 1px dashed #000; }
+    }
 </style>
 
 <script>
-    // Toggle details on left side click
     function toggleDetail(element) {
-        const detailDiv = element.closest('.note-interactive-card').querySelector('.note-detail-content');
+        const card = element.closest('.note-interactive-card');
+        const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.toggle('d-none');
     }
 
-    // ELI10 Logic
     async function explainLike10(btn, text) {
-        // Event bubble na ho isliye stop propagation
-        event.stopPropagation();
+        if (event) event.stopPropagation();
         
-        const detailDiv = btn.closest('.note-interactive-card').querySelector('.note-detail-content');
+        const card = btn.closest('.note-interactive-card');
+        const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.remove('d-none');
-        detailDiv.innerHTML = `<div class="p-3 bg-light rounded-3">
-                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
-                                <small>👦 Explaining like you're 10...</small>
-                               </div>`;
+        
+        detailDiv.innerHTML = `
+            <div class="p-3 bg-light rounded-4 d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm text-warning me-3"></div>
+                <small class="fw-bold">👦 Simpifying for a 10-year old...</small>
+            </div>`;
         
         try {
             const response = await fetch('/simplify', {
@@ -180,12 +183,13 @@
                 body: JSON.stringify({ explanation: text })
             });
             const result = await response.json();
-            detailDiv.innerHTML = `<div class="p-3 bg-info bg-opacity-10 rounded-3 border-start border-info border-4">
-                                    <strong class="d-block mb-1">👦 Simple Version:</strong>
-                                    <p class="mb-0 small text-dark">${result.simplified}</p>
-                                   </div>`;
+            detailDiv.innerHTML = `
+                <div class="p-3 rounded-4 animate__animated animate__fadeIn" style="background: #eef2ff; border-left: 5px solid #4f46e5;">
+                    <strong class="d-block mb-1 text-primary"><i class="fa-solid fa-child me-2"></i>Simple Version:</strong>
+                    <p class="mb-0 text-dark" style="font-size: 0.95rem;">${result.simplified}</p>
+                </div>`;
         } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-3">Error simplifying text.</div>`;
+            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4">AI busy. Try again.</div>`;
         }
     }
 </script>
