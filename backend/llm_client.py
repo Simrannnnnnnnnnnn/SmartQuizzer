@@ -104,3 +104,19 @@ class LLMClient:
             return completion.choices[0].message.content
         except Exception:
             return "AI is taking a break. Please click ELI10 again in a few seconds."
+# LLMClient class ke andar sabse neeche ye paste karo
+def extend_notes(self, topic_text):
+    """Notes extend karne ke liye specific method."""
+    prompt = f"Explain this concept briefly in 2-3 simple sentences for quick revision: {topic_text}"
+    try:
+        # Isme FAST_MODEL use karo taaki 'Busy' error na aaye
+        completion = self._safe_request(
+            self.client.chat.completions.create,
+            messages=[{"role": "user", "content": prompt}],
+            model=self.FAST_MODEL, 
+            temperature=0.5,
+            timeout=15.0
+        )
+        return completion.choices[0].message.content.strip()
+    except Exception:
+        return "AI busy right now. Please try again."
