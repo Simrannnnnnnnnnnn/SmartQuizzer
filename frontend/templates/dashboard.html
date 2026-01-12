@@ -42,7 +42,6 @@
                                 </span>
                                 <select name="source_type" id="source-select" class="form-select border-start-0 rounded-end-4 p-3 border-2" style="border-color: #FFEBB7; focus: ring-0;">
                                     <option value="pdf">📄 PDF Document</option>
-                                    <option value="image">📸 Image / Notes</option>
                                     <option value="text">✍️ Raw Text</option>
                                     <option value="topic">🌐 Broad Topic</option>
                                 </select>
@@ -129,10 +128,6 @@
             pdf: {
                 label: 'UPLOAD DOCUMENT',
                 html: '<input type="file" name="pdf_file" class="form-control rounded-4 p-4" style="border: 2px dashed #FFEBB7; background: #fffcf5;" required><small class="text-muted d-block mt-2">Max 10MB PDF supported</small>'
-            },
-            image: {
-                label: 'UPLOAD PHOTO OF NOTES',
-                html: '<input type="file" name="image_file" accept="image/*" class="form-control rounded-4 p-4" style="border: 2px dashed #FFEBB7; background: #fffcf5;" required><small class="text-muted d-block mt-2">Supported: JPG, PNG, Handwritten Notes</small>'
             },
             text: {
                 label: 'PASTE YOUR TEXT',
