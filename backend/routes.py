@@ -333,7 +333,8 @@ def results():
     active_qs = session.get('active_questions', [])
     total = len(active_qs)
     topic_name = session.get('quiz_topic', 'General Review')
-    
+    acc = (score/total*100 if total > 0 else 0)
+    recommendation = llm.get_ai_recommendation(acc)
     # 2. Save current result to Database
     new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
     db.session.add(new_res)
@@ -362,7 +363,8 @@ def results():
     return render_template('results.html', 
                            score=score, 
                            total=total, 
-                           accuracy=(score/total*100 if total > 0 else 0),
+                           accuracy=acc,
+                           recommendation=recommendation,
                            history_scores=history_scores,
                            history_labels=history_labels)
 
