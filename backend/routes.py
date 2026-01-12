@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from groq import Groq
 from PIL import Image
 
-from backen.adaptive_core import AdaptiveEngine
+from backend.adaptive_core import AdaptiveEngine
 # Model imports
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, Bookmark, db
 from backend.services import extract_text_from_pdf
