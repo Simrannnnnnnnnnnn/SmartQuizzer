@@ -65,7 +65,12 @@ class LLMClient:
                 response_format={"type": "json_object"},
                 temperature=0.1  # Accuracy ke liye temperature low rakha hai
             )
-            data = json.loads(completion.choices[0].message.content)
+            raw_content = completion.choices[0].message.content
+            if "```json" in raw_content:
+                raw_content = raw_content.split("```json")[1].split("```")[0].strip()
+            elif "```" in raw_content:
+                raw_content = raw_content.split("```")[1].split("```")[0].strip()
+            data = json.loads(raw_content)
             return data.get("questions", [])
         except Exception as e:
             print(f"Strict Error: {e}")
