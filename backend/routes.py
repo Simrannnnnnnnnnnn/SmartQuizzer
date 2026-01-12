@@ -163,7 +163,6 @@ def extend_concept():
 # ==========================================
 # QUIZ GENERATION LOGIC
 # ==========================================
-
 @routes_bp.route('/handle_generation', methods=['POST'])
 @login_required
 def handle_generation():
@@ -193,23 +192,31 @@ def handle_generation():
         raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format)
         
         if not raw_qs:
-            flash("AI failed to generate questions.", "danger")
+            flash("AI failed to generate questions. Try a smaller topic.", "danger")
             return redirect(url_for('routes.dashboard'))
 
         q_ids = []
-        for q in raw_qs:
+        for q_data in raw_qs:
+            # Check if essential data exists to avoid IntegrityError
+            q_text = q_data.get('question') or q_data.get('question_text')
+            if not q_text:
+                continue # Skip invalid questions
+
             new_q = Question(
-                question_text=q.get('question_text'),
-                options_json=json.dumps(q.get('options', {})),
-                correct_answer=q.get('correct_answer'),
-                explanation=q.get('explanation'),
-                difficulty_level=q.get('difficulty', 'Medium'),
+                question_text=q_text, 
+                options_json=json.dumps(q_data.get('options') or {}),
+                correct_answer=q_data.get('correct_answer', 'A'),
+                explanation=q_data.get('explanation', 'No explanation provided.'),
+                difficulty_level='Medium',
                 user_id=current_user.id
             )
             db.session.add(new_q)
-            db.session.flush()
+            db.session.flush() # This gets the ID before commit
             q_ids.append(new_q.id)
         
+        if not q_ids:
+            raise Exception("No valid questions were saved to database.")
+
         db.session.commit()
 
         # Set up Session for Quiz
@@ -226,7 +233,8 @@ def handle_generation():
 
     except Exception as e:
         db.session.rollback()
-        flash(f"Error: {str(e)}", "danger")
+        print(f"DEBUG ERROR: {str(e)}") # Render logs ke liye
+        flash(f"Generation Error: AI is a bit overwhelmed, try again!", "danger")
         return redirect(url_for('routes.dashboard'))
 
 # ==========================================
