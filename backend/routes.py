@@ -23,51 +23,6 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 llm = LLMClient(api_key=os.getenv("GROQ_API_KEY"))
 
 # ==========================================
-# HELPER: VISION OCR (Fixed Model)
-# ==========================================
-def extract_text_via_groq_vision(file_storage):
-    if not file_storage: return ""
-    try:
-        file_storage.seek(0)
-        img = Image.open(file_storage).convert("RGB")
-        img.thumbnail((1200, 1200)) 
-        
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='JPEG', quality=80)
-        encoded_image = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
-
-        # Try Llama 3.2 Vision first (Standard Vision Model)
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview", 
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Extract all text from this image clearly."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
-                    ]
-                }]
-            )
-            return response.choices[0].message.content
-        except Exception:
-            # Fallback to Compound if Llama Vision is not available
-            print("Llama Vision failed, switching to Compound...")
-            response = client.chat.completions.create(
-                model="groq/compound", 
-                messages=[{
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Extract all text from this image clearly."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
-                    ]
-                }]
-            )
-            return response.choices[0].message.content
-            
-    except Exception as e:
-        print(f"Vision Error: {e}")
-        return "OCR Error: Could not read image."
-# ==========================================
 # AUTHENTICATION
 # ==========================================
 
@@ -133,8 +88,28 @@ def study_hub():
             return redirect(url_for('routes.study_hub'))
 
         study_bundle = llm.generate_study_material(content)
+        if 'flashcards' in study_bundle:
+            for card in study_bundle['flashcards']:
+                if 'question' not in card and 'front' in card:
+                    card['question'] = card['front']
+        
         return render_template('study_hub_result.html', data=study_bundle)
     return render_template('study_hub.html')
+@routes_bp.route('/simplify', methods=['POST'])
+@login_required
+def simplify():
+    try:
+        data = request.get_json()
+        concept = data.get('concept', '')
+        if not concept:
+            return jsonify({"error": "No concept provided"}), 400
+        
+        simple_text = llm.explain_like_five(concept) 
+        return jsonify({"simple_text": simple_text})
+    except Exception as e:
+        print(f"Simplify Error: {e}")
+        return jsonify({"error": "AI is busy, please try again."}), 500
+
 
 # ==========================================
 # DASHBOARD & RESULTS
@@ -143,7 +118,7 @@ def study_hub():
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    allowed_topics = ['PDF Review', 'Image Review', 'Text Review', 'Topic Review']
+    allowed_topics = ['PDF Review', 'Text Review', 'Topic Review']
     topic_mastery = TopicMastery.query.filter(
         TopicMastery.user_id == current_user.id,
         TopicMastery.topic_name.in_(allowed_topics)
@@ -165,7 +140,6 @@ def dashboard():
 @login_required
 def handle_generation():
     source_type = request.form.get('source_type')
-    # NAYA: Form se format aur goal lena
     quiz_format = request.form.get('quiz_format', 'mcq') 
     quiz_goal = request.form.get('quiz_goal', 'revision').lower().strip()
     count = int(request.form.get('count', 5))
@@ -176,10 +150,6 @@ def handle_generation():
         if source_type == 'pdf':
             content = extract_text_from_pdf(request.files.get('pdf_file'))
             mastery_label = 'PDF Review'
-        elif source_type == 'image':
-            # Note: Ensure your Vision model is active in Groq
-            content = extract_text_via_groq_vision(request.files.get('image_file'))
-            mastery_label = 'Image Review'
         elif source_type == 'text':
             content = request.form.get('raw_text')
             mastery_label = 'Text Review'
