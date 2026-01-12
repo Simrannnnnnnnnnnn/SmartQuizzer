@@ -95,6 +95,7 @@ def study_hub():
         
         return render_template('study_hub_result.html', data=study_bundle)
     return render_template('study_hub.html')
+
 @routes_bp.route('/simplify', methods=['POST'])
 @login_required
 def simplify():
@@ -109,7 +110,6 @@ def simplify():
     except Exception as e:
         print(f"Simplify Error: {e}")
         return jsonify({"error": "AI is busy, please try again."}), 500
-
 
 # ==========================================
 # DASHBOARD & RESULTS
@@ -161,7 +161,6 @@ def handle_generation():
             flash("No content found to generate questions.", "warning")
             return redirect(url_for('routes.dashboard'))
 
-        # UPDATED: Ab llm_client ko quiz_format bhi bhej rahe hain
         raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format, source_type=source_type)
         
         if not raw_qs:
@@ -172,14 +171,12 @@ def handle_generation():
         for q in raw_qs:
             new_q = Question(
                 question_text=q.get('question_text'),
-                # Options agar empty hain (Theory) toh empty dict save hoga
                 options_json=json.dumps(q.get('options', {})),
                 correct_answer=q.get('correct_answer'),
                 explanation=q.get('explanation'),
                 difficulty_level=q.get('difficulty', 'Medium'),
                 user_id=current_user.id
             )
-            # Theory ke liye ideal answer extra info mein dal sakte hain
             if quiz_format == 'theory':
                  new_q.explanation = f"Ideal Answer: {q.get('ideal_answer')} \n\n {q.get('explanation')}"
 
@@ -198,9 +195,10 @@ def handle_generation():
             'quiz_format': quiz_format,
             'quiz_goal': quiz_goal, 
             'user_answers': [], 
-            'time_limit': (count * 60 if quiz_format == 'theory' else count * 30), # Theory ko zyada time
+            'time_limit': (count * 60 if quiz_format == 'theory' else count * 30),
             'start_time': time.time()
         })
+        session.modified = True
         return redirect(url_for('routes.quiz_page', q_id=q_ids[0]))
 
     except Exception as e:
@@ -208,6 +206,7 @@ def handle_generation():
         print(f"Generation Error: {e}")
         flash("Something went wrong during generation.", "danger")
         return redirect(url_for('routes.dashboard'))
+
 # ==========================================
 # QUIZ EXECUTION
 # ==========================================
@@ -238,31 +237,23 @@ def submit_answer(q_id):
     user_ans = request.form.get('answer', '').strip()
     quiz_format = session.get('quiz_format', 'mcq')
     
-    # 1. Parsing Options
     try:
         options = json.loads(question.options_json) if isinstance(question.options_json, str) else question.options_json
     except:
         options = {}
 
-    # 2. Correctness Logic (One place only!)
     if quiz_format == 'theory' or not options:
-        # Theory ya empty options ke liye word count check
         is_correct = len(user_ans.split()) >= 10
     else:
-        # MCQ/TF ke liye direct matching
         is_correct = (user_ans.lower() == str(question.correct_answer).lower())
 
-    # 3. Update Adaptive Proficiency
     current_theta = session.get('user_proficiency', 0.0)
     engine = AdaptiveEngine(proficiency=current_theta)
     new_theta = engine._calculate_new_proficiency(question.difficulty_level, is_correct)
     session['user_proficiency'] = new_theta
 
-    # 4. Save to User Answers session
-    if 'user_answers' not in session:
-        session['user_answers'] = []
-    
-    temp_answers = session['user_answers']
+    # Updated: Ensure session list saves correctly
+    temp_answers = session.get('user_answers', [])
     temp_answers.append({
         'question': question.question_text,
         'user_ans': user_ans,
@@ -271,12 +262,12 @@ def submit_answer(q_id):
         'is_correct': is_correct
     })
     session['user_answers'] = temp_answers
+    session.modified = True 
 
-    # 5. Score & Mistake Bank handling
     if is_correct:
         session['score'] = session.get('score', 0) + 1
         if is_mistake:
-            db.session.delete(question) # Mastered mistake removal
+            db.session.delete(question) 
     else:
         if not is_mistake:
             already_exists = MistakeBank.query.filter_by(user_id=current_user.id, question_text=question.question_text).first()
@@ -293,7 +284,6 @@ def submit_answer(q_id):
 
     db.session.commit()
 
-    # 6. Navigation
     session['current_idx'] = session.get('current_idx', 0) + 1
     q_list = session.get('active_questions', [])
 
@@ -302,7 +292,7 @@ def submit_answer(q_id):
     else:
         return redirect(url_for('routes.results'))
 
-@routes_bp.route('/review_mistakes') # This name must match url_for('routes.review_mistakes')
+@routes_bp.route('/review_mistakes')
 @login_required
 def review_mistakes():
     now = datetime.utcnow()
@@ -323,42 +313,40 @@ def review_mistakes():
         'score': 0, 
         'quiz_topic': 'Mistake Review'
     })
+    session.modified = True
     return redirect(url_for('routes.quiz_page', q_id=m_ids[0]))
     
 @routes_bp.route('/results')
 @login_required
 def results():
-    # 1. Get data from session
     score = session.get('score', 0)
     active_qs = session.get('active_questions', [])
     total = len(active_qs)
     topic_name = session.get('quiz_topic', 'General Review')
+    
     acc = (score/total*100 if total > 0 else 0)
+    # Important: Generate recommendation to avoid template error
     recommendation = llm.get_ai_recommendation(acc)
-    # 2. Save current result to Database
+
     new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
     db.session.add(new_res)
+    db.session.commit()
     
-    # 3. Update Topic Mastery (For Dashboard Progress Bars)
+    # Required for the PDF download link in your HTML
+    session['last_result_id'] = new_res.id
+
     mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic_name=topic_name).first()
     if not mastery:
-        mastery = TopicMastery(user_id=current_user.id, topic_name=topic_name)
+        mastery = TopicMastery(user_id=current_user.id, topic_name=topic_name, correct_count=0, total_count=0)
         db.session.add(mastery)
     
     mastery.correct_count += score
     mastery.total_count += total
-    
     db.session.commit()
 
-    # 4. Fetch History for the Progress Line Chart (Last 10 Quizzes)
     history = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.date_taken.desc()).limit(10).all()
-    
-    # Data formatting for Chart.js
     history_scores = [round((r.score / r.total_questions) * 100) if r.total_questions > 0 else 0 for r in reversed(history)]
     history_labels = [r.date_taken.strftime("%d %b") for r in reversed(history)]
-
-    # 5. Clear session for next quiz (Optional but recommended)
-    # session.pop('active_questions', None) 
 
     return render_template('results.html', 
                            score=score, 
@@ -369,7 +357,7 @@ def results():
                            history_labels=history_labels)
 
 # ==========================================
-# DOWNLOAD REPORT (Fixed ReportLab Logic)
+# REPORTS
 # ==========================================
 
 @routes_bp.route('/download_report/<int:res_id>')
@@ -386,6 +374,7 @@ def download_report(res_id):
     p.setFont("Helvetica", 14)
     p.drawString(100, 700, f"User: {current_user.username}")
     p.drawString(100, 680, f"Score: {result.score} / {result.total_questions}")
+    p.drawString(100, 660, f"Date: {result.date_taken.strftime('%Y-%m-%d %H:%M')}")
     p.showPage()
     p.save()
     buffer.seek(0)
