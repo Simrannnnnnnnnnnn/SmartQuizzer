@@ -1,78 +1,158 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row g-4 animate__animated animate__fadeIn">
-    <div class="col-lg-8">
-        <div class="glass-card h-100">
-            <h2 class="fw-bold mb-4" style="color: var(--primary-gold);">Create New Quiz ✨</h2>
-            
-            <form action="{{ url_for('routes.handle_generation') }}" method="POST" enctype="multipart/form-data">
-                <div class="mb-4">
-                    <label class="form-label fw-bold text-muted small">SELECT MODE</label>
-                    <div class="d-flex gap-2">
-                        <input type="radio" class="btn-check" name="quiz_goal" id="rev" value="revision" checked>
-                        <label class="btn btn-outline-warning rounded-pill px-4 fw-bold" for="rev">📖 Revision</label>
-
-                        <input type="radio" class="btn-check" name="quiz_goal" id="qz" value="quiz">
-                        <label class="btn btn-outline-danger rounded-pill px-4 fw-bold" for="qz">⏱️ Timed Quiz</label>
+<div class="container-fluid py-4">
+    <div class="row g-4 animate__animated animate__fadeIn">
+        <div class="col-lg-8">
+            <div class="glass-card h-100 shadow-sm border-0">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="icon-box me-3 bg-warning bg-opacity-10 p-3 rounded-4">
+                        <i class="fa-solid fa-wand-magic-sparkles fs-3 text-warning"></i>
+                    </div>
+                    <div>
+                        <h2 class="fw-bold mb-0" style="color: var(--primary-gold);">Create New Quiz</h2>
+                        <p class="text-muted small mb-0">Transform your material into a mastery session</p>
                     </div>
                 </div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small">SOURCE TYPE</label>
-                        <select name="source_type" id="source-select" class="form-select rounded-4 border-2 p-3" style="border-color: #FFEBB7;">
-                            <option value="pdf">📄 PDF Document</option>
-                            <option value="image">📸 Image / Notes</option>
-                            <option value="text">✍️ Raw Text</option>
-                            <option value="topic">🌐 Broad Topic</option>
-                        </select>
+                
+                <form action="{{ url_for('routes.handle_generation') }}" method="POST" enctype="multipart/form-data" id="quiz-form">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small letter-spacing-1">SELECT STUDY MODE</label>
+                        <div class="d-flex gap-3">
+                            <div class="flex-fill">
+                                <input type="radio" class="btn-check" name="quiz_goal" id="rev" value="revision" checked>
+                                <label class="btn btn-outline-warning w-100 rounded-4 py-3 fw-bold border-2" for="rev">
+                                    <i class="fa-solid fa-book-open me-2"></i>Revision
+                                </label>
+                            </div>
+                            <div class="flex-fill">
+                                <input type="radio" class="btn-check" name="quiz_goal" id="qz" value="quiz">
+                                <label class="btn btn-outline-danger w-100 rounded-4 py-3 fw-bold border-2" for="qz">
+                                    <i class="fa-solid fa-stopwatch me-2"></i>Timed Quiz
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold text-muted small">QUESTION COUNT</label>
-                        <input type="number" name="count" class="form-control rounded-4 border-2 p-3" value="5" min="1" max="15" style="border-color: #FFEBB7;">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small letter-spacing-1">SOURCE TYPE</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 rounded-start-4" style="border-color: #FFEBB7;">
+                                    <i class="fa-solid fa-layer-group text-warning"></i>
+                                </span>
+                                <select name="source_type" id="source-select" class="form-select border-start-0 rounded-end-4 p-3 border-2" style="border-color: #FFEBB7; focus: ring-0;">
+                                    <option value="pdf">📄 PDF Document</option>
+                                    <option value="image">📸 Image / Notes</option>
+                                    <option value="text">✍️ Raw Text</option>
+                                    <option value="topic">🌐 Broad Topic</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-muted small letter-spacing-1">QUESTION COUNT</label>
+                            <input type="range" class="form-range mt-2" name="count" id="countRange" min="1" max="15" value="5" oninput="countOutput.value = value">
+                            <div class="text-center fw-bold text-warning">
+                                <output id="countOutput">5</output> Questions
+                            </div>
+                        </div>
+
+                        <div id="input-area" class="col-12 mt-4 animate__animated animate__fadeIn">
+                            <label class="form-label fw-bold text-muted small">UPLOAD DOCUMENT</label>
+                            <div class="upload-container position-relative">
+                                <input type="file" name="pdf_file" class="form-control rounded-4 p-4" style="border: 2px dashed #FFEBB7; background: #fffcf5;" required>
+                                <small class="text-muted d-block mt-2"><i class="fa-solid fa-info-circle me-1"></i> Best for textbooks or multi-page notes (PDF max 10MB)</small>
+                            </div>
+                        </div>
                     </div>
-                    <div id="input-area" class="col-12 mt-3">
-                        <input type="file" name="pdf_file" class="form-control rounded-4 p-3" style="border: 2px dashed #FFEBB7;" required>
-                    </div>
-                </div>
 
-                <button type="submit" class="sunshine-btn w-100 py-3 mt-4 fs-5">Generate My Quiz 🪄</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        <div class="glass-card mb-4 text-center border-0" style="background: linear-gradient(135deg, #FFF9E6, #FFF); border: 2px solid #FFEBB7 !important;">
-            <h5 class="fw-bold text-muted">Mistake Bank 🧠</h5>
-            <h1 class="display-4 fw-bold" style="color: var(--accent-orange);">{{ mistake_count }}</h1>
-            <p class="small text-muted">Questions waiting for review</p>
-            <a href="{{ url_for('routes.review_mistakes') }}" class="sunshine-btn py-2 px-4 rounded-pill small">Review Now</a>
-        </div>
-
-        <div class="glass-card">
-            <h5 class="fw-bold mb-3">Topic Mastery</h5>
-            {% for topic in topic_mastery %}
-            <div class="mb-3">
-                <div class="d-flex justify-content-between small fw-bold mb-1">
-                    <span>{{ topic.topic_name }}</span>
-                    <span>{{ topic.percentage }}%</span>
-                </div>
-                <div class="progress rounded-pill" style="height: 10px; background: #FFF4E6;">
-                    <div class="progress-bar bg-warning" style="width: {{ topic.percentage }}%"></div>
-                </div>
+                    <button type="submit" class="sunshine-btn w-100 py-3 mt-4 fs-5 rounded-4 shadow-sm" id="submitBtn">
+                        Generate My Quiz 🪄
+                    </button>
+                </form>
             </div>
-            {% endfor %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-card mb-4 text-center border-0 overflow-hidden position-relative" style="background: linear-gradient(135deg, #FFF9E6, #FFF); border: 2px solid #FFEBB7 !important;">
+                <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                    <i class="fa-solid fa-brain display-1"></i>
+                </div>
+                <h5 class="fw-bold text-muted position-relative">Mistake Bank 🧠</h5>
+                <h1 class="display-3 fw-bold my-2" style="color: var(--accent-orange);">{{ mistake_count }}</h1>
+                <p class="small text-muted">Focused review needed for these concepts</p>
+                <a href="{{ url_for('routes.review_mistakes') }}" class="btn btn-warning text-white py-2 px-5 rounded-pill fw-bold shadow-sm">Review Now</a>
+            </div>
+
+            <div class="glass-card border-0 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0">Topic Mastery</h5>
+                    <i class="fa-solid fa-chart-line text-success"></i>
+                </div>
+                {% for topic in topic_mastery %}
+                <div class="mastery-item mb-4">
+                    <div class="d-flex justify-content-between small fw-bold mb-2">
+                        <span class="text-dark">{{ topic.topic_name }}</span>
+                        <span class="badge bg-soft-warning text-warning rounded-pill">{{ topic.percentage }}%</span>
+                    </div>
+                    <div class="progress rounded-pill shadow-sm" style="height: 12px; background: #f0f0f0;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                             role="progressbar" 
+                             style="width: {{ topic.percentage }}%" 
+                             aria-valuenow="{{ topic.percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+    .letter-spacing-1 { letter-spacing: 1px; }
+    .bg-soft-warning { background-color: #FFF9E6; }
+    .upload-container input:hover { border-color: var(--primary-gold) !important; cursor: pointer; }
+    .form-range::-webkit-slider-thumb { background: var(--primary-gold); }
+    .form-range::-moz-range-thumb { background: var(--primary-gold); }
+</style>
+
 <script>
     document.getElementById('source-select').onchange = function() {
         const area = document.getElementById('input-area');
-        if(this.value === 'pdf') area.innerHTML = '<input type="file" name="pdf_file" class="form-control rounded-4 p-3" style="border: 2px dashed #FFEBB7;" required>';
-        else if(this.value === 'image') area.innerHTML = '<input type="file" name="image_file" class="form-control rounded-4 p-3" style="border: 2px dashed #FFEBB7;" required>';
-        else if(this.value === 'text') area.innerHTML = '<textarea name="raw_text" class="form-control rounded-4 p-3" rows="4" style="border: 2px solid #FFEBB7;" placeholder="Paste text here..."></textarea>';
-        else area.innerHTML = '<input type="text" name="topic_name" class="form-control rounded-pill p-3" style="border: 2px solid #FFEBB7;" placeholder="Enter topic (e.g. Biology)">';
+        area.classList.remove('animate__fadeIn');
+        void area.offsetWidth; // Trigger reflow
+        area.classList.add('animate__fadeIn');
+
+        const configs = {
+            pdf: {
+                label: 'UPLOAD DOCUMENT',
+                html: '<input type="file" name="pdf_file" class="form-control rounded-4 p-4" style="border: 2px dashed #FFEBB7; background: #fffcf5;" required><small class="text-muted d-block mt-2">Max 10MB PDF supported</small>'
+            },
+            image: {
+                label: 'UPLOAD PHOTO OF NOTES',
+                html: '<input type="file" name="image_file" accept="image/*" class="form-control rounded-4 p-4" style="border: 2px dashed #FFEBB7; background: #fffcf5;" required><small class="text-muted d-block mt-2">Supported: JPG, PNG, Handwritten Notes</small>'
+            },
+            text: {
+                label: 'PASTE YOUR TEXT',
+                html: '<textarea name="raw_text" class="form-control rounded-4 p-3" rows="5" style="border: 2px solid #FFEBB7;" placeholder="Paste textbook paragraphs or lecture notes here..." required></textarea>'
+            },
+            topic: {
+                label: 'ENTER SUBJECT/TOPIC',
+                html: '<input type="text" name="topic_name" class="form-control rounded-pill p-4" style="border: 2px solid #FFEBB7;" placeholder="e.g. Quantum Physics or Cell Biology" required>'
+            }
+        };
+
+        const config = configs[this.value];
+        area.innerHTML = `<label class="form-label fw-bold text-muted small">${config.label}</label>${config.html}`;
+    };
+
+    // Prevent double submission
+    document.getElementById('quiz-form').onsubmit = function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Crafting Questions...';
     };
 </script>
 {% endblock %}
