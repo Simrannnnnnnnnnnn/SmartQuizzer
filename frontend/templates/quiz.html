@@ -4,7 +4,7 @@
     {% if session.get('quiz_goal') == 'quiz' %}
     <div class="mb-4 animate__animated animate__fadeInDown">
         <div class="d-flex justify-content-between small fw-bold mb-1">
-            <span style="color: #666;">You 🏃</span>
+            <span style="color: var(--text-color);">You 🏃</span>
             <span class="text-danger">AI Rival 👻</span>
         </div>
         <div class="progress rounded-pill shadow-sm" style="height: 14px; background: #eee; border: 2px solid #fff;">
@@ -38,7 +38,7 @@
 
         <hr class="mb-5 opacity-10">
 
-        <h2 class="fw-bold mb-5" style="line-height: 1.4; color: #333;">{{ question.question_text }}</h2>
+        <h2 class="fw-bold mb-5" style="line-height: 1.4; color: var(--text-color);">{{ question.question_text }}</h2>
 
         <div id="feedback-area" class="alert d-none mb-4 rounded-4 shadow-sm animate__animated animate__bounceIn" style="border-left: 8px solid;">
             <h4 id="feedback-status" class="fw-bold"></h4>
@@ -99,14 +99,12 @@
 </div>
 
 <style>
-    /* Aapka existing CSS yahan rahega */
     .option-card { border: 2px solid #eee; background-color: #ffffff; transition: all 0.2s ease-in-out; cursor: pointer; color: #333; }
     .btn-check:checked + .option-card { border-color: #D4A017 !important; background-color: #FFD700 !important; color: #000 !important; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(212, 160, 23, 0.4) !important; }
     .sunshine-btn { background: var(--primary-gold, #FFD700); border: none; border-radius: 15px; font-weight: bold; color: black; box-shadow: 0 5px 0 #D4A017; transition: all 0.1s; }
     .sunshine-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #D4A017; }
-    
-    /* Theory Textarea focus effect */
     textarea:focus { border-color: #FFD700 !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.2) !important; outline: none; }
+    #ghost-bar { transition: width 1s linear; }
 </style>
 
 <script>
@@ -114,45 +112,53 @@
     const correct = "{{ question.correct_answer }}".toLowerCase();
     const isTheory = {% if options %} false {% else %} true {% endif %};
 
-    // 1. Timer & Ghost (Same logic as yours)
+    // 1. Timer & Ghost Logic
     if (mode === 'quiz') {
-        let time = parseInt("{{ remaining_time or 30 }}");
+        let timeLeft = parseInt("{{ remaining_time or 30 }}");
+        let totalTime = 30; // Assuming 30s base for ghost speed
+        
         const tInt = setInterval(() => {
-            time--;
+            timeLeft--;
             const timerDisplay = document.getElementById('timer');
-            if(timerDisplay) timerDisplay.innerText = time;
-            if(time <= 0) {
+            if(timerDisplay) timerDisplay.innerText = timeLeft;
+            
+            // AI Rival Movement
+            const ghostBar = document.getElementById('ghost-bar');
+            if(ghostBar) {
+                let progress = ((totalTime - timeLeft) / totalTime) * 100;
+                ghostBar.style.width = progress + "%";
+            }
+
+            if(timeLeft <= 0) {
                 clearInterval(tInt);
                 document.getElementById('quiz-form').submit();
             }
         }, 1000);
-        // ... (ghost bar logic)
     }
 
-    // 2. Feedback Logic (Modified to handle Theory)
+    // 2. Feedback Logic
     const checkBtn = document.getElementById('check-btn');
     if(checkBtn) {
         checkBtn.onclick = () => {
+            const area = document.getElementById('feedback-area');
+            const status = document.getElementById('feedback-status');
+            const expl = document.getElementById('explanation-text');
+            
             if (isTheory) {
-                // Theory mode feedback
-                const area = document.getElementById('feedback-area');
-                const status = document.getElementById('feedback-status');
-                const expl = document.getElementById('explanation-text');
+                const userText = document.querySelector('textarea[name="answer"]').value;
+                if(userText.trim().length < 5) return alert("Please write a bit more!");
+
                 area.classList.remove('d-none');
                 area.className = "alert alert-info mb-4 rounded-4 shadow-sm";
                 status.innerText = "💡 Conceptual Guide:";
                 expl.innerText = "{{ question.explanation }}";
-                checkBtn.classList.add('d-none');
-                document.getElementById('next-btn').classList.remove('d-none');
             } else {
-                // MCQ mode feedback (Same as your logic)
                 const selected = document.querySelector('input[name="answer"]:checked');
                 if(!selected) return alert("Please pick an answer first!");
-                const area = document.getElementById('feedback-area');
-                const status = document.getElementById('feedback-status');
-                const expl = document.getElementById('explanation-text');
+
                 area.classList.remove('d-none');
                 expl.innerText = "{{ question.explanation }}";
+
                 if(selected.value.toLowerCase() === correct) {
                     area.className = "alert alert-success mb-4 rounded-4 shadow-sm";
                     status.innerText = "✨ Correct!";
@@ -160,9 +166,10 @@
                     area.className = "alert alert-danger mb-4 rounded-4 shadow-sm";
                     status.innerText = "❌ Correct Answer: " + correct.toUpperCase();
                 }
-                checkBtn.classList.add('d-none');
-                document.getElementById('next-btn').classList.remove('d-none');
             }
+            // Transition to Next Button
+            checkBtn.classList.add('d-none');
+            document.getElementById('next-btn').classList.remove('d-none');
         };
     }
 </script>
