@@ -146,6 +146,16 @@ def simplify():
         return jsonify({"simple_text": simple_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@routes.route('/extend-concept', methods=['POST'])
+def extend_concept():
+    data = request.get_json()
+    topic = data.get('topic')
+    
+  
+    explanation = ai_client.extend_notes(topic)
+    
+    return jsonify({"explanation": explanation})
 
 # ==========================================
 # QUIZ GENERATION LOGIC
