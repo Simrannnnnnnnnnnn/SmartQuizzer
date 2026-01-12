@@ -8,7 +8,6 @@ from reportlab.pdfgen import canvas
 from dotenv import load_dotenv
 
 # App specific imports
-from backend.adaptive_core import AdaptiveEngine
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, db
 from backend.services import extract_text_from_pdf
 from backend.llm_client import LLMClient
@@ -20,7 +19,7 @@ routes_bp = Blueprint('routes', __name__)
 llm = LLMClient(api_key=os.getenv("GROQ_API_KEY"))
 
 # ==========================================
-# AUTHENTICATION (Login, Signup, Logout)
+# AUTHENTICATION
 # ==========================================
 
 @routes_bp.route('/')
@@ -70,7 +69,6 @@ def logout():
 @routes_bp.route('/dashboard')
 @login_required
 def dashboard():
-    # Filtering mastery for specific labels
     allowed_topics = ['PDF Review', 'Text Review', 'Topic Review']
     topic_mastery = TopicMastery.query.filter(
         TopicMastery.user_id == current_user.id,
@@ -82,8 +80,6 @@ def dashboard():
     
     correct_total = sum([r.score for r in results_list]) if results_list else 0
     total_q = sum([r.total_questions for r in results_list]) if results_list else 0
-    
-    # Streak safety check
     user_streak = getattr(current_user, 'streak_count', 0) or 0
     
     return render_template('dashboard.html', 
@@ -95,7 +91,7 @@ def dashboard():
                            streak=user_streak)
 
 # ==========================================
-# STUDY HUB (Notes & Summary Generation)
+# STUDY HUB & DEEP DIVE
 # ==========================================
 
 @routes_bp.route('/study-hub', methods=['GET', 'POST'])
@@ -104,12 +100,10 @@ def study_hub():
     if request.method == 'POST':
         source_type = request.form.get('source_type')
         content = ""
-        
         try:
             if source_type == 'pdf':
                 file = request.files.get('pdf_file')
-                if file:
-                    content = extract_text_from_pdf(file)
+                if file: content = extract_text_from_pdf(file)
             elif source_type == 'text':
                 content = request.form.get('raw_text')
             elif source_type == 'topic':
@@ -120,49 +114,42 @@ def study_hub():
                 return redirect(url_for('routes.study_hub'))
 
             study_bundle = llm.generate_study_material(content)
-            
             return render_template('study_hub_result.html', data=study_bundle)
             
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
             return redirect(url_for('routes.study_hub'))
-
     return render_template('study_hub.html')
 
-# ==========================================
-# STUDY TOOLS (Simplification)
-# ==========================================
-
-@routes_bp.route('/simplify', methods=['POST'])
+@routes_bp.route('/deep-dive', methods=['POST'])
 @login_required
-def simplify():
+def deep_dive():
     try:
         data = request.get_json()
         concept = data.get('concept', '')
         if not concept:
-            return jsonify({"error": "No concept"}), 400
-        simple_text = llm.explain_like_five(concept) 
-        return jsonify({"simple_text": simple_text})
+            return jsonify({"error": "No concept provided"}), 400
+        analysis = llm.deep_dive(concept) 
+        return jsonify({"analysis": analysis})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-        
+
 @routes_bp.route('/extend-concept', methods=['POST'])
 @login_required
 def extend_concept():
     try:
         data = request.get_json()
         topic = data.get('topic')
-        if not topic:
-            return jsonify({"error": "No topic"}), 400
-        # Fixed ai_client to llm
+        if not topic: return jsonify({"error": "No topic"}), 400
         explanation = llm.extend_notes(topic)
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 # ==========================================
-# QUIZ GENERATION LOGIC
+# QUIZ LOGIC
 # ==========================================
+
 @routes_bp.route('/handle_generation', methods=['POST'])
 @login_required
 def handle_generation():
@@ -174,8 +161,7 @@ def handle_generation():
     try:
         if source_type == 'pdf':
             file = request.files.get('pdf_file')
-            if file:
-                content = extract_text_from_pdf(file)
+            if file: content = extract_text_from_pdf(file)
             mastery_label = 'PDF Review'
         elif source_type == 'text':
             content = request.form.get('raw_text')
@@ -188,7 +174,6 @@ def handle_generation():
             flash("Content missing for generation.", "warning")
             return redirect(url_for('routes.dashboard'))
 
-        # Generate questions via LLM
         raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format)
         
         if not raw_qs:
@@ -197,29 +182,23 @@ def handle_generation():
 
         q_ids = []
         for q_data in raw_qs:
-            # Check if essential data exists to avoid IntegrityError
             q_text = q_data.get('question') or q_data.get('question_text')
-            if not q_text:
-                continue # Skip invalid questions
+            if not q_text: continue 
 
             new_q = Question(
                 question_text=q_text, 
                 options_json=json.dumps(q_data.get('options') or {}),
                 correct_answer=q_data.get('correct_answer', 'A'),
-                explanation=q_data.get('explanation', 'No explanation provided.'),
+                explanation=q_data.get('explanation', 'Keep studying!'),
                 difficulty_level='Medium',
                 user_id=current_user.id
             )
             db.session.add(new_q)
-            db.session.flush() # This gets the ID before commit
+            db.session.flush() 
             q_ids.append(new_q.id)
         
-        if not q_ids:
-            raise Exception("No valid questions were saved to database.")
-
         db.session.commit()
 
-        # Set up Session for Quiz
         session.update({
             'active_questions': q_ids, 
             'current_idx': 0, 
@@ -233,12 +212,11 @@ def handle_generation():
 
     except Exception as e:
         db.session.rollback()
-        print(f"DEBUG ERROR: {str(e)}") # Render logs ke liye
-        flash(f"Generation Error: AI is a bit overwhelmed, try again!", "danger")
+        flash(f"Generation Error: AI is busy, try again!", "danger")
         return redirect(url_for('routes.dashboard'))
 
 # ==========================================
-# QUIZ ENGINE
+# QUIZ ENGINE & RESULTS
 # ==========================================
 
 @routes_bp.route('/quiz/<int:q_id>')
@@ -261,10 +239,8 @@ def quiz_page(q_id):
 def submit_answer(q_id):
     question = Question.query.get_or_404(q_id)
     user_ans = request.form.get('answer', '').strip()
-    
     is_correct = (user_ans.lower() == str(question.correct_answer).lower())
     
-    # Update Session Data
     ans_list = session.get('user_answers', [])
     ans_list.append({
         'question': question.question_text,
@@ -275,10 +251,8 @@ def submit_answer(q_id):
     session['user_answers'] = ans_list
     if is_correct:
         session['score'] = session.get('score', 0) + 1
-    
     session.modified = True
 
-    # Handle Mistake Bank
     if not is_correct:
         mistake = MistakeBank(
             user_id=current_user.id, 
@@ -297,37 +271,23 @@ def submit_answer(q_id):
         return redirect(url_for('routes.quiz_page', q_id=q_list[session['current_idx']]))
     return redirect(url_for('routes.results'))
 
-# ==========================================
-# RESULTS & REPORTS
-# ==========================================
-
 @routes_bp.route('/results')
 @login_required
 def results():
+    score = session.get('score', 0)
+    questions = session.get('active_questions', [])
+    total = len(questions)
+    accuracy = (score / total * 100) if total > 0 else 0
+    
     try:
-        score = session.get('score', 0)
-        questions = session.get('active_questions', [])
-        total = len(questions)
-        accuracy = (score / total * 100) if total > 0 else 0
-        
-        # Database Save with Safety Catch
-        try:
-            new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
-            db.session.add(new_res)
-            # Streak badhao
-            current_user.streak_count = (current_user.streak_count or 0) + 1
-            db.session.commit()
-        except Exception as db_e:
-            db.session.rollback()
-            print(f"Database Error: {db_e}")
+        new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
+        db.session.add(new_res)
+        current_user.streak_count = (current_user.streak_count or 0) + 1
+        db.session.commit()
+    except:
+        db.session.rollback()
 
-        return render_template('results.html', 
-                               score=score, 
-                               total=total, 
-                               accuracy=accuracy)
-    except Exception as e:
-        print(f"Result Page Error: {e}")
-        return redirect(url_for('routes.dashboard'))
+    return render_template('results.html', score=score, total=total, accuracy=accuracy)
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
@@ -344,7 +304,6 @@ def download_report(res_id):
     p.drawString(100, 700, f"User: {current_user.username}")
     p.drawString(100, 680, f"Score: {res.score} / {res.total_questions}")
     p.drawString(100, 660, f"Accuracy: {(res.score/res.total_questions)*100 if res.total_questions > 0 else 0}%")
-    p.drawString(100, 640, f"Date: {res.date_taken.strftime('%Y-%m-%d %H:%M')}")
     p.save()
     buffer.seek(0)
     return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name=f"Report_{res_id}.pdf")
