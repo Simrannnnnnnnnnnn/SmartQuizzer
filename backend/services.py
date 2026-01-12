@@ -22,10 +22,3 @@ def extract_text_from_pdf(file):
         print(f"Error extracting PDF: {e}")
         return ""
 
-def extract_text_from_image(file):
-    """
-    Note: Humne EasyOCR hata diya hai memory bachane ke liye.
-    Ab images 'routes.py' mein Groq Vision ke through process ho rahi hain.
-    Ye function sirf compatibility ke liye yahan hai.
-    """
-    return "IMAGE_REDIRECTED"
