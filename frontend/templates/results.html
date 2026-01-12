@@ -1,132 +1,156 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container py-5">
-    <div class="glass-card p-4 p-md-5 shadow-lg mx-auto mb-5 animate__animated animate__fadeIn" style="max-width: 1000px; border-radius: 30px; background: white;">
+    <div class="card border-0 shadow-sm mx-auto mb-5 animate__animated animate__fadeIn" 
+         style="max-width: 1000px; border-radius: 35px; background: white; overflow: hidden;">
         
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
-            <div>
-                <h1 class="fw-bold m-0" style="color: #333;">Performance Analytics 📈</h1>
-                <p class="text-muted mb-0">Analysis of your {{ session.get('quiz_goal', 'quiz') }} session</p>
+        <div class="p-4 p-md-5">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
+                <div>
+                    <h1 class="fw-bold m-0" style="color: #2d3436;">Performance Analytics ☀️</h1>
+                    <p class="text-muted mb-0 fw-medium">Analysis of your {{ session.get('quiz_goal', 'quiz') }} session</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('routes.download_report', res_id=session.get('last_result_id', 1)) }}" 
+                       class="btn btn-outline-danger rounded-pill px-4 fw-bold border-2">
+                        <i class="fas fa-file-pdf me-2"></i>PDF Report
+                    </a>
+                    <a href="{{ url_for('routes.dashboard') }}" class="sunshine-main-btn rounded-pill px-4 py-2 text-decoration-none">New Quiz 🚀</a>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('routes.download_report', res_id=session.get('last_result_id', 1)) }}" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
-                    <i class="fas fa-file-pdf me-2"></i>PDF Report
-                </a>
-                <a href="{{ url_for('routes.dashboard') }}" class="sunshine-btn rounded-pill px-4">New Quiz 🚀</a>
-            </div>
-        </div>
 
-        <div class="row g-4 mb-5">
-            <div class="col-lg-4">
-                <div class="p-4 rounded-4 text-center h-100 d-flex flex-column justify-content-center border" style="background: #fafafa;">
-                    <div style="position: relative; height: 180px;">
-                        <canvas id="accuracyPie"></canvas>
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                            <h2 class="fw-bold m-0">{{ accuracy|round|int }}%</h2>
-                            <small class="text-muted fw-bold">ACCURACY</small>
+            <div class="row g-4 mb-5">
+                <div class="col-lg-4">
+                    <div class="p-4 rounded-4 text-center h-100 d-flex flex-column justify-content-center border-0" 
+                         style="background: #fffef0; border: 1px solid #fff4cc !important;">
+                        <div style="position: relative; height: 180px;">
+                            <canvas id="accuracyPie"></canvas>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                <h2 class="fw-bold m-0" style="color: #ffb800;">{{ accuracy|round|int }}%</h2>
+                                <small class="text-muted fw-bold">ACCURACY</small>
+                            </div>
+                        </div>
+                        <p class="mt-3 mb-0 fw-bold text-dark small">{{ score }} / {{ total }} Correct</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="p-4 rounded-4 h-100 border-0 position-relative overflow-hidden" 
+                         style="background: linear-gradient(135deg, #fff9db 0%, #fffcf0 100%);">
+                        <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                            <i class="fa-solid fa-sun display-1 text-warning"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-robot me-2 text-warning"></i>AI Learning Insight</h5>
+                        <p class="lead mb-4 fw-medium" style="font-size: 1.1rem; color: #555; position: relative; z-index: 1;">
+                            {{ recommendation or "Keep practicing to unlock personalized learning paths and deep topic analysis!" }}
+                        </p>
+                        <div class="d-flex gap-2 position-relative" style="z-index: 1;">
+                            <span class="badge bg-dark rounded-pill px-3 py-2">Mode: {{ session.get('quiz_goal', 'Standard').upper() }}</span>
+                            <span class="badge rounded-pill px-3 py-2" style="background: #ffb800; color: white;">Streak: 🔥 {{ current_user.streak_count or 0 }}</span>
                         </div>
                     </div>
-                    <p class="mt-3 mb-0 fw-bold text-muted small">{{ score }} / {{ total }} Correct</p>
                 </div>
             </div>
 
-            <div class="col-lg-8">
-                <div class="p-4 rounded-4 h-100 border-start border-4 border-warning" style="background: #FFFDF5;">
-                    <h5 class="fw-bold mb-3"><i class="fa-solid fa-robot me-2 text-warning"></i>AI Learning Insight</h5>
-                    <p class="lead mb-4" style="font-size: 1.1rem; color: #444;">
-                        {{ recommendation or "Keep practicing to unlock personalized learning paths and deep topic analysis!" }}
-                    </p>
-                    <div class="d-flex gap-2">
-                        <span class="badge bg-dark rounded-pill px-3 py-2">Mode: {{ session.get('quiz_goal', 'Standard').upper() }}</span>
-                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Streak: 🔥 {{ current_user.streak_count or 0 }}</span>
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm">
+                        <h6 class="text-center fw-bold text-muted mb-3 small">SCORE VS TOTAL</h6>
+                        <canvas id="scoreBar" style="max-height: 250px;"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm">
+                        <h6 class="text-center fw-bold text-muted mb-3 small">ACCURACY TREND (LAST 10)</h6>
+                        <canvas id="progressLine" style="max-height: 250px;"></canvas>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row g-4 mb-5">
-            <div class="col-md-6">
-                <div class="p-3 border rounded-4 bg-white shadow-sm">
-                    <h6 class="text-center fw-bold text-muted mb-3 small">SCORE VS TOTAL</h6>
-                    <canvas id="scoreBar" style="max-height: 250px;"></canvas>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="p-3 border rounded-4 bg-white shadow-sm">
-                    <h6 class="text-center fw-bold text-muted mb-3 small">ACCURACY TREND (LAST 10)</h6>
-                    <canvas id="progressLine" style="max-height: 250px;"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="fw-bold mb-4 mt-5">Question Review 📝</h3>
-        <div class="review-container">
-            {% for item in session.get('user_answers', []) %}
-            <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeInUp" style="animation-delay: {{ loop.index0 * 0.1 }}s">
-                <div class="d-flex">
-                    <div class="p-3 {% if item.is_correct %}bg-success{% else %}bg-danger{% endif %} text-white d-flex align-items-center justify-content-center" style="min-width: 60px;">
-                        <h4 class="m-0 fw-bold">{{ loop.index }}</h4>
-                    </div>
-                    
-                    <div class="card-body p-4 bg-white">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="fw-bold pe-3">{{ item.question }}</h5>
-                            {% if item.confidence %}
-                            <span class="badge rounded-pill bg-light text-muted border px-3">
-                                <i class="fa-solid fa-brain me-1"></i> Confidence: {{ item.confidence|capitalize }}
-                            </span>
-                            {% endif %}
+            <h3 class="fw-bold mb-4 mt-5" style="color: #2d3436;">Question Review 📝</h3>
+            <div class="review-container">
+                {% for item in session.get('user_answers', []) %}
+                <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden animate__animated animate__fadeInUp" 
+                     style="animation-delay: {{ loop.index0 * 0.1 }}s; background: #fff;">
+                    <div class="d-flex">
+                        <div class="p-3 d-flex align-items-center justify-content-center" 
+                             style="min-width: 65px; background: {% if item.is_correct %}#2ecc71{% else %}#ff7675{% endif %};">
+                            <h4 class="m-0 fw-bold text-white">{{ loop.index }}</h4>
                         </div>
                         
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <p class="mb-1 text-muted small fw-bold">YOUR ANSWER</p>
-                                <div class="p-3 rounded-3 {% if item.is_correct %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} fw-bold">
-                                    {{ item.user_ans or "No response" }}
-                                </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="fw-bold pe-3" style="color: #333;">{{ item.question }}</h5>
+                                {% if item.is_correct %}
+                                <span class="badge rounded-pill bg-success-subtle text-success border-success border px-3">Correct</span>
+                                {% else %}
+                                <span class="badge rounded-pill bg-danger-subtle text-danger border-danger border px-3">Incorrect</span>
+                                {% endif %}
                             </div>
-                            {% if not item.is_correct %}
-                            <div class="col-md-6">
-                                <p class="mb-1 text-muted small fw-bold">CORRECT ANSWER</p>
-                                <div class="p-3 rounded-3 bg-light text-dark fw-bold border">
-                                    {{ item.correct_ans }}
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1 text-muted small fw-bold">YOUR ANSWER</p>
+                                    <div class="p-3 rounded-3 fw-bold" 
+                                         style="background: {% if item.is_correct %}#f0fff4{% else %}#fff5f5{% endif %}; 
+                                                color: {% if item.is_correct %}#27ae60{% else %}#e74c3c{% endif %};">
+                                        {{ item.user_ans or "No response" }}
+                                    </div>
                                 </div>
+                                {% if not item.is_correct %}
+                                <div class="col-md-6">
+                                    <p class="mb-1 text-muted small fw-bold">CORRECT ANSWER</p>
+                                    <div class="p-3 rounded-3 bg-light text-dark fw-bold border border-light">
+                                        {{ item.correct_ans }}
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
-                        </div>
 
-                        <div class="mt-4 p-3 rounded-3" style="background: #f8f9fa; border-left: 5px solid #FFB300;">
-                            <p class="mb-0 fs-6">
-                                <i class="fas fa-lightbulb me-2 text-warning"></i>
-                                <strong>Explanation:</strong> {{ item.explanation }}
-                            </p>
+                            <div class="mt-4 p-3 rounded-4" style="background: #fffcf0; border-left: 5px solid #ffcc00;">
+                                <p class="mb-0 fs-6" style="color: #666;">
+                                    <i class="fas fa-lightbulb me-2 text-warning"></i>
+                                    <strong style="color: #444;">Explanation:</strong> {{ item.explanation }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <div class="text-center py-5">
-                <p class="text-muted">No review data found for this session.</p>
-            </div>
-            {% endfor %}
         </div>
-
     </div>
 </div>
 
 <style>
-    .sunshine-btn { background: #FFD700; border: none; border-radius: 50px; padding: 10px 25px; font-weight: bold; color: black; box-shadow: 0 4px 0 #D4A017; transition: 0.2s; text-decoration: none; display: inline-block; }
-    .sunshine-btn:hover { background: #FFC400; transform: translateY(-2px); color: black; }
-    .sunshine-btn:active { transform: translateY(2px); box-shadow: 0 0 0; }
-    .bg-success-subtle { background-color: #e8f5e9; }
-    .bg-danger-subtle { background-color: #ffebee; }
+    body { background-color: #fffdf5 !important; }
+    
+    .sunshine-main-btn {
+        background: linear-gradient(45deg, #ffcc00, #ffb800) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: bold;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(255, 184, 0, 0.2);
+    }
+    
+    .sunshine-main-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 184, 0, 0.3);
+        color: white;
+    }
+
+    .bg-success-subtle { background-color: #e8f5e9 !important; }
+    .bg-danger-subtle { background-color: #ffebee !important; }
+    
+    /* Charts Customization */
+    canvas { filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.02)); }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Global Config for Chart Colors
-    const primaryGold = '#FFB300';
-    const softGray = '#e9ecef';
+    const primaryGold = '#FFCC00';
+    const softGray = '#f1f2f6';
 
     // 1. Accuracy Doughnut
     new Chart(document.getElementById('accuracyPie'), {
@@ -136,15 +160,14 @@
             datasets: [{
                 data: [{{ score or 0 }}, {{ (total or 0) - (score or 0) }}],
                 backgroundColor: [primaryGold, softGray],
-                borderWidth: 0,
-                hoverOffset: 4
+                borderWidth: 0
             }]
         },
         options: { 
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } }, 
-            cutout: '82%' 
+            cutout: '80%' 
         }
     });
 
@@ -155,15 +178,15 @@
             labels: ['Your Score', 'Total Points'],
             datasets: [{
                 data: [{{ score or 0 }}, {{ total or 0 }}],
-                backgroundColor: ['#333', softGray],
-                borderRadius: 8,
-                barThickness: 35
+                backgroundColor: ['#4b4b4b', primaryGold],
+                borderRadius: 10,
+                barThickness: 30
             }]
         },
         options: { 
             plugins: { legend: { display: false } },
             scales: { 
-                y: { beginAtZero: true, grid: { display: false } },
+                y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } },
                 x: { grid: { display: false } }
             }
         }
@@ -175,20 +198,20 @@
         data: {
             labels: {{ (history_labels or []) | tojson }},
             datasets: [{
-                label: 'Accuracy %',
                 data: {{ (history_scores or []) | tojson }},
                 borderColor: primaryGold,
-                backgroundColor: 'rgba(255, 179, 0, 0.1)',
+                backgroundColor: 'rgba(255, 204, 0, 0.1)',
                 tension: 0.4,
                 fill: true,
-                pointRadius: 4,
-                pointBackgroundColor: primaryGold
+                pointRadius: 5,
+                pointBackgroundColor: primaryGold,
+                borderWidth: 3
             }]
         },
         options: {
             plugins: { legend: { display: false } },
             scales: { 
-                y: { min: 0, max: 100, grid: { color: '#f0f0f0' } },
+                y: { min: 0, max: 100, grid: { color: '#f8f9fa' } },
                 x: { grid: { display: false } }
             }
         }
