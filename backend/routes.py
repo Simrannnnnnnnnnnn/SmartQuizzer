@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from groq import Groq
 from PIL import Image
 
+from backen.adaptive_core import AdaptiveEngine
 # Model imports
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, Bookmark, db
 from backend.services import extract_text_from_pdf
@@ -261,32 +262,35 @@ def quiz_page(q_id):
 @routes_bp.route('/submit_answer/<int:q_id>', methods=['POST'])
 @login_required
 def submit_answer(q_id):
-    
     is_mistake = session.get('is_mistake_review', False)
     question = MistakeBank.query.get_or_404(q_id) if is_mistake else Question.query.get_or_404(q_id)
     
-   
     user_ans = request.form.get('answer', '').strip()
+    quiz_format = session.get('quiz_format', 'mcq')
     
-  
+    # 1. Parsing Options
     try:
         options = json.loads(question.options_json) if isinstance(question.options_json, str) else question.options_json
     except:
         options = {}
 
-   
-    if not options or len(options) == 0:
-        
-        is_correct = len(user_ans) >= 5 
-        
+    # 2. Correctness Logic (One place only!)
+    if quiz_format == 'theory' or not options:
+        # Theory ya empty options ke liye word count check
+        is_correct = len(user_ans.split()) >= 10
     else:
-        
+        # MCQ/TF ke liye direct matching
         is_correct = (user_ans.lower() == str(question.correct_answer).lower())
 
-   
+    # 3. Update Adaptive Proficiency
+    current_theta = session.get('user_proficiency', 0.0)
+    engine = AdaptiveEngine(proficiency=current_theta)
+    new_theta = engine._calculate_new_proficiency(question.difficulty_level, is_correct)
+    session['user_proficiency'] = new_theta
+
+    # 4. Save to User Answers session
     if 'user_answers' not in session:
         session['user_answers'] = []
-    
     
     temp_answers = session['user_answers']
     temp_answers.append({
@@ -298,13 +302,12 @@ def submit_answer(q_id):
     })
     session['user_answers'] = temp_answers
 
+    # 5. Score & Mistake Bank handling
     if is_correct:
         session['score'] = session.get('score', 0) + 1
-        
         if is_mistake:
-            db.session.delete(question)
+            db.session.delete(question) # Mastered mistake removal
     else:
-       
         if not is_mistake:
             already_exists = MistakeBank.query.filter_by(user_id=current_user.id, question_text=question.question_text).first()
             if not already_exists:
@@ -320,7 +323,7 @@ def submit_answer(q_id):
 
     db.session.commit()
 
-    # 7. Next Question ya Results?
+    # 6. Navigation
     session['current_idx'] = session.get('current_idx', 0) + 1
     q_list = session.get('active_questions', [])
 
@@ -355,11 +358,43 @@ def review_mistakes():
 @routes_bp.route('/results')
 @login_required
 def results():
-    score, total = session.get('score', 0), len(session.get('active_questions', []))
+    # 1. Get data from session
+    score = session.get('score', 0)
+    active_qs = session.get('active_questions', [])
+    total = len(active_qs)
+    topic_name = session.get('quiz_topic', 'General Review')
+    
+    # 2. Save current result to Database
     new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
     db.session.add(new_res)
+    
+    # 3. Update Topic Mastery (For Dashboard Progress Bars)
+    mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic_name=topic_name).first()
+    if not mastery:
+        mastery = TopicMastery(user_id=current_user.id, topic_name=topic_name)
+        db.session.add(mastery)
+    
+    mastery.correct_count += score
+    mastery.total_count += total
+    
     db.session.commit()
-    return render_template('results.html', score=score, total=total, accuracy=(score/total*100 if total > 0 else 0))
+
+    # 4. Fetch History for the Progress Line Chart (Last 10 Quizzes)
+    history = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.date_taken.desc()).limit(10).all()
+    
+    # Data formatting for Chart.js
+    history_scores = [round((r.score / r.total_questions) * 100) if r.total_questions > 0 else 0 for r in reversed(history)]
+    history_labels = [r.date_taken.strftime("%d %b") for r in reversed(history)]
+
+    # 5. Clear session for next quiz (Optional but recommended)
+    # session.pop('active_questions', None) 
+
+    return render_template('results.html', 
+                           score=score, 
+                           total=total, 
+                           accuracy=(score/total*100 if total > 0 else 0),
+                           history_scores=history_scores,
+                           history_labels=history_labels)
 
 # ==========================================
 # DOWNLOAD REPORT (Fixed ReportLab Logic)
