@@ -338,3 +338,11 @@ def download_report(res_id):
 def library():
     questions = Question.query.filter_by(user_id=current_user.id).order_by(Question.id.desc()).limit(20).all()
     return render_template('library.html', questions=questions)
+@routes_bp.route('/review-mistakes')
+@login_required
+def review_mistakes():
+    # MistakeBank table se user ki galtiyan le kar review template pe bhejna
+    mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
+    # Check kar lena file ka naam review.html hai ya review_mistakes.html
+    return render_template('review.html', mistakes=mistakes)
+
