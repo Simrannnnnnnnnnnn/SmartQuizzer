@@ -19,7 +19,7 @@ routes_bp = Blueprint('routes', __name__)
 llm = LLMClient(api_key=os.getenv("GROQ_API_KEY"))
 
 # ==========================================
-# AUTHENTICATION
+# AUTHENTICATION (Unchanged)
 # ==========================================
 
 @routes_bp.route('/')
@@ -82,13 +82,17 @@ def dashboard():
     total_q = sum([r.total_questions for r in results_list]) if results_list else 0
     user_streak = getattr(current_user, 'streak_count', 0) or 0
     
+    # AI Fact integration
+    ai_fact = llm.get_random_tech_fact()
+    
     return render_template('dashboard.html', 
                            fun_fact=llm.get_fun_fact(),
                            correct_total=correct_total, 
                            incorrect_total=total_q - correct_total,
                            topic_mastery=topic_mastery,
                            mistake_count=mistake_count,
-                           streak=user_streak)
+                           streak=user_streak,
+                           ai_fact=ai_fact)
 
 # ==========================================
 # STUDY HUB & DEEP DIVE
@@ -147,72 +151,85 @@ def extend_concept():
         return jsonify({"error": str(e)}), 500
 
 # ==========================================
-# QUIZ LOGIC
+# QUIZ LOGIC (FIXED IDENTATION)
 # ==========================================
 
-@routes_bp.route('/handle_generation', methods=['POST'])
+@routes_bp.route('/handle_generation', methods=['POST', 'GET'])
 @login_required
 def handle_generation():
-    source_type = request.form.get('source_type')
+    # Priority: URL args (for Review) then Form
+    mode = request.args.get('quiz_goal') or request.form.get('quiz_goal') or 'quiz'
+    session['quiz_goal'] = mode
+    
+    source_type = request.args.get('source_type') or request.form.get('source_type')
     quiz_format = request.form.get('quiz_format', 'mcq') 
     count = int(request.form.get('count', 5))
     
     content, mastery_label = "", ""
+    q_ids = []
+
     try:
-        if source_type == 'pdf':
-            file = request.files.get('pdf_file')
-            if file: content = extract_text_from_pdf(file)
-            mastery_label = 'PDF Review'
-        elif source_type == 'text':
-            content = request.form.get('raw_text')
-            mastery_label = 'Text Review'
+        # CASE A: Mistake Bank Review
+        if source_type == 'mistake':
+            mistakes = MistakeBank.query.filter_by(user_id=current_user.id).limit(count).all()
+            if not mistakes:
+                flash("No Mistakes for review!", "info")
+                return redirect(url_for('routes.dashboard'))
+            
+            for m in mistakes:
+                new_q = Question(
+                    question_text=m.question_text,
+                    options_json=m.options_json,
+                    correct_answer=m.correct_answer,
+                    explanation=m.explanation,
+                    user_id=current_user.id
+                )
+                db.session.add(new_q)
+                db.session.flush()
+                q_ids.append(new_q.id)
+            mastery_label = "Mistake Review"
+
+        # CASE B: Standard AI Generation
         else:
-            content = request.form.get('topic_name')
-            mastery_label = 'Topic Review'
+            if source_type == 'pdf':
+                file = request.files.get('pdf_file')
+                content = extract_text_from_pdf(file) if file else ""
+                mastery_label = 'PDF Review'
+            elif source_type == 'text':
+                content = request.form.get('raw_text')
+                mastery_label = 'Text Review'
+            else:
+                content = request.form.get('topic_name')
+                mastery_label = 'Topic Review'
 
-        if not content:
-            flash("Content missing for generation.", "warning")
-            return redirect(url_for('routes.dashboard'))
+            if not content:
+                flash("Write something to generate questions!", "warning")
+                return redirect(url_for('routes.dashboard'))
 
-        raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format)
-        
-        if not raw_qs:
-            flash("AI failed to generate questions. Try a smaller topic.", "danger")
-            return redirect(url_for('routes.dashboard'))
+            raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format)
+            for q_data in raw_qs:
+                new_q = Question(
+                    question_text=q_data.get('question') or q_data.get('question_text'), 
+                    options_json=json.dumps(q_data.get('options') or {}),
+                    correct_answer=q_data.get('correct_answer', 'A'),
+                    explanation=q_data.get('explanation', 'Study hard!'),
+                    user_id=current_user.id
+                )
+                db.session.add(new_q)
+                db.session.flush()
+                q_ids.append(new_q.id)
 
-        q_ids = []
-        for q_data in raw_qs:
-            q_text = q_data.get('question') or q_data.get('question_text')
-            if not q_text: continue 
-
-            new_q = Question(
-                question_text=q_text, 
-                options_json=json.dumps(q_data.get('options') or {}),
-                correct_answer=q_data.get('correct_answer', 'A'),
-                explanation=q_data.get('explanation', 'Keep studying!'),
-                difficulty_level='Medium',
-                user_id=current_user.id
-            )
-            db.session.add(new_q)
-            db.session.flush() 
-            q_ids.append(new_q.id)
-        
         db.session.commit()
-
         session.update({
-            'active_questions': q_ids, 
-            'current_idx': 0, 
-            'score': 0, 
-            'quiz_topic': mastery_label,
-            'quiz_format': quiz_format,
-            'user_answers': []
+            'active_questions': q_ids, 'current_idx': 0, 'score': 0, 
+            'quiz_topic': mastery_label, 'user_answers': []
         })
         session.modified = True
         return redirect(url_for('routes.quiz_page', q_id=q_ids[0]))
 
     except Exception as e:
         db.session.rollback()
-        flash(f"Generation Error: AI is busy, try again!", "danger")
+        flash(f"Error: AI is currently busy. Try again later!", "danger")
         return redirect(url_for('routes.dashboard'))
 
 # ==========================================
@@ -223,8 +240,6 @@ def handle_generation():
 @login_required
 def quiz_page(q_id):
     question = Question.query.get_or_404(q_id)
-    quiz_goal = session.get('quiz_goal','quiz')
-    
     try:
         options = json.loads(question.options_json)
     except:
@@ -233,7 +248,7 @@ def quiz_page(q_id):
     return render_template('quiz.html', 
                            question=question, 
                            options=options,
-                           quiz_goal = quiz_goal,
+                           quiz_goal=session.get('quiz_goal', 'quiz'),
                            current_num=session.get('current_idx', 0) + 1, 
                            total_num=len(session.get('active_questions', [])))
 
@@ -250,14 +265,14 @@ def submit_answer(q_id):
         'user_ans': user_ans,
         'correct_ans': question.correct_answer,
         'is_correct': is_correct,
-        'explanation':question.explanation
+        'explanation': question.explanation
     })
     session['user_answers'] = ans_list
     if is_correct:
         session['score'] = session.get('score', 0) + 1
-    session.modified = True
-    quiz_mode = session.get('quiz_goal', 'quiz').lower()
-    if not is_correct:
+    
+    # Mistake Logic: Sirf 'quiz' mode mein save karein
+    if not is_correct and session.get('quiz_goal') == 'quiz':
         mistake = MistakeBank(
             user_id=current_user.id, 
             question_text=question.question_text, 
@@ -280,23 +295,31 @@ def submit_answer(q_id):
 @login_required
 def results():
     score = session.get('score', 0)
-    questions = session.get('active_questions', [])
     user_answers = session.get('user_answers', [])
     topic = session.get('quiz_topic', 'General')
-    total = len(questions)
+    total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
+    
     mistakes_only = [ans for ans in user_answers if not ans['is_correct']]
     ai_recommendation = llm.generate_performance_insight(mistakes_only, topic)
-    try:
-        if session.get('quiz_goal') == 'quiz':
+    
+    # Save results and update streak only in Quiz mode
+    if session.get('quiz_goal') == 'quiz':
+        try:
             new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
             db.session.add(new_res)
             current_user.streak_count = (current_user.streak_count or 0) + 1
             db.session.commit()
-    except:
-        db.session.rollback()
+        except:
+            db.session.rollback()
 
-    return render_template('results.html', score=score, total=total, accuracy=accuracy,user_answers=user_answers,recommendation=ai_recommendation)
+    return render_template('results.html', 
+                           score=score, 
+                           total=total, 
+                           accuracy=accuracy,
+                           user_answers=user_answers,
+                           recommendation=ai_recommendation,
+                           topic=topic)
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
@@ -328,15 +351,12 @@ def library():
 def review_mistakes():
     try:
         raw_mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
-        
         processed_mistakes = []
         for m in raw_mistakes:
-        
             try:
                 opts = json.loads(m.options_json) if m.options_json else {}
             except:
                 opts = {"Error": "Format mismatch"}
-               
             
             processed_mistakes.append({
                 "id": m.id,
@@ -345,13 +365,9 @@ def review_mistakes():
                 "options": opts,
                 "topic": m.topic,
                 "explanation": getattr(m, 'explanation', 'Check the core concept.')
-                
             })
-            
         return render_template('review.html', mistakes=processed_mistakes)
-    
     except Exception as e:
-        # Console mein error print hoga debugging ke liye
-        print(f"DEBUG ERROR 500 (Review Page): {str(e)}")
-        flash("Kuch technical issue ki wajah se mistakes load nahi ho payi.", "danger")
+        print(f"DEBUG ERROR: {str(e)}")
+        flash("Technical issue loading mistakes.", "danger")
         return redirect(url_for('routes.dashboard'))
