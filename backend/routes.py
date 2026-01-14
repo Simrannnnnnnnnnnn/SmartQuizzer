@@ -317,5 +317,36 @@ def library():
 @routes_bp.route('/review-mistakes')
 @login_required
 def review_mistakes():
-    mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
-    return render_template('review.html', mistakes=mistakes)
+    try:
+        # User ki saari mistakes fetch karo
+        raw_mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
+        
+        processed_mistakes = []
+        for m in raw_mistakes:
+            # 🛠️ Fix: Corrupt JSON options ko handle karne ke liye logic
+            try:
+                if m.options_json:
+                    # Agar single quotes ya invalid format ho toh usse handle karega
+                    opts = json.loads(m.options_json)
+                else:
+                    opts = {}
+            except (ValueError, TypeError):
+                # Fallback agar JSON load na ho sake
+                opts = {"Info": "Options format error - Check Database"}
+            
+            processed_mistakes.append({
+                "id": m.id,
+                "question": m.question_text,
+                "correct_answer": m.correct_answer,
+                "options": opts,
+                "topic": m.topic,
+                "timestamp": m.id # Ya created_at agar model mein hai
+            })
+            
+        return render_template('review.html', mistakes=processed_mistakes)
+    
+    except Exception as e:
+        # Console mein error print hoga debugging ke liye
+        print(f"DEBUG ERROR 500 (Review Page): {str(e)}")
+        flash("Kuch technical issue ki wajah se mistakes load nahi ho payi.", "danger")
+        return redirect(url_for('routes.dashboard'))
