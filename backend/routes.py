@@ -61,31 +61,58 @@ def signup():
 def logout():
     logout_user()
     return redirect(url_for('routes.login'))
+@routes_bp.route('/guest-login')
+def guest_login():
+    
+    session.clear()
+    session['is_guest'] = True
+    session['username'] = "Guest User"
+    # Guest ke liye default values jo dashboard mangta hai
+    session['streak'] = 0
+    flash("Logged in as Guest. Your data won't be saved!", "info")
+    return redirect(url_for('routes.dashboard'))
 
 # ==========================================
 # DASHBOARD
 # ==========================================
-
 @routes_bp.route('/dashboard')
-@login_required
 def dashboard():
-    mistake_count = MistakeBank.query.filter_by(user_id=current_user.id).count()
-    results_list = QuizResult.query.filter_by(user_id=current_user.id).all()
+    # 1. Check: Agar na user login hai aur na Guest session, toh login pe bhejo
+    if not current_user.is_authenticated and not session.get('is_guest'):
+        return redirect(url_for('routes.login'))
+
+    # 2. Logic for Guest User
+    if session.get('is_guest'):
+        mistake_count = 0
+        correct_total = 0
+        total_q = 0
+        user_streak = 0
+        username = "Guest"
     
-    correct_total = sum([r.score for r in results_list]) if results_list else 0
-    total_q = sum([r.total_questions for r in results_list]) if results_list else 0
-    
+    # 3. Logic for Registered User
+    else:
+        username = current_user.username
+        mistake_count = MistakeBank.query.filter_by(user_id=current_user.id).count()
+        results_list = QuizResult.query.filter_by(user_id=current_user.id).all()
+        
+        correct_total = sum([r.score for r in results_list]) if results_list else 0
+        total_q = sum([r.total_questions for r in results_list]) if results_list else 0
+        user_streak = getattr(current_user, 'streak_count', 0) or 0
+
+    # 4. AI Fact (Common for both)
     try:
         ai_fact = llm.get_random_tech_fact()
     except:
         ai_fact = "AI is transforming how students master difficult concepts!"
     
     return render_template('dashboard.html', 
+                           username=username,
+                           is_guest=session.get('is_guest', False),
                            fun_fact=llm.get_fun_fact(),
                            correct_total=correct_total, 
                            incorrect_total=total_q - correct_total,
                            mistake_count=mistake_count,
-                           streak=getattr(current_user, 'streak_count', 0),
+                           streak=user_streak,
                            ai_fact=ai_fact)
 
 # ==========================================
