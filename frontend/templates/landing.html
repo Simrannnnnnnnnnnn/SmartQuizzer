@@ -2,93 +2,256 @@
 
 {% block content %}
 <style>
+    /* Global Styles */
+    body {
+        overflow-x: hidden; /* Prevent horizontal scroll from animations */
+    }
+
+    /* Hero Section */
     .hero-section {
+        position: relative;
+        overflow: hidden; /* For particles/animations */
+        min-height: 90vh;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        min-height: 80vh;
-        padding: 20px;
-    }
-    .welcome-card {
-        background: var(--card-white);
-        padding: 60px;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--raised);
         text-align: center;
-        max-width: 600px;
+        background: linear-gradient(135deg, #f0f8ff, #e6f0fa); /* Light gradient background */
+        color: var(--text-dark);
+        padding: 50px 20px;
     }
-    .welcome-card h1 {
-        font-size: 3rem;
-        margin-bottom: 20px;
-        color: var(--mauve);
-    }
-    .welcome-card p {
-        color: var(--text-sub);
-        font-size: 1.1rem;
-        margin-bottom: 40px;
-    }
-    .auth-buttons {
-        display: flex;
-        gap: 20px;
-        justify-content: center;
-    }
-    .btn-outline {
-        padding: 16px 32px;
-        border-radius: 50px;
-        border: 2px solid var(--mauve);
-        color: var(--mauve);
-        text-decoration: none;
-        font-weight: 700;
-        transition: 0.3s;
-    }
-    .btn-outline:hover {
-        background: var(--mauve);
-        color: white;
-    }
-    .sunshine-btn {
-    background: #ffcc00; /* Brand Orange-Yellow */
-    color: #000 !important;
-    padding: 14px 35px;
-    border-radius: 50px;
-    font-weight: 800;
-    text-decoration: none !important;
-    display: inline-block;
-    margin: 10px;
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2);
-}
 
-.sunshine-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
-    background: #ffdb4d;
-}
+    .hero-content {
+        z-index: 2; /* Bring content above any background animations */
+        max-width: 800px;
+    }
+
+    .hero-section h1 {
+        font-size: 4.5rem; /* Larger, more impactful */
+        font-weight: 900;
+        color: var(--primary-gold); /* Bright gold */
+        margin-bottom: 20px;
+        line-height: 1.1;
+        letter-spacing: -2px;
+        animation: slideInUp 1s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    .hero-section h1 span {
+        display: block;
+        font-size: 0.8em; /* Subtitle size relative to main title */
+        font-weight: 500;
+        color: var(--text-sub);
+        margin-top: 10px;
+        letter-spacing: 0px;
+    }
+
+    .hero-section p.lead {
+        font-size: 1.4rem;
+        color: var(--text-sub);
+        margin-bottom: 40px;
+        animation: fadeIn 1.5s ease-out 0.5s forwards;
+        opacity: 0;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 25px;
+        justify-content: center;
+        margin-top: 20px;
+        animation: fadeIn 1.5s ease-out 1s forwards;
+        opacity: 0;
+    }
+
+    .sunshine-btn {
+        background: var(--primary-gold); /* Using CSS variable for consistency */
+        color: #fff !important;
+        padding: 16px 40px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 8px 25px rgba(255, 204, 0, 0.3);
+    }
+
+    .sunshine-btn:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(255, 204, 0, 0.5);
+        background: #ffdb4d; /* Lighter shade on hover */
+    }
+
+    .guest-link {
+        margin-top: 30px;
+        font-size: 1.05rem;
+        color: var(--text-sub);
+        transition: color 0.3s ease;
+        animation: fadeIn 1.5s ease-out 1.5s forwards;
+        opacity: 0;
+    }
+
+    .guest-link a {
+        color: var(--accent-blue);
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .guest-link a:hover {
+        color: var(--primary-gold);
+        border-bottom-color: var(--primary-gold);
+    }
+
+    /* Feature Section */
+    .feature-section {
+        background: white;
+        padding: 80px 20px;
+        text-align: center;
+    }
+
+    .feature-section h2 {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--heading-color);
+        margin-bottom: 60px;
+        position: relative;
+    }
+
+    .feature-section h2::after {
+        content: '';
+        display: block;
+        width: 80px;
+        height: 4px;
+        background: var(--primary-gold);
+        margin: 15px auto 0;
+        border-radius: 2px;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        background: linear-gradient(145deg, #ffffff, #f0f8ff);
+        padding: 35px;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        text-align: left;
+        border: 1px solid #e0eafc;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-card .icon {
+        font-size: 3rem;
+        color: var(--accent-blue);
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .feature-card h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--heading-color);
+        margin-bottom: 15px;
+    }
+
+    .feature-card p {
+        font-size: 1.1rem;
+        color: var(--text-sub);
+        line-height: 1.7;
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 </style>
 
-<div class="container text-center" style="padding: 80px 20px;">
-    <h1 style="font-size: 4rem; font-weight: 800; color: #ffcc00;">SmartQuizzer 🚀</h1>
-    <h2 class="mb-5">An Effortless AI-Generated Quiz</h2>
-    
-    <div class="d-flex justify-content-center gap-3 mb-5">
-        <a href="{{ url_for('routes.login') }}" class="sunshine-btn">Login</a>
-        <a href="{{ url_for('routes.signup') }}" class="sunshine-btn">Sign Up</a>
+<section class="hero-section">
+    <div class="hero-content">
+        <h1>SmartQuizzer 🚀<span>Your AI-Powered Study Companion</span></h1>
+        <p class="lead">
+            Turn any text, PDF, or topic into instant quizzes & smart study guides.
+            Master concepts faster, understand deeper, and ace your exams with AI.
+        </p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('routes.login') }}" class="sunshine-btn">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{{ url_for('routes.signup') }}" class="sunshine-btn" style="background: var(--accent-blue);">
+                <i class="fas fa-user-plus"></i> Sign Up
+            </a>
+        </div>
+        <p class="guest-link">
+            Just want to try it out? <a href="{{ url_for('routes.guest_login') }}">Continue as Guest</a>
+        </p>
     </div>
+</section>
 
-   
-
-    <div class="mx-auto p-5 text-left bg-white shadow-sm" style="max-width: 850px; border-radius: 25px; border: 1px solid #eee;">
-        <h3 class="text-center mb-4">Project Objectives</h3>
-        <ul class="list-unstyled" style="font-size: 1.1rem; line-height: 1.8;">
-            <li>🤖 <b>AI Extraction:</b> Use LLMs (Llama-3) to extract concepts from PDF or Raw Text.</li>
-            <li>✍️ <b>Automatic Generation:</b> Create MCQs and Short Answers with distractors and explanations.</li>
-            <li>📈 <b>Adaptive Engine:</b> Difficulty classification that adjusts based on user performance.</li>
-            <li>💻 <b>Web Application:</b> Streamlined interface for uploading docs and taking quizzes.</li>
-            <li>📊 <b>Rich Analytics:</b> Visualize accuracy, weak topics, and response-time analysis.</li>
-        </ul>
+<section class="feature-section">
+    <h2>How SmartQuizzer Elevates Your Learning</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <span class="icon">🧠</span>
+            <h3>Instant AI Quizzes</h3>
+            <p>Upload PDFs or paste text, and our AI instantly generates personalized MCQs and short answers. No more manual question making!</p>
+        </div>
+        <div class="feature-card">
+            <span class="icon">📚</span>
+            <h3>Deep Dive Explanations</h3>
+            <p>Get comprehensive, AI-driven explanations for any concept. Understand the 'why' behind the 'what' and clear your doubts instantly.</p>
+        </div>
+        <div class="feature-card">
+            <span class="icon">📈</span>
+            <h3>Adaptive Learning Paths</h3>
+            <p>Our intelligent system identifies your weak spots and tailors quizzes to help you master challenging topics effectively.</p>
+        </div>
+        <div class="feature-card">
+            <span class="icon">📝</span>
+            <h3>Mistake Bank & Review</h3>
+            <p>Automatically save all your incorrect answers to a dedicated Mistake Bank. Revisit and conquer past errors effortlessly.</p>
+        </div>
+        <div class="feature-card">
+            <span class="icon">📊</span>
+            <h3>Progress & Analytics</h3>
+            <p>Track your learning journey with detailed performance analytics, accuracy scores, and mastery levels for each topic.</p>
+        </div>
+        <div class="feature-card">
+            <span class="icon">💡</span>
+            <h3>Smart Study Guides</h3>
+            <p>Convert your notes or study material into structured summaries, key takeaways, and memorable mnemonics with AI.</p>
+        </div>
     </div>
-</div>
+</section>
 
-
+<section style="background: var(--primary-gold); color: white; padding: 60px 20px; text-align: center;">
+    <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 20px;">Ready to Transform Your Study Habits?</h2>
+    <p style="font-size: 1.2rem; margin-bottom: 40px;">Join SmartQuizzer today and unlock the power of AI for smarter learning.</p>
+    <a href="{{ url_for('routes.signup') }}" class="sunshine-btn" style="background: white; color: var(--primary-gold) !important;">
+        Get Started Free <i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</section>
 
 {% endblock %}
