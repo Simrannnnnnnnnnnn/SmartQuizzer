@@ -292,15 +292,21 @@ def results():
     user_answers = session.get('user_answers', [])
     total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
-    
+    history_labels = []
+    history_scores = []
     if not session.get('is_guest'):
         new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
         db.session.add(new_res)
         current_user.streak_count = (current_user.streak_count or 0) + 1
         db.session.commit()
-    
+        past_results = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.desc()).limit(5).all()
+        # Data ko seedha order mein karo (Oldest to Newest)
+        past_results.reverse()
+        history_labels = [r.timestamp.strftime("%d %b") for r in past_results]
+        history_scores = [r.score for r in past_results]
     return render_template('results.html', score=score, total=total, accuracy=accuracy, 
-                           user_answers=user_answers, is_guest=session.get('is_guest'))
+                           user_answers=user_answers, is_guest=session.get('is_guest'),history_labels=history_labels, 
+                           history_scores=history_scores)
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
