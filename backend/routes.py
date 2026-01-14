@@ -323,7 +323,7 @@ def results():
     mistakes_only = [ans for ans in user_answers if not ans['is_correct']]
     recommendation = llm.generate_performance_insight(mistakes_only, topic)
     
-    new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total, topic=topic)
+    new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
     db.session.add(new_res)
     current_user.streak_count = (current_user.streak_count or 0) + 1
     db.session.commit()
