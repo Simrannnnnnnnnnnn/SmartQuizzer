@@ -292,29 +292,30 @@ def results():
     total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
     
-    # YouTube/Books ke liye topic clean karna
-    raw_topic = session.get('quiz_topic', 'General Study')
-    clean_topic = raw_topic.replace(' ', '+')
+    # Topic for display (No more cleaning for YouTube)
+    raw_topic = session.get('quiz_topic', 'AI Analysis')
     
     history_labels = []
     history_scores = []
     is_guest = session.get('is_guest', False)
 
     try:
-        # --- LOGIN USER LOGIC ---
         if not is_guest and current_user.is_authenticated:
-            # 1. Result Save Karo (Taaki Library/History mein dikhe)
+            # 1. Result Save Karo
             new_res = QuizResult(
                 user_id=current_user.id, 
                 score=score, 
                 total_questions=total,
-                topic=raw_topic # Agar aapke model mein topic field hai
+                topic=raw_topic
             )
             db.session.add(new_res)
+            db.session.flush() # ID generate karne ke liye
             
-            # 2. STREAK LOGIC (Only for Login Users)
+            # PDF download ke liye ID save karo
+            session['last_result_id'] = new_res.id
+            
+            # 2. STREAK LOGIC
             today = datetime.utcnow().date()
-            # Pichla sabse recent result check karo jo aaj se pehle ka ho
             last_res = QuizResult.query.filter_by(user_id=current_user.id)\
                                      .filter(QuizResult.timestamp < datetime.utcnow().replace(hour=0, minute=0, second=0))\
                                      .order_by(QuizResult.timestamp.desc()).first()
@@ -322,33 +323,31 @@ def results():
             if last_res:
                 last_date = last_res.timestamp.date()
                 if last_date == today - timedelta(days=1):
-                    current_user.streak += 1  # Kal khela tha, streak badhao
+                    current_user.streak += 1  
                 elif last_date < today - timedelta(days=1):
-                    current_user.streak = 1   # Gap ho gaya, reset to 1
+                    current_user.streak = 1   
             else:
-                if current_user.streak == 0:
-                    current_user.streak = 1   # Pehla quiz
+                if getattr(current_user, 'streak', 0) == 0:
+                    current_user.streak = 1   
             
-            db.session.commit() # Database update
+            db.session.commit() 
             
-            # 3. Chart Data (History for Dashboard/Results)
+            # 3. Chart Data
             results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
             for r in results_query[-5:]:
-                d = r.timestamp
-                if d:
-                    history_labels.append(d.strftime("%d %b"))
-                    history_scores.append(r.score)
+                history_labels.append(r.timestamp.strftime("%d %b"))
+                history_scores.append(r.score)
 
-        # --- GUEST USER LOGIC ---
         else:
-            # Guest ka data store nahi hoga, bas memory mein rahega display ke liye
-            history_labels = ["Current Quiz"]
+            # Guest logic
+            history_labels = ["Current"]
             history_scores = [score]
 
     except Exception as e:
         db.session.rollback()
         print(f"Error in Results: {e}")
 
+    # clean_topic aur search_query hata diye hain kyunki recommendation delete kar di hai
     return render_template('results.html', 
                            score=score, 
                            total=total, 
