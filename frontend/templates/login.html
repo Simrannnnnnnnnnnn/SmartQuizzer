@@ -1,15 +1,71 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="max-width: 400px; margin: 50px auto;">
-    <div class="glass-card" style="text-align: center;">
-        <h2 style="color: var(--primary-gold); font-weight: 900;">Welcome Back! ✨</h2>
+<div style="max-width: 400px; margin: 50px auto; padding: 0 20px;">
+    <div class="glass-card" style="text-align: center; padding: 40px 30px; border-radius: 25px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 15px 35px rgba(0,0,0,0.1);">
+        
+        <h2 style="color: var(--primary-gold); font-weight: 900; margin-bottom: 30px; font-size: 2rem; letter-spacing: -1px;">Welcome Back! ✨</h2>
+        
         <form method="POST">
-            <input type="text" name="login_id" placeholder="Username or Email" required 
-                   style="width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 15px; border: 2px solid #EEE; font-family: inherit;">
-            <input type="password" name="password" placeholder="Password" required style="width: 100%; padding: 15px; margin-bottom: 25px; border-radius: 15px; border: 2px solid #EEE; font-family: inherit;">
-            <button type="submit" class="sunshine-btn" style="width: 100%;">LET'S GO 🚀</button>
+            <div style="text-align: left; margin-bottom: 15px;">
+                <input type="text" name="login_id" placeholder="Username or Email" required 
+                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #f0f0f0; font-family: inherit; outline: none; transition: 0.3s;">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <input type="password" name="password" placeholder="Password" required 
+                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #f0f0f0; font-family: inherit; outline: none; transition: 0.3s;">
+            </div>
+            
+            <button type="submit" class="sunshine-btn" style="width: 100%; padding: 15px; font-weight: 800; letter-spacing: 1px; cursor: pointer;">
+                LET'S GO 🚀
+            </button>
         </form>
-        <p style="margin-top: 20px; font-size: 0.9rem;">New here? <a href="{{ url_for('routes.signup') }}" style="color: var(--accent-orange); font-weight: 700;">Create an account</a></p>
+
+        <div style="margin: 25px 0; display: flex; align-items: center; justify-content: center; opacity: 0.6;">
+            <div style="flex: 1; height: 1px; background: #EEE;"></div>
+            <span style="margin: 0 15px; font-size: 0.8rem; font-weight: 700; color: #666;">OR</span>
+            <div style="flex: 1; height: 1px; background: #EEE;"></div>
+        </div>
+
+        <a href="{{ url_for('routes.guest_login') }}" class="guest-btn" 
+           style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 2px solid var(--primary-gold); border-radius: 15px; text-decoration: none; color: var(--primary-gold); font-weight: 700; transition: 0.3s; background: transparent;">
+           <span style="font-size: 1.2rem;">🕵️‍♂️</span> Continue as Guest
+        </a>
+
+        <p style="margin-top: 25px; font-size: 0.95rem; color: #555;">
+            New here? <a href="{{ url_for('routes.signup') }}" style="color: var(--accent-orange); font-weight: 700; text-decoration: none; border-bottom: 2px solid transparent; transition: 0.3s;">Create an account</a>
+        </p>
     </div>
 </div>
+
+<style>
+    /* Input Focus Effects */
+    input:focus {
+        border-color: var(--primary-gold) !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+    }
+
+    /* Guest Button Hover */
+    .guest-btn:hover {
+        background-color: var(--primary-gold) !important;
+        color: white !important;
+        box-shadow: 0 8px 20px rgba(255, 215, 0, 0.25);
+        transform: translateY(-2px);
+    }
+
+    /* Sign up Link Hover */
+    a[href="{{ url_for('routes.signup') }}"]:hover {
+        border-bottom: 2px solid var(--accent-orange);
+    }
+
+    /* Animation for the card */
+    .glass-card {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 {% endblock %}
