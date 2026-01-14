@@ -334,7 +334,7 @@ def results():
             # 3. Chart Data (History for Dashboard/Results)
             results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
             for r in results_query[-5:]:
-                d = getattr(r, 'timestamp', getattr(r, 'date_created', None))
+                d = r.timestamp
                 if d:
                     history_labels.append(d.strftime("%d %b"))
                     history_scores.append(r.score)
@@ -342,7 +342,7 @@ def results():
         # --- GUEST USER LOGIC ---
         else:
             # Guest ka data store nahi hoga, bas memory mein rahega display ke liye
-            history_labels = ["Guest"]
+            history_labels = ["Current Quiz"]
             history_scores = [score]
 
     except Exception as e:
@@ -355,9 +355,7 @@ def results():
                            accuracy=accuracy, 
                            user_answers=user_answers, 
                            is_guest=is_guest,
-                           search_query=clean_search_query, 
                            display_topic=raw_topic,
-                           clean_topic=clean_topic,
                            history_labels=history_labels, 
                            history_scores=history_scores)
     
