@@ -285,7 +285,6 @@ def submit_answer(q_id):
 # RESULTS, REPORTS & LIBRARY
 # ==========================================
 from datetime import datetime, timedelta
-
 @routes_bp.route('/results')
 def results():
     score = session.get('score', 0)
@@ -293,53 +292,73 @@ def results():
     total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
     
-    # Topic ko clean karo YouTube ke liye (e.g., "python data types")
+    # YouTube/Books ke liye topic clean karna
     raw_topic = session.get('quiz_topic', 'General')
-    clean_topic = raw_topic.replace(' ', '+') 
+    clean_topic = raw_topic.replace(' ', '+')
     
     history_labels = []
     history_scores = []
-    
+    is_guest = session.get('is_guest', False)
+
     try:
-        if not session.get('is_guest') and current_user.is_authenticated:
-            # 1. Result save karo
-            new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
+        # --- LOGIN USER LOGIC ---
+        if not is_guest and current_user.is_authenticated:
+            # 1. Result Save Karo (Taaki Library/History mein dikhe)
+            new_res = QuizResult(
+                user_id=current_user.id, 
+                score=score, 
+                total_questions=total,
+                topic=raw_topic # Agar aapke model mein topic field hai
+            )
             db.session.add(new_res)
             
-            # 2. STREAK LOGIC FIX
+            # 2. STREAK LOGIC (Only for Login Users)
             today = datetime.utcnow().date()
-            # Pichla result check karo (aaj ke naye result se pehle wala)
+            # Pichla sabse recent result check karo jo aaj se pehle ka ho
             last_res = QuizResult.query.filter_by(user_id=current_user.id)\
+                                     .filter(QuizResult.timestamp < datetime.utcnow().replace(hour=0, minute=0, second=0))\
                                      .order_by(QuizResult.timestamp.desc()).first()
             
             if last_res:
                 last_date = last_res.timestamp.date()
                 if last_date == today - timedelta(days=1):
-                    current_user.streak += 1 # Kal quiz diya tha, streak badhao
+                    current_user.streak += 1  # Kal khela tha, streak badhao
                 elif last_date < today - timedelta(days=1):
-                    current_user.streak = 1  # Gap ho gaya, reset to 1
+                    current_user.streak = 1   # Gap ho gaya, reset to 1
             else:
-                current_user.streak = 1 # Pehla quiz
+                if current_user.streak == 0:
+                    current_user.streak = 1   # Pehla quiz
             
-            db.session.commit() # Save everything
+            db.session.commit() # Database update
             
-            # 3. Chart data fetch
-            results_query = QuizResult.query.filter_by(user_id=current_user.id).all()
+            # 3. Chart Data (History for Dashboard/Results)
+            results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
             for r in results_query[-5:]:
                 d = getattr(r, 'timestamp', getattr(r, 'date_created', None))
                 if d:
                     history_labels.append(d.strftime("%d %b"))
                     history_scores.append(r.score)
+
+        # --- GUEST USER LOGIC ---
+        else:
+            # Guest ka data store nahi hoga, bas memory mein rahega display ke liye
+            history_labels = ["Guest"]
+            history_scores = [score]
+
     except Exception as e:
-        print(f"Error: {e}")
+        db.session.rollback()
+        print(f"Error in Results: {e}")
 
     return render_template('results.html', 
-                           score=score, total=total, accuracy=accuracy, 
+                           score=score, 
+                           total=total, 
+                           accuracy=accuracy, 
                            user_answers=user_answers, 
-                           is_guest=session.get('is_guest'),
-                           clean_topic=clean_topic, # Naya variable
+                           is_guest=is_guest,
+                           clean_topic=clean_topic,
                            history_labels=history_labels, 
                            history_scores=history_scores)
+    
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
 def download_report(res_id):
@@ -358,12 +377,20 @@ def download_report(res_id):
     return send_file(buffer, as_attachment=True, download_name=f"Report_{res.id}.pdf")
 
 @routes_bp.route('/library')
+@login_required # Ye zaroori hai taaki anonymous user crash na kare
 def library():
+    # 1. Guest check
     if session.get('is_guest'):
-        flash("Library is only for registered users!", "info")
+        flash("Library is only for registered users to track progress! 🚀", "info")
         return redirect(url_for('routes.signup'))
-    questions = Question.query.filter_by(user_id=current_user.id).order_by(Question.id.desc()).limit(20).all()
-    return render_template('library.html', questions=questions)
+    
+    # 2. Quiz results nikaalein (Sahi table use kar rahe hain ab)
+    # Hum Score, Topic aur Date dikhayenge
+    user_quizzes = QuizResult.query.filter_by(user_id=current_user.id)\
+                                   .order_by(QuizResult.timestamp.desc())\
+                                   .all()
+    
+    return render_template('library.html', quizzes=user_quizzes)
 
 @routes_bp.route('/review-mistakes')
 @login_required
