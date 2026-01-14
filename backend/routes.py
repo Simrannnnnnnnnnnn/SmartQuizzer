@@ -293,7 +293,7 @@ def results():
     accuracy = (score / total * 100) if total > 0 else 0
     
     # YouTube/Books ke liye topic clean karna
-    raw_topic = session.get('quiz_topic', 'General')
+    raw_topic = session.get('quiz_topic', 'General Study')
     clean_topic = raw_topic.replace(' ', '+')
     
     history_labels = []
@@ -355,6 +355,8 @@ def results():
                            accuracy=accuracy, 
                            user_answers=user_answers, 
                            is_guest=is_guest,
+                           search_query=clean_search_query, 
+                           display_topic=raw_topic,
                            clean_topic=clean_topic,
                            history_labels=history_labels, 
                            history_scores=history_scores)
