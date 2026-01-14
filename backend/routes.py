@@ -284,6 +284,7 @@ def submit_answer(q_id):
 # ==========================================
 # RESULTS, REPORTS & LIBRARY
 # ==========================================
+from datetime import datetime, timedelta
 
 @routes_bp.route('/results')
 def results():
@@ -292,31 +293,53 @@ def results():
     total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
     
+    # Topic ko clean karo YouTube ke liye (e.g., "python data types")
+    raw_topic = session.get('quiz_topic', 'General')
+    clean_topic = raw_topic.replace(' ', '+') 
+    
     history_labels = []
     history_scores = []
     
     try:
         if not session.get('is_guest') and current_user.is_authenticated:
-            # Result save karo
+            # 1. Result save karo
             new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
             db.session.add(new_res)
-            db.session.commit()
             
-            # Chart data (Safe way)
+            # 2. STREAK LOGIC FIX
+            today = datetime.utcnow().date()
+            # Pichla result check karo (aaj ke naye result se pehle wala)
+            last_res = QuizResult.query.filter_by(user_id=current_user.id)\
+                                     .order_by(QuizResult.timestamp.desc()).first()
+            
+            if last_res:
+                last_date = last_res.timestamp.date()
+                if last_date == today - timedelta(days=1):
+                    current_user.streak += 1 # Kal quiz diya tha, streak badhao
+                elif last_date < today - timedelta(days=1):
+                    current_user.streak = 1  # Gap ho gaya, reset to 1
+            else:
+                current_user.streak = 1 # Pehla quiz
+            
+            db.session.commit() # Save everything
+            
+            # 3. Chart data fetch
             results_query = QuizResult.query.filter_by(user_id=current_user.id).all()
             for r in results_query[-5:]:
-                # Yahan attribute check karlo manually
                 d = getattr(r, 'timestamp', getattr(r, 'date_created', None))
                 if d:
                     history_labels.append(d.strftime("%d %b"))
                     history_scores.append(r.score)
     except Exception as e:
-        print(f"Chart Error: {e}") # App crash nahi hoga!
+        print(f"Error: {e}")
 
-    return render_template('results.html', score=score, total=total, accuracy=accuracy, 
-                           user_answers=user_answers, is_guest=session.get('is_guest'),
-                           history_labels=history_labels, history_scores=history_scores)
-
+    return render_template('results.html', 
+                           score=score, total=total, accuracy=accuracy, 
+                           user_answers=user_answers, 
+                           is_guest=session.get('is_guest'),
+                           clean_topic=clean_topic, # Naya variable
+                           history_labels=history_labels, 
+                           history_scores=history_scores)
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
 def download_report(res_id):
