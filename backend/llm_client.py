@@ -10,7 +10,6 @@ class LLMClient:
         self.POWER_MODEL = "llama-3.3-70b-versatile"  
 
     def _safe_request(self, func, *args, **kwargs):
-        
         max_retries = 3
         retry_delay = 2  
         for attempt in range(max_retries):
@@ -37,18 +36,28 @@ class LLMClient:
         except Exception:
             return "AI can process data millions of times faster than a human brain!"
 
-    # llm_client.py ke andar LLMClient class mein ye add karein:
+    # FIXED INDENTATION HERE
     def get_random_tech_fact(self):
         try:
-            prompt = "Give me one interesting, short, and surprising technology or AI fact in one sentence."
-        # Aapka jo bhi model calling logic hai (Groq/OpenAI)
             response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile", # Ya aapka preferred model
-                messages=[{"role": "user", "content": prompt}]
-        )
+                model=self.POWER_MODEL,
+                messages=[{"role": "user", "content": "Tell me one amazing tech fact in one short sentence."}]
+            )
             return response.choices[0].message.content
-        except Exception as e:
-            return "AI is amazing at helping you study!" # Fallback fact
+        except Exception:
+            return "AI is making learning 10x faster!"
+
+    def get_topic_from_content(self, text):
+        try:
+            # Added "Direct answer only" to stop AI from talking too much
+            prompt = f"Identify the main subject of this text. Return ONLY the topic name in 2-3 words. No extra text: {text}"
+            response = self.client.chat.completions.create(
+                model=self.POWER_MODEL,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.choices[0].message.content.strip().replace('"', '').replace('Topic:', '')
+        except Exception:
+            return "Study Material"
     
     def generate_questions(self, content, count, quiz_format='mcq'):
         if not content: return []
@@ -83,7 +92,6 @@ class LLMClient:
             return []
 
     def deep_dive(self, text):
-        """Sophisticated academic breakdown of the concept."""
         prompt = (
             f"Provide a sophisticated, deep-dive analysis of: {text}. "
             "Focus on core principles and technical applications. Professional tone."
@@ -115,26 +123,22 @@ class LLMClient:
             return json.loads(response.choices[0].message.content)
         except Exception:
             return {"shorthand_notes": ["Error loading notes."], "detailed_revision": "", "mnemonic_story": "", "flashcards": []}
+
     def generate_performance_insight(self, mistakes_list, topic):
-       
         if not mistakes_list:
-            return f"Outstanding! You have mastered {topic}. Try a harder level or a related subject to keep the momentum going! 🚀"
+            return f"Outstanding! You have mastered {topic}. Try a harder level or a related subject! 🚀"
 
         mistake_context = "\n".join([f"- {m['question']}" for m in mistakes_list[:3]]) 
         
         prompt = f"""
         User just took a quiz on '{topic}'.
-        They struggled with these specific questions:
+        They struggled with these questions:
         {mistake_context}
         
-        Provide a 2-line encouraging advice. 
-        1st line: Identify the weak sub-topic based on these questions.
-        2nd line: Give a specific actionable tip to improve.
-        Keep it friendly, concise, and professional.
+        1st line: Identify weak sub-topic.
+        2nd line: Actionable tip to improve.
         """
-        
         try:
-          
             completion = self._safe_request(
                 self.client.chat.completions.create,
                 messages=[{"role": "user", "content": prompt}],
@@ -143,6 +147,5 @@ class LLMClient:
                 timeout=15.0
             )
             return completion.choices[0].message.content
-        except Exception as e:
-            print(f"Insight Error: {e}")
+        except Exception:
             return f"Keep practicing {topic}! Review your mistakes to strengthen your core concepts."
