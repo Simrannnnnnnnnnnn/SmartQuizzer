@@ -82,8 +82,10 @@ def dashboard():
     total_q = sum([r.total_questions for r in results_list]) if results_list else 0
     user_streak = getattr(current_user, 'streak_count', 0) or 0
     
-    # AI Fact integration
-    ai_fact = llm.get_random_tech_fact()
+    try:
+        ai_fact = llm.get_random_tech_fact()
+    except AttributeError:
+        ai_fact = "Did you know? AI can help you identify your study patterns!" # Static text if method missing
     
     return render_template('dashboard.html', 
                            fun_fact=llm.get_fun_fact(),
