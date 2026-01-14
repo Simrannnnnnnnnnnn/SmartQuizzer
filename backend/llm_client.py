@@ -10,7 +10,7 @@ class LLMClient:
         self.POWER_MODEL = "llama-3.3-70b-versatile"  
 
     def _safe_request(self, func, *args, **kwargs):
-        """AI Busy error handles karne ke liye auto-retry logic."""
+        
         max_retries = 3
         retry_delay = 2  
         for attempt in range(max_retries):
@@ -102,3 +102,34 @@ class LLMClient:
             return json.loads(response.choices[0].message.content)
         except Exception:
             return {"shorthand_notes": ["Error loading notes."], "detailed_revision": "", "mnemonic_story": "", "flashcards": []}
+    def generate_performance_insight(self, mistakes_list, topic):
+       
+        if not mistakes_list:
+            return f"Outstanding! You have mastered {topic}. Try a harder level or a related subject to keep the momentum going! 🚀"
+
+        mistake_context = "\n".join([f"- {m['question']}" for m in mistakes_list[:3]]) 
+        
+        prompt = f"""
+        User just took a quiz on '{topic}'.
+        They struggled with these specific questions:
+        {mistake_context}
+        
+        Provide a 2-line encouraging advice. 
+        1st line: Identify the weak sub-topic based on these questions.
+        2nd line: Give a specific actionable tip to improve.
+        Keep it friendly, concise, and professional.
+        """
+        
+        try:
+          
+            completion = self._safe_request(
+                self.client.chat.completions.create,
+                messages=[{"role": "user", "content": prompt}],
+                model=self.FAST_MODEL,
+                temperature=0.7,
+                timeout=15.0
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            print(f"Insight Error: {e}")
+            return f"Keep practicing {topic}! Review your mistakes to strengthen your core concepts."
