@@ -287,26 +287,35 @@ def submit_answer(q_id):
 
 @routes_bp.route('/results')
 def results():
-    if not is_allowed(): return redirect(url_for('routes.login'))
     score = session.get('score', 0)
     user_answers = session.get('user_answers', [])
     total = len(user_answers)
     accuracy = (score / total * 100) if total > 0 else 0
+    
     history_labels = []
     history_scores = []
-    if not session.get('is_guest'):
-        new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
-        db.session.add(new_res)
-        current_user.streak_count = (current_user.streak_count or 0) + 1
-        db.session.commit()
-        past_results = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.desc()).limit(5).all()
-        # Data ko seedha order mein karo (Oldest to Newest)
-        past_results.reverse()
-        history_labels = [r.timestamp.strftime("%d %b") for r in past_results]
-        history_scores = [r.score for r in past_results]
+    
+    try:
+        if not session.get('is_guest') and current_user.is_authenticated:
+            # Result save karo
+            new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
+            db.session.add(new_res)
+            db.session.commit()
+            
+            # Chart data (Safe way)
+            results_query = QuizResult.query.filter_by(user_id=current_user.id).all()
+            for r in results_query[-5:]:
+                # Yahan attribute check karlo manually
+                d = getattr(r, 'timestamp', getattr(r, 'date_created', None))
+                if d:
+                    history_labels.append(d.strftime("%d %b"))
+                    history_scores.append(r.score)
+    except Exception as e:
+        print(f"Chart Error: {e}") # App crash nahi hoga!
+
     return render_template('results.html', score=score, total=total, accuracy=accuracy, 
-                           user_answers=user_answers, is_guest=session.get('is_guest'),history_labels=history_labels, 
-                           history_scores=history_scores)
+                           user_answers=user_answers, is_guest=session.get('is_guest'),
+                           history_labels=history_labels, history_scores=history_scores)
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
