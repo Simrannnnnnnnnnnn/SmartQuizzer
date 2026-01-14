@@ -33,7 +33,8 @@ class QuizResult(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
     total_questions = db.Column(db.Integer, nullable=False)
-    date_taken = db.Column(db.DateTime, default=datetime.utcnow)
+    topic = db.Column(db.String(200)) # Ye column missing hai shayad
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 class MistakeBank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
