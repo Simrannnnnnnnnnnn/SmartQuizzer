@@ -19,6 +19,45 @@
                 </div>
             </div>
 
+            <div class="row mb-5">
+                <div class="col-12">
+                    <div class="p-4 rounded-4 border-0 shadow-sm" style="background: #f8f9fa; border: 1px dashed #dee2e6 !important;">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-dark text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <h5 class="fw-bold m-0">Personalized Improvement Plan</h5>
+                        </div>
+                        <p class="text-muted small mb-4">Based on your performance in <strong>{{ session.get('quiz_topic', 'General') }}</strong>, here is how you can improve:</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <a href="https://www.youtube.com/results?search_query={{ session.get('quiz_topic') }}+tutorial" target="_blank" class="text-decoration-none">
+                                    <div class="p-3 rounded-4 bg-white border h-100 d-flex align-items-center transition-all hover-shadow">
+                                        <i class="fa-brands fa-youtube text-danger fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">Watch Video Lessons</h6>
+                                            <small class="text-muted">Top tutorials for {{ session.get('quiz_topic') }}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="https://www.google.com/search?q={{ session.get('quiz_topic') }}+best+books+pdf" target="_blank" class="text-decoration-none">
+                                    <div class="p-3 rounded-4 bg-white border h-100 d-flex align-items-center transition-all hover-shadow">
+                                        <i class="fa-solid fa-book-open text-primary fs-3 me-3"></i>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">Recommended Reading</h6>
+                                            <small class="text-muted">Explore deep dive books & notes</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="row g-4 mb-5">
                 <div class="col-lg-4">
                     <div class="p-4 rounded-4 text-center h-100 d-flex flex-column justify-content-center border-0" 
@@ -42,7 +81,11 @@
                         </div>
                         <h5 class="fw-bold mb-3"><i class="fa-solid fa-robot me-2 text-warning"></i>AI Learning Insight</h5>
                         <p class="lead mb-4 fw-medium" style="font-size: 1.1rem; color: #555; position: relative; z-index: 1;">
-                            {{ recommendation or "Keep practicing to unlock personalized learning paths and deep topic analysis!" }}
+                            {% if accuracy < 50 %}
+                                It seems you're struggling with {{ session.get('quiz_topic') }}. Try the "Watch Video" resource above to strengthen your basics!
+                            {% else %}
+                                {{ recommendation or "Great job! You have a solid grasp. Use the Recommended Reading to master advanced concepts." }}
+                            {% endif %}
                         </p>
                         <div class="d-flex gap-2 position-relative" style="z-index: 1;">
                             <span class="badge bg-dark rounded-pill px-3 py-2">Mode: {{ session.get('quiz_goal', 'Standard').upper() }}</span>
@@ -54,14 +97,14 @@
 
             <div class="row g-4 mb-5">
                 <div class="col-md-6">
-                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm">
-                        <h6 class="text-center fw-bold text-muted mb-3 small">SCORE VS TOTAL</h6>
+                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm text-center">
+                        <h6 class="fw-bold text-muted mb-3 small text-uppercase">Score Distribution</h6>
                         <canvas id="scoreBar" style="max-height: 250px;"></canvas>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm">
-                        <h6 class="text-center fw-bold text-muted mb-3 small">ACCURACY TREND (LAST 10)</h6>
+                    <div class="p-3 border-0 rounded-4 bg-light shadow-sm text-center">
+                        <h6 class="fw-bold text-muted mb-3 small text-uppercase">Accuracy Trend</h6>
                         <canvas id="progressLine" style="max-height: 250px;"></canvas>
                     </div>
                 </div>
@@ -77,36 +120,29 @@
                              style="min-width: 65px; background: {% if item.is_correct %}#2ecc71{% else %}#ff7675{% endif %};">
                             <h4 class="m-0 fw-bold text-white">{{ loop.index }}</h4>
                         </div>
-                        
                         <div class="card-body p-4">
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <h5 class="fw-bold pe-3" style="color: #333;">{{ item.question }}</h5>
-                                {% if item.is_correct %}
-                                <span class="badge rounded-pill bg-success-subtle text-success border-success border px-3">Correct</span>
-                                {% else %}
-                                <span class="badge rounded-pill bg-danger-subtle text-danger border-danger border px-3">Incorrect</span>
-                                {% endif %}
+                                <span class="badge rounded-pill {% if item.is_correct %}bg-success-subtle text-success border-success{% else %}bg-danger-subtle text-danger border-danger{% endif %} border px-3">
+                                    {{ 'Correct' if item.is_correct else 'Incorrect' }}
+                                </span>
                             </div>
-                            
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <p class="mb-1 text-muted small fw-bold">YOUR ANSWER</p>
-                                    <div class="p-3 rounded-3 fw-bold" 
-                                         style="background: {% if item.is_correct %}#f0fff4{% else %}#fff5f5{% endif %}; 
-                                                color: {% if item.is_correct %}#27ae60{% else %}#e74c3c{% endif %};">
+                                    <div class="p-3 rounded-3 fw-bold" style="background: {% if item.is_correct %}#f0fff4{% else %}#fff5f5{% endif %}; color: {% if item.is_correct %}#27ae60{% else %}#e74c3c{% endif %};">
                                         {{ item.user_ans or "No response" }}
                                     </div>
                                 </div>
                                 {% if not item.is_correct %}
                                 <div class="col-md-6">
                                     <p class="mb-1 text-muted small fw-bold">CORRECT ANSWER</p>
-                                    <div class="p-3 rounded-3 bg-light text-dark fw-bold border border-light">
+                                    <div class="p-3 rounded-3 bg-light text-dark fw-bold border">
                                         {{ item.correct_ans }}
                                     </div>
                                 </div>
                                 {% endif %}
                             </div>
-
                             <div class="mt-4 p-3 rounded-4" style="background: #fffcf0; border-left: 5px solid #ffcc00;">
                                 <p class="mb-0 fs-6" style="color: #666;">
                                     <i class="fas fa-lightbulb me-2 text-warning"></i>
@@ -124,7 +160,6 @@
 
 <style>
     body { background-color: #fffdf5 !important; }
-    
     .sunshine-main-btn {
         background: linear-gradient(45deg, #ffcc00, #ffb800) !important;
         color: white !important;
@@ -133,17 +168,14 @@
         transition: 0.3s;
         box-shadow: 0 4px 15px rgba(255, 184, 0, 0.2);
     }
-    
-    .sunshine-main-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 184, 0, 0.3);
-        color: white;
+    .sunshine-main-btn:hover { transform: translateY(-2px); color: white; }
+    .hover-shadow:hover { 
+        transform: translateY(-3px); 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #ffcc00 !important;
     }
-
     .bg-success-subtle { background-color: #e8f5e9 !important; }
     .bg-danger-subtle { background-color: #ffebee !important; }
-    
-    /* Charts Customization */
     canvas { filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.02)); }
 </style>
 
@@ -163,12 +195,7 @@
                 borderWidth: 0
             }]
         },
-        options: { 
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } }, 
-            cutout: '80%' 
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '80%' }
     });
 
     // 2. Score Bar
@@ -183,13 +210,7 @@
                 barThickness: 30
             }]
         },
-        options: { 
-            plugins: { legend: { display: false } },
-            scales: { 
-                y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } },
-                x: { grid: { display: false } }
-            }
-        }
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } }, x: { grid: { display: false } } } }
     });
 
     // 3. Learning Progress Line Chart
@@ -201,20 +222,10 @@
                 data: {{ (history_scores or []) | tojson }},
                 borderColor: primaryGold,
                 backgroundColor: 'rgba(255, 204, 0, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 5,
-                pointBackgroundColor: primaryGold,
-                borderWidth: 3
+                tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: primaryGold, borderWidth: 3
             }]
         },
-        options: {
-            plugins: { legend: { display: false } },
-            scales: { 
-                y: { min: 0, max: 100, grid: { color: '#f8f9fa' } },
-                x: { grid: { display: false } }
-            }
-        }
+        options: { plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, grid: { color: '#f8f9fa' } }, x: { grid: { display: false } } } }
     });
 </script>
 {% endblock %}
