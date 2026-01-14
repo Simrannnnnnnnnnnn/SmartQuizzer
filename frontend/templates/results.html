@@ -115,7 +115,6 @@
         </div>
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const primaryGold = '#FFCC00';
@@ -125,7 +124,7 @@
         type: 'doughnut',
         data: {
             datasets: [{
-                data: [{{ score }}, {{ total - score }}],
+                data: [{{ score|default(0) }}, {{ (total - score)|default(0) }}],
                 backgroundColor: [primaryGold, '#dee2e6'],
                 borderWidth: 0
             }]
@@ -140,29 +139,41 @@
             labels: ['Correct', 'Incorrect', 'Total'],
             datasets: [{
                 label: 'Questions',
-                data: [{{ score }}, {{ total - score }}, {{ total }}],
+                data: [{{ score|default(0) }}, {{ (total - score)|default(0) }}, {{ total|default(0) }}],
                 backgroundColor: [primaryGold, '#ff7675', '#2d3436'],
                 borderRadius: 8
             }]
         },
-        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } }, 
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } 
+        }
     });
 
-    // 3. Progress Line
+    // 3. Progress Line (Added safety for empty history)
+    const labels = {{ (history_labels if history_labels else []) | tojson }};
+    const scores = {{ (history_scores if history_scores else []) | tojson }};
+
     new Chart(document.getElementById('progressLine'), {
         type: 'line',
         data: {
-            labels: {{ history_labels | tojson }},
+            labels: labels.length > 0 ? labels : ['No Data'],
             datasets: [{
-                label: 'Accuracy %',
-                data: {{ history_scores | tojson }},
+                label: 'Score History',
+                data: scores.length > 0 ? scores : [0],
                 borderColor: primaryGold,
                 backgroundColor: 'rgba(255, 204, 0, 0.1)',
                 fill: true,
-                tension: 0.4
+                tension: 0.4,
+                pointRadius: 5
             }]
         },
-        options: { scales: { y: { min: 0, max: 100 } } }
+        options: { 
+            responsive: true,
+            scales: { y: { min: 0, max: Math.max(...scores, 10) + 2 } } 
+        }
     });
 </script>
 {% endblock %}
