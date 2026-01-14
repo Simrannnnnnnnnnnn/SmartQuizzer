@@ -223,6 +223,8 @@ def handle_generation():
 @login_required
 def quiz_page(q_id):
     question = Question.query.get_or_404(q_id)
+    quiz_goal = session.get('quiz_goal','quiz')
+    
     try:
         options = json.loads(question.options_json)
     except:
@@ -231,6 +233,7 @@ def quiz_page(q_id):
     return render_template('quiz.html', 
                            question=question, 
                            options=options,
+                           quiz_goal = quiz_goal,
                            current_num=session.get('current_idx', 0) + 1, 
                            total_num=len(session.get('active_questions', [])))
 
@@ -246,20 +249,22 @@ def submit_answer(q_id):
         'question': question.question_text,
         'user_ans': user_ans,
         'correct_ans': question.correct_answer,
-        'is_correct': is_correct
+        'is_correct': is_correct,
+        'explanation':question.explanation
     })
     session['user_answers'] = ans_list
     if is_correct:
         session['score'] = session.get('score', 0) + 1
     session.modified = True
-
+    quiz_mode = session.get('quiz_goal', 'quiz').lower()
     if not is_correct:
         mistake = MistakeBank(
             user_id=current_user.id, 
             question_text=question.question_text, 
             correct_answer=question.correct_answer, 
             options_json=question.options_json,
-            topic=session.get('quiz_topic', 'General')
+            topic=session.get('quiz_topic', 'General'),
+            explanation=question.explanation
         )
         db.session.add(mistake)
         db.session.commit()
@@ -276,18 +281,22 @@ def submit_answer(q_id):
 def results():
     score = session.get('score', 0)
     questions = session.get('active_questions', [])
+    user_answers = session.get('user_answers', [])
+    topic = session.get('quiz_topic', 'General')
     total = len(questions)
     accuracy = (score / total * 100) if total > 0 else 0
-    
+    mistakes_only = [ans for ans in user_answers if not ans['is_correct']]
+    ai_recommendation = llm.generate_performance_insight(mistakes_only, topic)
     try:
-        new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
-        db.session.add(new_res)
-        current_user.streak_count = (current_user.streak_count or 0) + 1
-        db.session.commit()
+        if session.get('quiz_goal') == 'quiz':
+            new_res = QuizResult(user_id=current_user.id, score=score, total_questions=total)
+            db.session.add(new_res)
+            current_user.streak_count = (current_user.streak_count or 0) + 1
+            db.session.commit()
     except:
         db.session.rollback()
 
-    return render_template('results.html', score=score, total=total, accuracy=accuracy)
+    return render_template('results.html', score=score, total=total, accuracy=accuracy,user_answers=user_answers,recommendation=ai_recommendation)
 
 @routes_bp.route('/download_report/<int:res_id>')
 @login_required
@@ -318,21 +327,16 @@ def library():
 @login_required
 def review_mistakes():
     try:
-        # User ki saari mistakes fetch karo
         raw_mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
         
         processed_mistakes = []
         for m in raw_mistakes:
-            # 🛠️ Fix: Corrupt JSON options ko handle karne ke liye logic
+        
             try:
-                if m.options_json:
-                    # Agar single quotes ya invalid format ho toh usse handle karega
-                    opts = json.loads(m.options_json)
-                else:
-                    opts = {}
-            except (ValueError, TypeError):
-                # Fallback agar JSON load na ho sake
-                opts = {"Info": "Options format error - Check Database"}
+                opts = json.loads(m.options_json) if m.options_json else {}
+            except:
+                opts = {"Error": "Format mismatch"}
+               
             
             processed_mistakes.append({
                 "id": m.id,
@@ -340,7 +344,8 @@ def review_mistakes():
                 "correct_answer": m.correct_answer,
                 "options": opts,
                 "topic": m.topic,
-                "timestamp": m.id # Ya created_at agar model mein hai
+                "explanation": getattr(m, 'explanation', 'Check the core concept.')
+                
             })
             
         return render_template('review.html', mistakes=processed_mistakes)
