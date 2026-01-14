@@ -155,11 +155,9 @@ def extend_concept():
 # ==========================================
 # QUIZ LOGIC (FIXED IDENTATION)
 # ==========================================
-
 @routes_bp.route('/handle_generation', methods=['POST', 'GET'])
 @login_required
 def handle_generation():
-    # Priority: URL args (for Review) then Form
     mode = request.args.get('quiz_goal') or request.form.get('quiz_goal') or 'quiz'
     session['quiz_goal'] = mode
     
@@ -196,17 +194,25 @@ def handle_generation():
             if source_type == 'pdf':
                 file = request.files.get('pdf_file')
                 content = extract_text_from_pdf(file) if file else ""
-                mastery_label = 'PDF Review'
             elif source_type == 'text':
                 content = request.form.get('raw_text')
-                mastery_label = 'Text Review'
             else:
                 content = request.form.get('topic_name')
-                mastery_label = 'Topic Review'
+                mastery_label = content # Topic mode mein user khud topic likhta hai
 
             if not content:
                 flash("Write something to generate questions!", "warning")
                 return redirect(url_for('routes.dashboard'))
+
+            # --- DYNAMIC TOPIC EXTRACTION START ---
+            # Agar PDF ya Text hai, toh AI se actual topic name nikalwao
+            if not mastery_label:
+                try:
+                    # Content ke shuruat ke 1000 characters bhej rahe hain topic pehchanne ke liye
+                    mastery_label = llm.get_topic_from_content(content[:1000])
+                except:
+                    mastery_label = "General Study"
+            # --- DYNAMIC TOPIC EXTRACTION END ---
 
             raw_qs = llm.generate_questions(content, count, quiz_format=quiz_format)
             for q_data in raw_qs:
@@ -223,15 +229,18 @@ def handle_generation():
 
         db.session.commit()
         session.update({
-            'active_questions': q_ids, 'current_idx': 0, 'score': 0, 
-            'quiz_topic': mastery_label, 'user_answers': []
+            'active_questions': q_ids, 
+            'current_idx': 0, 
+            'score': 0, 
+            'quiz_topic': mastery_label, # Ab yahan real topic jayega (e.g., "Organic Chemistry")
+            'user_answers': []
         })
         session.modified = True
         return redirect(url_for('routes.quiz_page', q_id=q_ids[0]))
 
     except Exception as e:
         db.session.rollback()
-        flash(f"Error: AI is currently busy. Try again later!", "danger")
+        flash(f"Error: {str(e)}", "danger")
         return redirect(url_for('routes.dashboard'))
 
 # ==========================================
