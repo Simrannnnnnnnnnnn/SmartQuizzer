@@ -18,7 +18,7 @@
             <i class="fa-solid fa-circle-check text-success display-1 opacity-25"></i>
         </div>
         <h3 class="fw-bold text-muted">No Mistakes Found!</h3>
-        <p class="text-muted">You're doing great. Keep practicing to maintain your streak!</p>
+        <p class="text-muted">You're doing great!</p>
         <a href="{{ url_for('routes.study_hub') }}" class="btn btn-warning rounded-pill px-5 fw-bold mt-3">Start Learning</a>
     </div>
     {% else %}
@@ -38,28 +38,28 @@
                 <div class="options-grid mb-4">
                     {% if m.options %}
                         {% for key, val in m.options.items() %}
-                        <div class="p-3 rounded-4 mb-2 border d-flex align-items-center {% if key == m.correct_answer %}bg-success bg-opacity-10 border-success{% else %}bg-light opacity-75{% endif %}">
-                            <span class="fw-bold me-3 text-uppercase" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 1px solid #ddd; font-size: 0.8rem;">
+                        <div class="p-3 rounded-4 mb-2 border d-flex align-items-center {% if key == m.correct_answer %}bg-success bg-opacity-10 border-success text-success fw-bold{% else %}bg-light opacity-75{% endif %}">
+                            <span class="fw-bold me-3 text-uppercase" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 1px solid #ddd; font-size: 0.8rem; color: #333;">
                                 {{ key }}
                             </span>
-                            <span class="{% if key == m.correct_answer %}text-success fw-bold{% endif %}">{{ val }}</span>
+                            <span>{{ val }}</span>
                             {% if key == m.correct_answer %}
                                 <i class="fa-solid fa-check-circle ms-auto text-success"></i>
                             {% endif %}
                         </div>
                         {% endfor %}
-                    {% else %}
-                        <p class="text-muted italic">Options data not available for this question.</p>
                     {% endif %}
                 </div>
 
-                <div class="p-3 rounded-4 bg-dark text-white d-flex align-items-center">
-                    <div class="icon-circle bg-warning text-dark me-3" style="width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-key fs-6"></i>
-                    </div>
-                    <div>
-                        <small class="d-block text-white-50 fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">CORRECT KEY</small>
-                        <span class="fw-bold text-warning">Option {{ m.correct_answer }}</span>
+                <div class="mt-3">
+                    <button class="btn btn-sm rounded-pill border-warning text-dark fw-bold bg-warning bg-opacity-10 w-100 py-2" 
+                            onclick="toggleExpl('expl-{{ m.id }}', this)">
+                        <i class="fa-solid fa-lightbulb me-2"></i> Why did I get this wrong?
+                    </button>
+                    <div id="expl-{{ m.id }}" class="d-none mt-3 p-3 rounded-4 bg-light border-start border-warning border-4 animate__animated animate__fadeIn">
+                        <p class="small mb-0 text-dark" style="line-height: 1.6;">
+                            <strong>AI Explanation:</strong> {{ m.explanation or "This topic focuses on core principles. Understanding the 'why' helps in long-term retention." }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -69,15 +69,20 @@
     {% endif %}
 </div>
 
+<script>
+    function toggleExpl(id, btn) {
+        const div = document.getElementById(id);
+        div.classList.toggle('d-none');
+        btn.classList.toggle('shadow-sm');
+    }
+</script>
+
 <style>
     :root { --primary-gold: #FFB300; }
     .glass-card:hover { 
         transform: translateY(-5px); 
         border-color: var(--primary-gold) !important; 
         box-shadow: 0 10px 30px rgba(255, 179, 0, 0.1) !important;
-    }
-    .options-grid .p-3 {
-        transition: 0.3s;
     }
 </style>
 {% endblock %}
