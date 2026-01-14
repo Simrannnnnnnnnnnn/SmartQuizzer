@@ -37,6 +37,19 @@ class LLMClient:
         except Exception:
             return "AI can process data millions of times faster than a human brain!"
 
+    # llm_client.py ke andar LLMClient class mein ye add karein:
+    def get_random_tech_fact(self):
+        try:
+            prompt = "Give me one interesting, short, and surprising technology or AI fact in one sentence."
+        # Aapka jo bhi model calling logic hai (Groq/OpenAI)
+            response = self.client.chat.completions.create(
+                model="llama-3.3-70b-versatile", # Ya aapka preferred model
+                messages=[{"role": "user", "content": prompt}]
+        )
+            return response.choices[0].message.content
+        except Exception as e:
+            return "AI is amazing at helping you study!" # Fallback fact
+    
     def generate_questions(self, content, count, quiz_format='mcq'):
         if not content: return []
         
