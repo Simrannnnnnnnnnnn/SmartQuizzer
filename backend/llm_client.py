@@ -92,21 +92,21 @@ class LLMClient:
             return []
     def get_mixed_cases(self, content):
     system_prompt = (
-        "You are a strict academic expert. Output ONLY a valid JSON list of objects. "
-        "Each object must represent either a 'Case Study Scenario' or a 'Give Reason' question. "
-        "STRICT STRUCTURE: "
-        "For Case Studies: {'type': 'case', 'scenario': '...', 'question': '...', 'answer': '...', 'key_points': ['word1', 'word2']} "
-        "For Direct Reasoning: {'type': 'reason', 'question': '...', 'answer': '...', 'key_points': ['word1', 'word2']} "
-        "Ensure the 'answer' is a logical explanation and 'key_points' are essential technical terms."
+        "You are an expert educator. Output ONLY valid JSON."
+        "The root must be an object with a key 'cases' containing a list." # Object wrap zaroori hai
+        "Create a mix of 'case' type (scenario based) and 'reason' type (logical explanation) questions."
+        "JSON Structure: "
+        "{"
+        "  \"cases\": ["
+        "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
+        "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
+        "  ]"
+        "}"
     )
-    
-    # Ye hai tera specific style wala instruction
+    # Tera requested style: Scenario + 2 Give Reason questions
     user_prompt = (
-        f"Based on this content: {content[:3000]}\n\n"
-        "TASK: Generate a mix of:\n"
-        "1. A real-world case study scenario followed by a logical question.\n"
-        "2. Two 'Give Reason' type questions that test deep conceptual understanding.\n"
-        "Provide correct answers with logical reasoning for all."
+        f"Generate 3-4 mixed conceptual questions based on this content: {content[:3000]}\n"
+        "Include 1 detailed Case Study Scenario and at least 2 'Give Reason' questions."
     )
     
     try:
@@ -117,14 +117,11 @@ class LLMClient:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            # Note: response_format 'json_object' expects a JSON object {}, 
-            # but since we want a list [], we handle it carefully.
-            response_format={"type": "json_object"} 
+            response_format={"type": "json_object"} # Ab ye safe hai kyunki humne wrapper diya hai
         )
         return completion.choices[0].message.content
     except Exception as e:
-        print(f"LLM Error: {e}")
-        return "[]" # Return empty list string to prevent crash
+        return f"Error: {str(e)}"
             
     def deep_dive(self, text):
         prompt = (
