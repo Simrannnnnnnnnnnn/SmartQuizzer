@@ -175,20 +175,34 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-        
+
 @routes_bp.route('/generate-case-study', methods=['POST'])
 def generate_case_study():
-    if not is_allowed(): 
-        return jsonify({"error": "Login required"}), 401
+    source_type = request.form.get('source_type')
+    content = ""
+
+    # 1. Extraction logic
+    if source_type == 'pdf':
+        file = request.files.get('pdf_file')
+        content = extract_text_from_pdf(file) # Tera existing function
+    elif source_type == 'topic':
+        content = request.form.get('topic_name')
+    else:
+        content = request.form.get('raw_text')
+
+    # 2. AI Call with the Master Prompt
+    # Hum AI ko bolenge ki wo JSON string de
+    raw_response = llm.get_mixed_cases(content) 
     
     try:
-        data = request.get_json()
-        topic = data.get('topic', 'General Science')
-        case_study_text = llm.generate_case_study(topic) 
-        return jsonify({"case_study": case_study_text})
+        start_idx = raw_response.find('[')
+        end_idx = raw_response.rfind(']') + 1
+        json_str = raw_response[start_idx:end_idx]
+        mixed_data = json.loads(json_str)
     except Exception as e:
-        print(f"Case Study Error:,{e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"JSON Error: {e}")
+        mixed_data = []
+    return render_template('case_study_mixed.html', cases=mixed_data)
         
 # ==========================================
 # QUIZ GENERATION ENGINE
