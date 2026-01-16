@@ -87,20 +87,22 @@ def dashboard():
 
     is_guest = session.get('is_guest', False)
     mastery_data = []
-    if is_guest:
-        mistake_count = 0
-        correct_total = 0
-        total_q = 0
-        user_streak = 0
-        username = "Guest"
-    else:
+    mistake_count = 0
+    correct_total = 0
+    total_q = 0
+    user_streak = 0
+    username = "Guest"
+
+    if not is_guest:
         username = current_user.username
+        # 2. Data fetch karein
         mistake_count = MistakeBank.query.filter_by(user_id=current_user.id).count()
         results_list = QuizResult.query.filter_by(user_id=current_user.id).all()
         correct_total = sum([r.score for r in results_list]) if results_list else 0
         total_q = sum([r.total_questions for r in results_list]) if results_list else 0
         user_streak = getattr(current_user, 'streak', 0)
-        mastery_data = TopicMastery.query.filter_by(user_id = current_user.id).all()
+        mastery_data = TopicMastery.query.filter_by(user_id=current_user.id).all()
+
     try:
         ai_fact = llm.get_random_tech_fact()
     except:
@@ -113,7 +115,7 @@ def dashboard():
                            correct_total=correct_total, 
                            incorrect_total=total_q - correct_total,
                            mistake_count=mistake_count,
-                           streak=user_streak,
+                           streak=user_streak, # <--- Ye variable HTML mein use hoga
                            ai_fact=ai_fact,
                            topic_mastery=mastery_data)
 
