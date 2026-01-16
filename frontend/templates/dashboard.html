@@ -114,12 +114,9 @@
                     {% for topic in topic_mastery %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between small fw-bold mb-1">
-                            <span class="text-truncate" style="max-width: 150px;">{{ topic.topic }}</span>
-                            {% set perc = (topic.correct_count / topic.total_count * 100)|round|int if topic.total_count > 0 else 0 %}
-                            <span style="color: #ff9900;">{{ perc }}%</span>
-                        </div>
+                            <span class="text-truncate" style="max-width: 150px;">{{ topic.topic }}</span> <span style="color: #ff9900;">{{ topic.percentage }}%</span> </div>
                         <div class="progress rounded-pill" style="height: 8px; background: #fff9db;">
-                            <div class="progress-bar" style="width: {{ perc }}%; background: linear-gradient(90deg, #ffcc00, #ff9900); border-radius: 50px;"></div>
+                            <div class="progress-bar" style="width: {{ topic.percentage }}%; background: linear-gradient(90deg, #ffcc00, #ff9900); border-radius: 50px;"></div>
                         </div>
                     </div>
                     {% endfor %}
