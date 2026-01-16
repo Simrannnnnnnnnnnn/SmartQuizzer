@@ -7,7 +7,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from dotenv import load_dotenv
 
-# App specific imports
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, db
 from backend.services import extract_text_from_pdf
 from backend.llm_client import LLMClient
@@ -99,7 +98,7 @@ def dashboard():
         results_list = QuizResult.query.filter_by(user_id=current_user.id).all()
         correct_total = sum([r.score for r in results_list]) if results_list else 0
         total_q = sum([r.total_questions for r in results_list]) if results_list else 0
-        user_streak = getattr(current_user, 'streak_count', 0) or 0
+        user_streak = getattr(current_user, 'streak', 0)
 
     try:
         ai_fact = llm.get_random_tech_fact()
@@ -138,7 +137,7 @@ def study_hub():
                 content = f"Summary for: {topic_name}"
 
             if not content:
-                flash("Bhai, pehle kuch content toh daalo!", "warning")
+                flash("add some context", "warning")
                 return redirect(url_for('routes.study_hub'))
 
             study_bundle = llm.generate_study_material(content)
