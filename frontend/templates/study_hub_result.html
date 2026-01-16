@@ -145,42 +145,66 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
     .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-2px); transition: 0.3s; }
 </style>
-
 <script>
+    // 1. Sidebar/Detail Toggle Logic
     function toggleDetail(element) {
         const card = element.closest('.note-interactive-card');
         const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.toggle('d-none');
     }
 
-    // NEW: Case Study Function
+    // 2. ✅ COMPLETE CASE STUDY LOGIC
     async function getCaseStudy(topic) {
         const box = document.getElementById('caseStudyBox');
         const content = document.getElementById('caseStudyContent');
         
+        // Show box and loading state
         box.style.display = 'block';
         box.scrollIntoView({ behavior: 'smooth' });
         content.innerHTML = `
             <div class="d-flex align-items-center p-3">
                 <div class="spinner-border text-info me-3"></div>
-                <span class="fw-bold">AI is generating a complex case study and "Give Reason" questions...</span>
+                <span class="fw-bold">AI is generating a complex case study for "${topic}"...</span>
             </div>`;
 
         try {
             const response = await fetch('/generate-case-study', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: topic })
+                body: JSON.stringify({ 
+                    topic: topic, 
+                    content_to_study: `{{ data.detailed_revision|e }}` // Sending full content to AI
+                })
             });
+
+            if (!response.ok) throw new Error('Network response was not ok');
+            
             const result = await response.json();
-            content.innerHTML = result.case_study;
+
+            if (result.success && result.case_study) {
+                // Formatting the result to handle line breaks properly
+                content.innerHTML = result.case_study;
+            } else {
+                throw new Error(result.error || 'Generation failed');
+            }
         } catch (e) {
-            content.innerHTML = `<div class="alert alert-danger">Failed to generate case study. Please try again.</div>`;
+            console.error("Case Study Error:", e);
+            content.innerHTML = `
+                <div class="alert alert-danger d-flex align-items-center rounded-4 shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation me-3 fs-4"></i>
+                    <div>
+                        <strong class="d-block">Generation Failed!</strong>
+                        <small>Check if your AI route is properly configured in routes.py and the content isn't too long.</small>
+                    </div>
+                </div>`;
         }
     }
 
+    // 3. ✅ COMPLETE DEEP DIVE LOGIC
     async function deepDive(btn, text) {
+        // Prevent parent click event
         if (window.event) window.event.stopPropagation();
+        
         const card = btn.closest('.note-interactive-card');
         const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.remove('d-none');
@@ -190,7 +214,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
         
         detailDiv.innerHTML = `
-            <div class="p-3 bg-light rounded-4 d-flex align-items-center border">
+            <div class="p-3 bg-light rounded-4 d-flex align-items-center border shadow-sm">
                 <div class="spinner-grow spinner-grow-sm text-primary me-3"></div>
                 <small class="fw-bold text-dark">AI is performing a professional Deep Dive...</small>
             </div>`;
@@ -201,19 +225,27 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ concept: text })
             });
+
+            if (!response.ok) throw new Error('Deep dive request failed');
+            
             const result = await response.json();
             
             detailDiv.innerHTML = `
                 <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border-left: 5px solid #0f172a; border: 1px solid #e2e8f0;">
-                    <strong class="d-block mb-2 text-dark"><i class="fa-solid fa-microchip me-2"></i>Advanced Technical Analysis:</strong>
-                    <p class="mb-0 text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</p>
+                    <strong class="d-block mb-2 text-dark">
+                        <i class="fa-solid fa-microchip me-2 text-primary"></i>Advanced Technical Analysis:
+                    </strong>
+                    <div class="text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</div>
                 </div>`;
         } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold">Deep Dive failed. Try again soon.</div>`;
+            console.error("Deep Dive Error:", e);
+            detailDiv.innerHTML = `
+                <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold border border-danger border-opacity-25">
+                    <i class="fa-solid fa-circle-xmark me-2"></i>Deep Dive failed. Try again soon.
+                </div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     }
 </script>
-{% endblock %}
