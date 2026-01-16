@@ -10,7 +10,8 @@
             </div>
             <div class="streak-badge p-2 px-4 rounded-pill shadow-sm bg-white border d-flex align-items-center animate__animated {% if current_user.streak > 0 %}animate__pulse animate__infinite{% endif %}">
                 <i class="fa-solid fa-fire text-danger fs-4 me-2"></i>
-                <span class="fw-bold fs-5" style="color: #333;">{{ current_user.streak }} Day Streak</span>
+                <span class="fw-bold fs-5" style="color: #333;">{{ streak }} Day Streak</span>
+                <h2 class="fw-bold mb-0 text-white">{{ streak }} Days</h2>
             </div>
         </div>
     </div>
@@ -113,7 +114,7 @@
                     {% for topic in topic_mastery %}
                     <div class="mb-3">
                         <div class="d-flex justify-content-between small fw-bold mb-1">
-                            <span class="text-truncate" style="max-width: 150px;">{{ topic.topic_name }}</span>
+                            <span class="text-truncate" style="max-width: 150px;">{{ topic.topic }}</span>
                             {% set perc = (topic.correct_count / topic.total_count * 100)|round|int if topic.total_count > 0 else 0 %}
                             <span style="color: #ff9900;">{{ perc }}%</span>
                         </div>
