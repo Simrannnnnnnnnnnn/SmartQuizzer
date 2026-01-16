@@ -198,7 +198,8 @@ def generate_case_study():
         start_idx = raw_response.find('[')
         end_idx = raw_response.rfind(']') + 1
         json_str = raw_response[start_idx:end_idx]
-        mixed_data = json.loads(json_str)
+        data_dict = json.loads(json_str)
+        mixed_data = data_dict.get('cases', [])
     except Exception as e:
         print(f"JSON Error: {e}")
         mixed_data = []
