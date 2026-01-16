@@ -1,5 +1,5 @@
 import json, os, io
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import or_
@@ -86,6 +86,7 @@ def dashboard():
         return redirect(url_for('routes.login'))
 
     is_guest = session.get('is_guest', False)
+    mastery_data = []
     if is_guest:
         mistake_count = 0
         correct_total = 0
@@ -99,7 +100,7 @@ def dashboard():
         correct_total = sum([r.score for r in results_list]) if results_list else 0
         total_q = sum([r.total_questions for r in results_list]) if results_list else 0
         user_streak = getattr(current_user, 'streak', 0)
-
+        mastery_data = TopicMastery.query.filter_by(user_id = current_user.id).all()
     try:
         ai_fact = llm.get_random_tech_fact()
     except:
@@ -113,7 +114,8 @@ def dashboard():
                            incorrect_total=total_q - correct_total,
                            mistake_count=mistake_count,
                            streak=user_streak,
-                           ai_fact=ai_fact)
+                           ai_fact=ai_fact,
+                           topic_mastery=mastery_data)
 
 # ==========================================
 # STUDY HUB & DEEP DIVE (AI TUTOR)
@@ -171,6 +173,7 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
 @routes_bp.route('/generate-case-study', methods=['POST'])
 def generate_case_study():
     if not is_allowed(): 
@@ -179,17 +182,10 @@ def generate_case_study():
     try:
         data = request.get_json()
         topic = data.get('topic', 'General Science')
-        
-        # AI se scenario aur 'Give Reason' questions mangwana
-        prompt = f"""Create a detailed real-world Case Study on '{topic}'. 
-        Format it as:
-        1. Scenario: (A detailed paragraph)
-        2. Questions: (3 'Give Reason' type questions based on the scenario)
-        3. Detailed Answers: (Logical reasoning for each question)"""
-        
-        case_study_text = llm.get_ai_response(prompt) 
+        case_study_text = llm.generate_case_study(topic) 
         return jsonify({"case_study": case_study_text})
     except Exception as e:
+        print(f"Case Study Error:,{e}")
         return jsonify({"error": str(e)}), 500
         
 # ==========================================
