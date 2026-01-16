@@ -317,48 +317,54 @@ def results():
 
     try:
         if not is_guest and current_user.is_authenticated:
-            # 1. ALWAYS SAVE THE RESULT FIRST
+            # 1. Aaj ka result save karo
             new_res = QuizResult(
                 user_id=current_user.id, 
                 score=score, 
                 total_questions=total,
                 topic=raw_topic,
-                timestamp=datetime.utcnow() # Ensure timestamp is added
+                timestamp=datetime.utcnow()
             )
             db.session.add(new_res)
             
-            # 2. UPDATED STREAK LOGIC
+            # 2. STREAK LOGIC (Strict Check)
             today = datetime.utcnow().date()
-            # Pichla koi bhi result dhoondo jo aaj se pehle ka ho
+            # Pichla result dhoondo jo AAJ se pehle ka ho (timestamp < today)
             last_res = QuizResult.query.filter(
                 QuizResult.user_id == current_user.id,
-                QuizResult.timestamp < today
+                QuizResult.timestamp < today 
             ).order_by(QuizResult.timestamp.desc()).first()
             
             if last_res:
                 last_date = last_res.timestamp.date()
+                # Agar pichla result thik KAL ka tha
                 if last_date == today - timedelta(days=1):
-                    current_user.streak += 1
+                    # Check karo ki aaj pehle streak update ho chuki hai? 
+                    # (Taaki ek din mein 10 bar quiz dene par 10 streak na badhe)
+                    if current_user.last_quiz_date != today:
+                        current_user.streak += 1
+                # Agar 1 din se zyada ka gap hai
                 elif last_date < today - timedelta(days=1):
                     current_user.streak = 1
             else:
-                # Pehla quiz hai user ka
-                current_user.streak = 1
+                # Agar ye user ka pehla quiz hai
+                if current_user.streak == 0:
+                    current_user.streak = 1
             
-            # 3. UPDATE TOPIC MASTERY (Taaki Dashboard khaali na dikhe)
+            # Update last quiz date
+            current_user.last_quiz_date = today
+
+            # 3. Topic Mastery Update (Dashboard Fix)
             mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic=raw_topic).first()
             if not mastery:
                 mastery = TopicMastery(user_id=current_user.id, topic=raw_topic)
                 db.session.add(mastery)
-            
             mastery.correct_count += score
             mastery.total_count += total
 
-            # FINAL COMMIT (Sab kuch ek saath save hoga)
             db.session.commit()
-            session['last_result_id'] = new_res.id
             
-            # 4. Chart Data
+            # Chart Data
             results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
             for r in results_query[-5:]:
                 history_labels.append(r.timestamp.strftime("%d %b"))
