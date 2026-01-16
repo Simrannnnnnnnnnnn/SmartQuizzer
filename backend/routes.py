@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from dotenv import load_dotenv
-
+from flask import session 
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, db
 from backend.services import extract_text_from_pdf
 from backend.llm_client import LLMClient
@@ -181,28 +181,48 @@ def generate_case_study():
     source_type = request.form.get('source_type')
     content = ""
 
-    # 1. Extraction logic
+    # 1. Extraction logic with safety check
     if source_type == 'pdf':
         file = request.files.get('pdf_file')
-        content = extract_text_from_pdf(file) # Tera existing function
+        if file and file.filename != '':
+            content = extract_text_from_pdf(file)
+        else:
+            flash("PDF file missing! Please upload again.", "warning")
+            return redirect(url_for('routes.study_hub'))
     elif source_type == 'topic':
         content = request.form.get('topic_name')
     else:
         content = request.form.get('raw_text')
 
-    # 2. AI Call with the Master Prompt
-    # Hum AI ko bolenge ki wo JSON string de
+    # 2. Crash bachane ke liye safety check
+    if not content or content.strip() == "":
+        flash("No content found to generate case study.", "danger")
+        return redirect(url_for('routes.study_hub'))
+
+    # 3. AI Call
     raw_response = llm.get_mixed_cases(content) 
     
     try:
-        start_idx = raw_response.find('[')
-        end_idx = raw_response.rfind(']') + 1
+        # JSON parsing logic
+        start_idx = raw_response.find('{')
+        end_idx = raw_response.rfind('}') + 1
+        if start_idx == -1: # Fallback for array format [ ]
+            start_idx = raw_response.find('[')
+            end_idx = raw_response.rfind(']') + 1
+
         json_str = raw_response[start_idx:end_idx]
         data_dict = json.loads(json_str)
-        mixed_data = data_dict.get('cases', [])
+        
+        # Check if response is a dict or direct list
+        if isinstance(data_dict, dict):
+            mixed_data = data_dict.get('cases', [])
+        else:
+            mixed_data = data_dict
+            
     except Exception as e:
-        print(f"JSON Error: {e}")
+        print(f"JSON Parsing Error: {e}")
         mixed_data = []
+
     return render_template('case_study_mixed.html', cases=mixed_data)
         
 # ==========================================
@@ -224,33 +244,54 @@ def handle_generation():
             if session.get('is_guest'):
                 flash("Guest users don't have a Mistake Bank!", "warning")
                 return redirect(url_for('routes.dashboard'))
+            
             mistakes = MistakeBank.query.filter_by(user_id=current_user.id).limit(count).all()
             if not mistakes:
                 flash("Mistake Bank khali hai!", "info")
                 return redirect(url_for('routes.dashboard'))
+            
             for m in mistakes:
-                new_q = Question(question_text=m.question_text, options_json=m.options_json, 
-                                 correct_answer=m.correct_answer, explanation=m.explanation, 
-                                 user_id=current_user.id)
+                new_q = Question(
+                    question_text=m.question_text, 
+                    options_json=m.options_json, 
+                    correct_answer=m.correct_answer, 
+                    explanation=m.explanation, 
+                    user_id=current_user.id
+                )
                 db.session.add(new_q)
                 db.session.flush()
                 q_ids.append(new_q.id)
+        
         else:
             content = ""
             if source_type == 'pdf':
                 file = request.files.get('pdf_file')
-                content = extract_text_from_pdf(file) if file else ""
+                # Check: File empty toh nahi hai?
+                if file and file.filename != '':
+                    content = extract_text_from_pdf(file)
+                    # Check: Kya extraction fail hui?
+                    if not content:
+                        flash("PDF se text nahi nikal paya. Please try another file.", "danger")
+                        return redirect(url_for('routes.dashboard'))
+                else:
+                    flash("Please upload a PDF file first!", "danger")
+                    return redirect(url_for('routes.dashboard'))
+            
             elif source_type == 'text':
                 content = request.form.get('raw_text', "")
+            
             elif source_type == 'topic':
                 mastery_label = request.form.get('topic_name', "General Study")
                 content = f"Create a quiz on: {mastery_label}"
 
-            if not content and source_type != 'topic':
-                flash("Kuch toh likho generate karne ke liye!", "warning")
+            # Final validation check before AI call
+            if not content or content.strip() == "":
+                flash("Kuch toh content provide karo generate karne ke liye!", "warning")
                 return redirect(url_for('routes.dashboard'))
 
+            # AI Question Generation
             raw_qs = llm.generate_questions(content, count)
+            
             for q_data in raw_qs:
                 new_q = Question(
                     question_text=q_data.get('question'),
@@ -263,12 +304,24 @@ def handle_generation():
                 db.session.flush()
                 q_ids.append(new_q.id)
 
+        # Commit all new questions
         db.session.commit()
-        session.update({'active_questions': q_ids, 'current_idx': 0, 'score': 0, 
-                        'quiz_topic': mastery_label, 'quiz_goal': mode, 'user_answers': []})
+        
+        # Update Session with quiz info
+        session.update({
+            'active_questions': q_ids, 
+            'current_idx': 0, 
+            'score': 0, 
+            'quiz_topic': mastery_label, 
+            'quiz_goal': mode, 
+            'user_answers': []
+        })
+        
         return redirect(url_for('routes.quiz_page', q_id=q_ids[0]))
+
     except Exception as e:
         db.session.rollback()
+        print(f"Quiz Generation Error: {str(e)}") # Terminal mein error dikhega
         flash(f"Error: {str(e)}", "danger")
         return redirect(url_for('routes.dashboard'))
 
