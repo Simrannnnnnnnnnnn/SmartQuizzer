@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">🧠 Deep Concept Explorer</h2>
+        <p class="text-muted">Mixed Cases & Logical Reasons to Master the Chapter</p>
+    </div>
+
+    {% for item in cases %}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden animate__animated animate__fadeInUp">
+        
+        <div class="px-4 py-2 {% if item.type == 'case' %}bg-primary text-white{% else %}bg-warning text-dark{% endif %} fw-bold small">
+            {% if item.type == 'case' %} 📁 REAL-WORLD CASE STUDY {% else %} 💡 GIVE REASON QUESTION {% endif %}
+        </div>
+
+        <div class="card-body p-4">
+            {% if item.type == 'case' %}
+            <div class="scenario-box p-3 rounded-3 mb-3" style="background: #f8f9fa; border-left: 5px solid #0d6efd;">
+                <h5 class="fw-bold mb-1">The Situation:</h5>
+                <p class="mb-0 italic">{{ item.scenario }}</p>
+            </div>
+            {% endif %}
+
+            <div class="question-box mb-4">
+                <h5 class="fw-bold text-dark">
+                    <span class="text-danger">Q:</span> {{ item.question }}
+                </h5>
+            </div>
+
+            <div class="interaction-zone">
+                <div class="btn-group btn-group-sm mb-3 shadow-sm rounded-pill overflow-hidden">
+                    <button class="btn btn-outline-dark px-4" onclick="setView('write', {{ loop.index }})">Write ✍️</button>
+                    <button class="btn btn-outline-dark px-4" onclick="setView('read', {{ loop.index }})">Direct Answer 📖</button>
+                </div>
+
+                <div id="write-{{ loop.index }}">
+                    <textarea id="ans-{{ loop.index }}" class="form-control border-2 rounded-3 mb-2" rows="3" placeholder="Explain your reason..."></textarea>
+                    <button class="btn btn-dark w-100 rounded-3 fw-bold" onclick="analyzeLogic({{ loop.index }}, {{ item.key_points | tojson }})">
+                        Validate My Logic 🪄
+                    </button>
+                    <div id="result-{{ loop.index }}" class="mt-3 d-none p-3 rounded-3 fw-medium"></div>
+                </div>
+
+                <div id="read-{{ loop.index }}" class="d-none">
+                    <div class="p-3 rounded-3 border" style="background: #f0faff;">
+                        <h6 class="fw-bold text-primary">Master Explanation:</h6>
+                        <p class="mb-0">{{ item.answer }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function setView(mode, id) {
+    document.getElementById(`write-${id}`).classList.toggle('d-none', mode === 'read');
+    document.getElementById(`read-${id}`).classList.toggle('d-none', mode === 'write');
+}
+
+function analyzeLogic(id, keys) {
+    const input = document.getElementById(`ans-${id}`).value.toLowerCase();
+    const res = document.getElementById(`result-${id}`);
+    let found = keys.filter(k => input.includes(k.toLowerCase()));
+
+    res.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger');
+    
+    if (found.length === keys.length) {
+        res.classList.add('alert-success');
+        res.innerHTML = "🎯 Spot on! You covered all technical points.";
+    } else if (found.length > 0) {
+        res.classList.add('alert-warning');
+        res.innerHTML = `✅ Good! You got <b>${found.join(', ')}</b>. Try to also mention: <b>${keys.filter(k => !found.includes(k)).join(', ')}</b>.`;
+    } else {
+        res.classList.add('alert-danger');
+        res.innerHTML = "❌ Think deeper! Focus on these keywords: " + keys.join(', ');
+    }
+}
+</script>
+
+<style>
+    .card { transition: transform 0.2s; }
+    .card:hover { transform: translateY(-5px); }
+    body { background-color: #fcfcfc; }
+</style>
+{% endblock %}
