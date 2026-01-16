@@ -146,7 +146,13 @@
                 
                 <div class="ms-4 d-none d-md-block" 
                      style="background: #FFF4E6; padding: 5px 15px; border-radius: 20px; color: var(--accent-orange); font-weight: 800; border: 2px solid #FFEBB7;">
-                    🔥 {{ current_user.streak_count if current_user.streak_count else 0 }}
+                    🔥 <span class="streak-val">
+                        {% if current_user.is_authenticated %}
+                            {{ current_user.streak }}
+                        {% else %}
+                            {{ session.get('streak', 0) }}
+                        {% endif %}
+                    </span>
                 </div>
                 
                 <a href="{{ url_for('routes.logout') }}" class="ms-3 text-danger small">Logout</a>
