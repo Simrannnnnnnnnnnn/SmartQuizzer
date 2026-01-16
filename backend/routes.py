@@ -175,40 +175,34 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+        
 @routes_bp.route('/generate-case-study', methods=['POST'])
 def generate_case_study():
-    # 1. Authorization & Data Fetching
     if not is_allowed(): 
-        return jsonify({"success": False, "error": "Unauthorized"}), 401
+        return redirect(url_for('routes.login'))
     
-    # Hum content JSON se le rahe hain (Fetch API ke through)
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "error": "No data received"}), 400
-
-    topic = data.get('topic', 'General Topic')
-    content = data.get('content_to_study', '')
-
-    # 2. Validation
-    if not content or content.strip() == "":
-        return jsonify({"success": False, "error": "Study content is missing!"}), 400
+    # Study Hub se data nikalna (Kyunki ye Form submission hai)
+    content = request.form.get('content_to_study', '')
+    
+    if not content:
+        flash("No content found to analyze!", "warning")
+        return redirect(url_for('routes.study_hub'))
 
     try:
-        # 3. AI Call
-        # AI ko instruct karein ki formatted text/markdown return kare
+        # AI se JSON string lena
         raw_response = llm.get_mixed_cases(content) 
         
-        # 4. JSON Response (Frontend compatibility ke liye)
-        return jsonify({
-            "success": True, 
-            "case_study": raw_response  # AI ka generated text
-        })
-            
-    except Exception as e:
-        print(f"Server Error: {str(e)}")
-        return jsonify({"success": False, "error": "AI failed to generate case study."}), 500
+        # JSON string ko Python dictionary mein convert karna
+        data_dict = json.loads(raw_response)
+        mixed_data = data_dict.get('cases', [])
         
+        # Naye page (case_study_mixed.html) par bhej dena
+        return render_template('case_study_mixed.html', cases=mixed_data)
+        
+    except Exception as e:
+        print(f"Case Study Error: {str(e)}")
+        flash("AI failed to parse the case study format.", "danger")
+        return redirect(url_for('routes.study_hub'))
 # ==========================================
 # QUIZ GENERATION ENGINE
 # ==========================================
