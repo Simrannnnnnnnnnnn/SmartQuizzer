@@ -91,37 +91,35 @@ class LLMClient:
             print(f"Error in Gen: {e}")
             return []
     def get_mixed_cases(self, content):
-    system_prompt = (
-        "You are an expert educator. Output ONLY valid JSON."
-        "The root must be an object with a key 'cases' containing a list." # Object wrap zaroori hai
-        "Create a mix of 'case' type (scenario based) and 'reason' type (logical explanation) questions."
-        "JSON Structure: "
-        "{"
-        "  \"cases\": ["
-        "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
-        "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
-        "  ]"
-        "}"
-    )
-    # Tera requested style: Scenario + 2 Give Reason questions
-    user_prompt = (
-        f"Generate 3-4 mixed conceptual questions based on this content: {content[:3000]}\n"
-        "Include 1 detailed Case Study Scenario and at least 2 'Give Reason' questions."
-    )
-    
-    try:
-        completion = self._safe_request(
+        system_prompt = (
+            "You are an expert educator. Output ONLY valid JSON."
+            "The root must be an object with a key 'cases' containing a list." # Object wrap zaroori hai
+            "Create a mix of 'case' type (scenario based) and 'reason' type (logical explanation) questions."
+            "JSON Structure: "
+            "{"
+            "  \"cases\": ["
+            "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
+            "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
+            "  ]"
+            "}"
+        )
+        user_prompt = (
+            f"Generate 3-4 mixed conceptual questions based on this content: {content[:3000]}\n"
+            "Include 1 detailed Case Study Scenario and at least 2 'Give Reason' questions."
+        )
+        try:
+            completion = self._safe_request(
             self.client.chat.completions.create,
             model=self.POWER_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            response_format={"type": "json_object"} # Ab ye safe hai kyunki humne wrapper diya hai
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        return f"Error: {str(e)}"
+                response_format={"type": "json_object"} # Ab ye safe hai kyunki humne wrapper diya hai
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            return f"Error: {str(e)}"
             
     def deep_dive(self, text):
         prompt = (
