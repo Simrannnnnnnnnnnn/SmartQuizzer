@@ -8,6 +8,9 @@
             <p class="text-muted fs-5">Deep Dive Analysis, Flashcards, and Shorthand Notes generated for you.</p>
         </div>
         <div class="d-flex gap-2">
+            <button onclick="getCaseStudy('{{ data.topic }}')" class="btn btn-info text-white rounded-pill px-4 shadow-sm fw-bold">
+                <i class="fa-solid fa-file-invoice me-2"></i>Generate Case Study
+            </button>
             <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 shadow-sm border-2">
                 <i class="fa-solid fa-file-pdf me-2"></i>Export PDF
             </button>
@@ -19,6 +22,15 @@
 
     <div class="row g-4">
         <div class="col-lg-7">
+            <div id="caseStudyBox" class="glass-card p-4 mb-4 border-2 animate__animated animate__fadeIn" style="display:none; background: #f0f9ff; border-left: 8px solid #0dcaf0;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold text-info m-0"><i class="fa-solid fa-paste me-2"></i>Scenario-Based Case Study</h4>
+                    <button class="btn-close" onclick="document.getElementById('caseStudyBox').style.display='none'"></button>
+                </div>
+                <div id="caseStudyContent" class="text-dark" style="white-space: pre-wrap; line-height: 1.7;">
+                    </div>
+            </div>
+
             <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
@@ -141,6 +153,32 @@
         detailDiv.classList.toggle('d-none');
     }
 
+    // NEW: Case Study Function
+    async function getCaseStudy(topic) {
+        const box = document.getElementById('caseStudyBox');
+        const content = document.getElementById('caseStudyContent');
+        
+        box.style.display = 'block';
+        box.scrollIntoView({ behavior: 'smooth' });
+        content.innerHTML = `
+            <div class="d-flex align-items-center p-3">
+                <div class="spinner-border text-info me-3"></div>
+                <span class="fw-bold">AI is generating a complex case study and "Give Reason" questions...</span>
+            </div>`;
+
+        try {
+            const response = await fetch('/generate-case-study', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic })
+            });
+            const result = await response.json();
+            content.innerHTML = result.case_study;
+        } catch (e) {
+            content.innerHTML = `<div class="alert alert-danger">Failed to generate case study. Please try again.</div>`;
+        }
+    }
+
     async function deepDive(btn, text) {
         if (window.event) window.event.stopPropagation();
         const card = btn.closest('.note-interactive-card');
@@ -158,7 +196,6 @@
             </div>`;
         
         try {
-            // Naya route call ho raha hai jo aapne routes.py mein banaya
             const response = await fetch('/deep-dive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
