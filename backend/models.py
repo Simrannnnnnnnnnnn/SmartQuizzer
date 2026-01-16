@@ -50,15 +50,15 @@ class MistakeBank(db.Model):
 class TopicMastery(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    topic_name = db.Column(db.String(100)) 
+    topic = db.Column(db.String(100)) # Ise 'topic' hi rakhein routes se match karne ke liye
     correct_count = db.Column(db.Integer, default=0)
     total_count = db.Column(db.Integer, default=0)
 
     @property
     def percentage(self): 
-        if self.total_count == 0: 
+        if self.total_count > 0: # Sahi logic: jab count 0 se zyada ho
             return int((self.correct_count / self.total_count) * 100)
-        return 0 
+        return 0
 
 class Bookmark(db.Model):
     id = db.Column(db.Integer, primary_key=True)
