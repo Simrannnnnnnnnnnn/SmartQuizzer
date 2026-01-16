@@ -10,7 +10,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    streak_count = db.Column(db.Integer, default=0)
+    streak = db.Column(db.Integer, default=0)
     last_quiz_date = db.Column(db.Date, nullable=True)
 
     def set_password(self, password):
@@ -33,7 +33,7 @@ class QuizResult(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
     total_questions = db.Column(db.Integer, nullable=False)
-    topic = db.Column(db.String(200)) # Ye column missing hai shayad
+    topic = db.Column(db.String(200), default ="General Study") # Ye column missing hai shayad
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 class MistakeBank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -43,25 +43,19 @@ class MistakeBank(db.Model):
     correct_answer = db.Column(db.Text, nullable=False)
     explanation = db.Column(db.Text)
     topic = db.Column(db.String(100))
-    total_count = db.Column(db.Integer, default=0, nullable=False) 
-
-    times_missed = db.Column(db.Integer, default=0, nullable=False)
-    # NEW: Spaced Repetition Fields
+    times_missed = db.Column(db.Integer, default=1)
     next_review = db.Column(db.DateTime, default=datetime.utcnow)
-    confidence_level = db.Column(db.String(20), default='medium') 
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
-
-# ... (QuizResult, TopicMastery, Bookmark remain same as your provided code)
 
 class TopicMastery(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    topic_name = db.Column(db.String(100)) # Removed unique=True to allow different users to have same topic names
+    topic_name = db.Column(db.String(100)) 
     correct_count = db.Column(db.Integer, default=0)
     total_count = db.Column(db.Integer, default=0)
 
     @property
-    def percentage(self): # Changed to .percentage to match dashboard.html
+    def percentage(self): 
         if self.total_count == 0: 
             return int((self.correct_count / self.total_count) * 100)
         return 0 
