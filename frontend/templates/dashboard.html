@@ -3,9 +3,15 @@
 {% block content %}
 <div class="container py-4">
     <div class="row mb-4 animate__animated animate__fadeIn">
-        <div class="col-12">
-            <h2 class="fw-bold" style="color: #4b4b4b;">Rise & Study! ☀️</h2>
-            <p class="text-muted fw-medium">Let's turn your notes into knowledge.</p>
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold" style="color: #4b4b4b;">Rise & Study! ☀️</h2>
+                <p class="text-muted fw-medium">Let's turn your notes into knowledge.</p>
+            </div>
+            <div class="streak-badge p-2 px-4 rounded-pill shadow-sm bg-white border d-flex align-items-center animate__animated {% if current_user.streak > 0 %}animate__pulse animate__infinite{% endif %}">
+                <i class="fa-solid fa-fire text-danger fs-4 me-2"></i>
+                <span class="fw-bold fs-5" style="color: #333;">{{ current_user.streak }} Day Streak</span>
+            </div>
         </div>
     </div>
 
@@ -87,28 +93,51 @@
 
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm p-4 mb-4 animate__animated animate__fadeInRight" 
-                 style="background: white; border-radius: 30px;">
-                <h6 class="fw-bold mb-4 text-muted">Mastery Levels</h6>
-                {% for topic in topic_mastery %}
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between small fw-bold mb-1">
-                        <span>{{ topic.topic_name }}</span>
-                        <span style="color: #ff9900;">{{ topic.percentage }}%</span>
+                 style="background: linear-gradient(135deg, #FF9800 0%, #FF5722 100%); border-radius: 30px; color: white;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="fw-bold opacity-75 mb-1 text-white">CURRENT STREAK</h6>
+                        <h2 class="fw-bold mb-0 text-white">{{ current_user.streak }} Days</h2>
+                        <p class="small mb-0 text-white">Don't break the chain! 🔥</p>
                     </div>
-                    <div class="progress rounded-pill" style="height: 8px; background: #fff9db;">
-                        <div class="progress-bar" style="width: {{ topic.percentage }}%; background: linear-gradient(90deg, #ffcc00, #ff9900); border-radius: 50px;"></div>
-                    </div>
+                    <div class="fs-1 text-white">⚡</div>
                 </div>
-                {% endfor %}
+            </div>
+
+            <div class="card border-0 shadow-sm p-4 mb-4 animate__animated animate__fadeInRight" 
+                 style="background: white; border-radius: 30px;">
+                <h6 class="fw-bold mb-4 text-muted">Knowledge Vault</h6>
+                
+                <div class="custom-scrollbar" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                {% if topic_mastery %}
+                    {% for topic in topic_mastery %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span class="text-truncate" style="max-width: 150px;">{{ topic.topic_name }}</span>
+                            <span style="color: #ff9900;">{{ topic.percentage }}%</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 8px; background: #fff9db;">
+                            <div class="progress-bar" style="width: {{ topic.percentage }}%; background: linear-gradient(90deg, #ffcc00, #ff9900); border-radius: 50px;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fa-solid fa-folder-open text-light mb-2 fs-2"></i>
+                        <p class="text-muted small">Your vault is empty.<br>Start a quiz to see results!</p>
+                    </div>
+                {% endif %}
+                </div>
             </div>
 
             <div class="card border-0 shadow-sm p-4 text-center animate__animated animate__fadeInRight" 
                  style="background: linear-gradient(180deg, #ffffff, #fffdf0); border-radius: 30px; border: 1px solid #fff9db !important;">
-                <div class="sun-icon mx-auto mb-3">🧠</div>
+                <div class="sun-icon mx-auto mb-3" style="font-size: 2.5rem;">🧠</div>
                 <h6 class="fw-bold text-muted">Mistake Bank</h6>
                 <h2 class="display-4 fw-bold" style="color: #333;">{{ mistake_count }}</h2>
                 <p class="small text-muted mb-4">Questions to re-try</p>
-                <a href="{{ url_for('routes.review_mistakes') }}" class="btn btn-dark w-100 py-2 rounded-pill fw-bold">
+                <a href="{{ url_for('routes.review_mistakes') }}" 
+                   class="btn {% if mistake_count > 0 %}btn-warning text-dark{% else %}btn-dark text-white{% endif %} w-100 py-2 rounded-pill fw-bold shadow-sm">
                     Start Review
                 </a>
             </div>
@@ -160,15 +189,21 @@
         box-shadow: 0 10px 20px rgba(255, 184, 0, 0.3) !important;
     }
 
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #ffcc00; border-radius: 10px; }
+    
     .extra-small { font-size: 0.7rem; }
+    .streak-badge { transition: all 0.3s; }
 </style>
 
 <script>
+    // File name update function
     function updateFileName(input) {
         const display = document.getElementById('fileNameDisplay');
         display.innerText = input.files[0] ? input.files[0].name : "Drop your PDF here or click";
     }
 
+    // Dynamic input area based on source selection
     document.getElementById('source-select').onchange = function() {
         const area = document.getElementById('input-area');
         const configs = {
@@ -185,6 +220,7 @@
         area.innerHTML = `<div class="animate__animated animate__fadeIn">${configs[this.value].html}</div>`;
     };
 
+    // Form loading state
     document.getElementById('quiz-form').onsubmit = function() {
         const btn = document.getElementById('submitBtn');
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Waking up the Sun...';
