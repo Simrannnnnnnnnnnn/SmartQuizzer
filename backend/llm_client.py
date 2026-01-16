@@ -2,6 +2,7 @@ import json
 import os
 import time
 from groq import Groq
+import re
 
 class LLMClient:
     def __init__(self, api_key):
