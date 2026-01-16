@@ -178,52 +178,36 @@ def extend_concept():
 
 @routes_bp.route('/generate-case-study', methods=['POST'])
 def generate_case_study():
-    source_type = request.form.get('source_type')
-    content = ""
-
-    # 1. Extraction logic with safety check
-    if source_type == 'pdf':
-        file = request.files.get('pdf_file')
-        if file and file.filename != '':
-            content = extract_text_from_pdf(file)
-        else:
-            flash("PDF file missing! Please upload again.", "warning")
-            return redirect(url_for('routes.study_hub'))
-    elif source_type == 'topic':
-        content = request.form.get('topic_name')
-    else:
-        content = request.form.get('raw_text')
-
-    # 2. Crash bachane ke liye safety check
-    if not content or content.strip() == "":
-        flash("No content found to generate case study.", "danger")
-        return redirect(url_for('routes.study_hub'))
-
-    # 3. AI Call
-    raw_response = llm.get_mixed_cases(content) 
+    # 1. Authorization & Data Fetching
+    if not is_allowed(): 
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
     
-    try:
-        # JSON parsing logic
-        start_idx = raw_response.find('{')
-        end_idx = raw_response.rfind('}') + 1
-        if start_idx == -1: # Fallback for array format [ ]
-            start_idx = raw_response.find('[')
-            end_idx = raw_response.rfind(']') + 1
+    # Hum content JSON se le rahe hain (Fetch API ke through)
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data received"}), 400
 
-        json_str = raw_response[start_idx:end_idx]
-        data_dict = json.loads(json_str)
+    topic = data.get('topic', 'General Topic')
+    content = data.get('content_to_study', '')
+
+    # 2. Validation
+    if not content or content.strip() == "":
+        return jsonify({"success": False, "error": "Study content is missing!"}), 400
+
+    try:
+        # 3. AI Call
+        # AI ko instruct karein ki formatted text/markdown return kare
+        raw_response = llm.get_mixed_cases(content) 
         
-        # Check if response is a dict or direct list
-        if isinstance(data_dict, dict):
-            mixed_data = data_dict.get('cases', [])
-        else:
-            mixed_data = data_dict
+        # 4. JSON Response (Frontend compatibility ke liye)
+        return jsonify({
+            "success": True, 
+            "case_study": raw_response  # AI ka generated text
+        })
             
     except Exception as e:
-        print(f"JSON Parsing Error: {e}")
-        mixed_data = []
-
-    return render_template('case_study_mixed.html', cases=mixed_data)
+        print(f"Server Error: {str(e)}")
+        return jsonify({"success": False, "error": "AI failed to generate case study."}), 500
         
 # ==========================================
 # QUIZ GENERATION ENGINE
