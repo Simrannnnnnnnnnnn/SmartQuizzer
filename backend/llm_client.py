@@ -90,20 +90,41 @@ class LLMClient:
         except Exception as e:
             print(f"Error in Gen: {e}")
             return []
-    def generate_case_study(self, topic):
-        prompt = f"Create a real-world case study scenario for the topic: {topic}. " \
-                 f"Followed by 2 'Give Reason' type questions based on the scenario. " \
-                 f"Finally, provide the correct answers with logical reasoning."
-        try:
-            completion = self._safe_request(
-                self.client.chat.completions.create,
-                messages=[{"role": "user", "content": prompt}],
-                model=self.POWER_MODEL, # Case study ke liye heavy model better hai
-                timeout=25.0
-            )
-            return completion.choices[0].message.content
-        except Exception:
-            return "Case study generation failed. Try again!"
+    def get_mixed_cases(self, content):
+    system_prompt = (
+        "You are a strict academic expert. Output ONLY a valid JSON list of objects. "
+        "Each object must represent either a 'Case Study Scenario' or a 'Give Reason' question. "
+        "STRICT STRUCTURE: "
+        "For Case Studies: {'type': 'case', 'scenario': '...', 'question': '...', 'answer': '...', 'key_points': ['word1', 'word2']} "
+        "For Direct Reasoning: {'type': 'reason', 'question': '...', 'answer': '...', 'key_points': ['word1', 'word2']} "
+        "Ensure the 'answer' is a logical explanation and 'key_points' are essential technical terms."
+    )
+    
+    # Ye hai tera specific style wala instruction
+    user_prompt = (
+        f"Based on this content: {content[:3000]}\n\n"
+        "TASK: Generate a mix of:\n"
+        "1. A real-world case study scenario followed by a logical question.\n"
+        "2. Two 'Give Reason' type questions that test deep conceptual understanding.\n"
+        "Provide correct answers with logical reasoning for all."
+    )
+    
+    try:
+        completion = self._safe_request(
+            self.client.chat.completions.create,
+            model=self.POWER_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            # Note: response_format 'json_object' expects a JSON object {}, 
+            # but since we want a list [], we handle it carefully.
+            response_format={"type": "json_object"} 
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"LLM Error: {e}")
+        return "[]" # Return empty list string to prevent crash
             
     def deep_dive(self, text):
         prompt = (
