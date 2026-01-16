@@ -171,7 +171,27 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+@routes_bp.route('/generate-case-study', methods=['POST'])
+def generate_case_study():
+    if not is_allowed(): 
+        return jsonify({"error": "Login required"}), 401
+    
+    try:
+        data = request.get_json()
+        topic = data.get('topic', 'General Science')
+        
+        # AI se scenario aur 'Give Reason' questions mangwana
+        prompt = f"""Create a detailed real-world Case Study on '{topic}'. 
+        Format it as:
+        1. Scenario: (A detailed paragraph)
+        2. Questions: (3 'Give Reason' type questions based on the scenario)
+        3. Detailed Answers: (Logical reasoning for each question)"""
+        
+        case_study_text = llm.get_ai_response(prompt) 
+        return jsonify({"case_study": case_study_text})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        
 # ==========================================
 # QUIZ GENERATION ENGINE
 # ==========================================
@@ -283,16 +303,13 @@ def submit_answer(q_id):
 # ==========================================
 # RESULTS, REPORTS & LIBRARY
 # ==========================================
-from datetime import datetime, timedelta
 @routes_bp.route('/results')
 def results():
     score = session.get('score', 0)
     user_answers = session.get('user_answers', [])
     total = len(user_answers)
-    accuracy = (score / total * 100) if total > 0 else 0
-    
-    # Topic for display (No more cleaning for YouTube)
     raw_topic = session.get('quiz_topic', 'AI Analysis')
+    accuracy = (score / total * 100) if total > 0 else 0
     
     history_labels = []
     history_scores = []
@@ -300,45 +317,53 @@ def results():
 
     try:
         if not is_guest and current_user.is_authenticated:
-            # 1. Result Save Karo
+            # 1. ALWAYS SAVE THE RESULT FIRST
             new_res = QuizResult(
                 user_id=current_user.id, 
                 score=score, 
                 total_questions=total,
-                topic=raw_topic
+                topic=raw_topic,
+                timestamp=datetime.utcnow() # Ensure timestamp is added
             )
             db.session.add(new_res)
-            db.session.flush() # ID generate karne ke liye
             
-            # PDF download ke liye ID save karo
-            session['last_result_id'] = new_res.id
-            
-            # 2. STREAK LOGIC
+            # 2. UPDATED STREAK LOGIC
             today = datetime.utcnow().date()
-            last_res = QuizResult.query.filter_by(user_id=current_user.id)\
-                                     .filter(QuizResult.timestamp < datetime.utcnow().replace(hour=0, minute=0, second=0))\
-                                     .order_by(QuizResult.timestamp.desc()).first()
+            # Pichla koi bhi result dhoondo jo aaj se pehle ka ho
+            last_res = QuizResult.query.filter(
+                QuizResult.user_id == current_user.id,
+                QuizResult.timestamp < today
+            ).order_by(QuizResult.timestamp.desc()).first()
             
             if last_res:
                 last_date = last_res.timestamp.date()
                 if last_date == today - timedelta(days=1):
-                    current_user.streak += 1  
+                    current_user.streak += 1
                 elif last_date < today - timedelta(days=1):
-                    current_user.streak = 1   
+                    current_user.streak = 1
             else:
-                if getattr(current_user, 'streak', 0) == 0:
-                    current_user.streak = 1   
+                # Pehla quiz hai user ka
+                current_user.streak = 1
             
-            db.session.commit() 
+            # 3. UPDATE TOPIC MASTERY (Taaki Dashboard khaali na dikhe)
+            mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic=raw_topic).first()
+            if not mastery:
+                mastery = TopicMastery(user_id=current_user.id, topic=raw_topic)
+                db.session.add(mastery)
             
-            # 3. Chart Data
+            mastery.correct_count += score
+            mastery.total_count += total
+
+            # FINAL COMMIT (Sab kuch ek saath save hoga)
+            db.session.commit()
+            session['last_result_id'] = new_res.id
+            
+            # 4. Chart Data
             results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
             for r in results_query[-5:]:
                 history_labels.append(r.timestamp.strftime("%d %b"))
                 history_scores.append(r.score)
-
         else:
-            # Guest logic
             history_labels = ["Current"]
             history_scores = [score]
 
@@ -346,7 +371,6 @@ def results():
         db.session.rollback()
         print(f"Error in Results: {e}")
 
-    # clean_topic aur search_query hata diye hain kyunki recommendation delete kar di hai
     return render_template('results.html', 
                            score=score, 
                            total=total, 
