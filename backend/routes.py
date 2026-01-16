@@ -355,7 +355,7 @@ def results():
             # 3. Topic Mastery Update (Dashboard Fix)
             mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic=raw_topic).first()
             if not mastery:
-                mastery = TopicMastery(user_id=current_user.id, topic=raw_topic)
+                mastery = TopicMastery(user_id=current_user.id, topic=raw_topic, correct_count=0, total_count=0)
                 db.session.add(mastery)
             mastery.correct_count += score
             mastery.total_count += total
