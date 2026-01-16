@@ -149,3 +149,10 @@ class LLMClient:
             return completion.choices[0].message.content
         except Exception:
             return f"Keep practicing {topic}! Review your mistakes to strengthen your core concepts."
+    
+    def generate_case_study(self, topic):
+    prompt = f"Create a real-world case study scenario for the topic: {topic}. " \
+             f"Followed by 2 'Give Reason' type questions based on the scenario. " \
+             f"Finally, provide the correct answers with logical reasoning."
+    # Isko Groq se call karwa lein (Jaise deep_dive karte hain)
+    return self.get_ai_response(prompt)
