@@ -90,7 +90,21 @@ class LLMClient:
         except Exception as e:
             print(f"Error in Gen: {e}")
             return []
-
+    def generate_case_study(self, topic):
+        prompt = f"Create a real-world case study scenario for the topic: {topic}. " \
+                 f"Followed by 2 'Give Reason' type questions based on the scenario. " \
+                 f"Finally, provide the correct answers with logical reasoning."
+        try:
+            completion = self._safe_request(
+                self.client.chat.completions.create,
+                messages=[{"role": "user", "content": prompt}],
+                model=self.POWER_MODEL, # Case study ke liye heavy model better hai
+                timeout=25.0
+            )
+            return completion.choices[0].message.content
+        except Exception:
+            return "Case study generation failed. Try again!"
+            
     def deep_dive(self, text):
         prompt = (
             f"Provide a sophisticated, deep-dive analysis of: {text}. "
@@ -150,9 +164,3 @@ class LLMClient:
         except Exception:
             return f"Keep practicing {topic}! Review your mistakes to strengthen your core concepts."
     
-    def generate_case_study(self, topic):
-    prompt = f"Create a real-world case study scenario for the topic: {topic}. " \
-             f"Followed by 2 'Give Reason' type questions based on the scenario. " \
-             f"Finally, provide the correct answers with logical reasoning."
-    # Isko Groq se call karwa lein (Jaise deep_dive karte hain)
-    return self.get_ai_response(prompt)
