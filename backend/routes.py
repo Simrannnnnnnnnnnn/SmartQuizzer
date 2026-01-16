@@ -191,14 +191,12 @@ def generate_case_study():
     try:
         # AI se JSON string lena
         raw_response = llm.get_mixed_cases(content) 
-        
-        # JSON string ko Python dictionary mein convert karna
-        data_dict = json.loads(raw_response)
+        if isinstance(raw_response, str):
+            data_dict = json.loads(raw_response)
+        else:
+            data_dict = raw_response
         mixed_data = data_dict.get('cases', [])
-        
-        # Naye page (case_study_mixed.html) par bhej dena
         return render_template('case_study_mixed.html', cases=mixed_data)
-        
     except Exception as e:
         print(f"Case Study Error: {str(e)}")
         flash("AI failed to parse the case study format.", "danger")
@@ -270,6 +268,10 @@ def handle_generation():
             # AI Question Generation
             raw_qs = llm.generate_questions(content, count)
             
+            if not raw_qs:
+                flash("AI questions generate nahi kar paya. Content badal kar try karein!", "danger")
+                return redirect(url_for('routes.dashboard'))
+                
             for q_data in raw_qs:
                 new_q = Question(
                     question_text=q_data.get('question'),
@@ -456,8 +458,6 @@ def library():
         flash("Library is only for registered users to track progress! 🚀", "info")
         return redirect(url_for('routes.signup'))
     
-    # 2. Quiz results nikaalein (Sahi table use kar rahe hain ab)
-    # Hum Score, Topic aur Date dikhayenge
     user_quizzes = QuizResult.query.filter_by(user_id=current_user.id)\
                                    .order_by(QuizResult.timestamp.desc())\
                                    .all()
