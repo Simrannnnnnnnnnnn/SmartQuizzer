@@ -178,28 +178,27 @@ def extend_concept():
         
 @routes_bp.route('/generate-case-study', methods=['POST'])
 def generate_case_study():
-    if not is_allowed(): 
-        return redirect(url_for('routes.login'))
+    if not is_allowed(): return redirect(url_for('routes.login'))
     
-    # Study Hub se data nikalna (Kyunki ye Form submission hai)
     content = request.form.get('content_to_study', '')
-    
     if not content:
-        flash("No content found to analyze!", "warning")
+        flash("No content found!", "warning")
         return redirect(url_for('routes.study_hub'))
 
     try:
-        # AI se JSON string lena
-        raw_response = llm.get_mixed_cases(content) 
-        if isinstance(raw_response, str):
-            data_dict = json.loads(raw_response)
-        else:
-            data_dict = raw_response
+        # Client ab direct DICT bhej raha hai upar wale fix ke baad
+        data_dict = llm.get_mixed_cases(content)
+        
+        # Safety check
+        if not data_dict or 'cases' not in data_dict:
+            raise ValueError("Invalid format from AI")
+            
         mixed_data = data_dict.get('cases', [])
         return render_template('case_study_mixed.html', cases=mixed_data)
+        
     except Exception as e:
-        print(f"Case Study Error: {str(e)}")
-        flash("AI failed to parse the case study format.", "danger")
+        print(f"Route Error: {e}")
+        flash("AI failed to generate specific case studies for this text.", "danger")
         return redirect(url_for('routes.study_hub'))
 # ==========================================
 # QUIZ GENERATION ENGINE
