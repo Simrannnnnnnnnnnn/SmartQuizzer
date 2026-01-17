@@ -175,15 +175,13 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-        
 @routes_bp.route('/generate-case-study', methods=['POST'])
 @login_required
 def generate_case_study():
-    # 1. Access Check
-    if not is_allowed(): 
+    if not is_allowed():
         return jsonify({"success": False, "error": "Unauthorized"}), 401
     
-    # 2. Get content (handles both AJAX JSON and standard Form data)
+    # Support both Form submission and JSON fetch
     if request.is_json:
         data = request.get_json()
         content = data.get('content_to_study', '')
@@ -191,36 +189,33 @@ def generate_case_study():
         content = request.form.get('content_to_study', '')
 
     if not content:
-        return jsonify({"success": False, "error": "No content found to analyze."}), 400
+        return jsonify({"success": False, "error": "No content found!"}), 400
 
     try:
-        # 3. Call AI logic to get the dictionary
+        # Get data from AI
         data_dict = llm.get_mixed_cases(content)
         
-        # 4. Extract the cases list
-        # Ensure the AI response actually contains the 'cases' key
-        mixed_data = data_dict.get('cases', []) if isinstance(data_dict, dict) else []
+        # Ensure data_dict is actually a dictionary and contains 'cases'
+        if isinstance(data_dict, str):
+            # Sometimes AI returns a string instead of a dict; let's handle that
+            import json
+            data_dict = json.loads(data_dict)
+
+        mixed_data = data_dict.get('cases', [])
         
-        if not mixed_data:
-            return jsonify({
-                "success": False, 
-                "error": "AI could not generate specific cases for this topic."
-            }), 422
-            
-        # 5. RETURN JSON (This is the fix!)
-        # The frontend JavaScript will receive this and render the cards
+        # This is the JSON response your JavaScript needs
         return jsonify({
             "success": True,
             "cases": mixed_data
         })
         
     except Exception as e:
-        print(f"Route Error: {e}")
+        print(f"AI Generation Error: {e}")
         return jsonify({
             "success": False, 
-            "error": "Internal AI Processing Error"
+            "error": "AI failed to generate case studies for this text."
         }), 500
-# ==========================================
+#==========================
 # QUIZ GENERATION ENGINE
 # ==========================================
 
