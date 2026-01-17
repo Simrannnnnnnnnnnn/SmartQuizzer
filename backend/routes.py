@@ -215,6 +215,41 @@ def generate_case_study():
             "success": False, 
             "error": "AI failed to generate case studies for this text."
         }), 500
+
+@routes_bp.route('/start-challenge', methods=['POST'])
+def start_challenge():
+    """Study Hub Result se data lekar session mein dalne ke liye"""
+    if not is_allowed(): return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    content = data.get('content_to_study', '')
+    
+    try:
+        # AI se data fetch karein
+        data_dict = llm.get_mixed_cases(content)
+        if isinstance(data_dict, str):
+            data_dict = json.loads(data_dict)
+            
+        mixed_cases = data_dict.get('cases', [])
+        
+        # Session mein store karein taaki agle page par access ho sake
+        session['active_challenges'] = mixed_cases
+        
+        return jsonify({"success": True, "redirect": url_for('routes.view_challenges')})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@routes_bp.route('/challenges')
+def view_challenges():
+    """Actual page render karne ke liye"""
+    if not is_allowed(): return redirect(url_for('routes.login'))
+    
+    cases = session.get('active_challenges', [])
+    if not cases:
+        flash("No challenges found. Please generate again.", "warning")
+        return redirect(url_for('routes.study_hub'))
+        
+    return render_template('case_study_mixed.html', cases=cases)
 #==========================
 # QUIZ GENERATION ENGINE
 # ==========================================
