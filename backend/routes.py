@@ -175,81 +175,65 @@ def extend_concept():
         return jsonify({"explanation": explanation})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@routes_bp.route('/generate-case-study', methods=['POST'])
-@login_required
-def generate_case_study():
+
+# ... (Baaki imports same rahenge)
+
+# ==========================================
+# INTERACTIVE CASE CHALLENGE ROUTES
+# ==========================================
+
+@routes_bp.route('/start-challenge', methods=['POST'])
+def start_challenge():
     if not is_allowed():
         return jsonify({"success": False, "error": "Unauthorized"}), 401
     
-    # Support both Form submission and JSON fetch
-    if request.is_json:
-        data = request.get_json()
-        content = data.get('content_to_study', '')
-    else:
-        content = request.form.get('content_to_study', '')
+    data = request.get_json()
+    content = data.get('content_to_study', '')
 
     if not content:
-        return jsonify({"success": False, "error": "No content found!"}), 400
+        return jsonify({"success": False, "error": "No content provided!"}), 400
 
     try:
-        # Get data from AI
+        # AI Question Generation (Mixed Case Studies & Reasoning)
         data_dict = llm.get_mixed_cases(content)
         
-        # Ensure data_dict is actually a dictionary and contains 'cases'
+        # String handle karne ke liye (Safety Check agar AI JSON string bhej de)
         if isinstance(data_dict, str):
-            # Sometimes AI returns a string instead of a dict; let's handle that
-            import json
             data_dict = json.loads(data_dict)
 
         mixed_data = data_dict.get('cases', [])
         
-        # This is the JSON response your JavaScript needs
+        if not mixed_cases:
+            return jsonify({"success": False, "error": "AI could not create challenges."}), 500
+
+        # Session mein data save karna taaki naye page par display ho sake
+        session['active_challenges'] = mixed_data
+        
+        # JavaScript ko redirect URL bhej rahe hain
         return jsonify({
-            "success": True,
-            "cases": mixed_data
+            "success": True, 
+            "redirect": url_for('routes.view_challenges')
         })
         
     except Exception as e:
-        print(f"AI Generation Error: {e}")
-        return jsonify({
-            "success": False, 
-            "error": "AI failed to generate case studies for this text."
-        }), 500
-
-@routes_bp.route('/start-challenge', methods=['POST'])
-def start_challenge():
-    """Study Hub Result se data lekar session mein dalne ke liye"""
-    if not is_allowed(): return jsonify({"error": "Unauthorized"}), 401
-    
-    data = request.get_json()
-    content = data.get('content_to_study', '')
-    
-    try:
-        # AI se data fetch karein
-        data_dict = llm.get_mixed_cases(content)
-        if isinstance(data_dict, str):
-            data_dict = json.loads(data_dict)
-            
-        mixed_cases = data_dict.get('cases', [])
-        
-        # Session mein store karein taaki agle page par access ho sake
-        session['active_challenges'] = mixed_cases
-        
-        return jsonify({"success": True, "redirect": url_for('routes.view_challenges')})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        print(f"Challenge Gen Error: {str(e)}")
+        return jsonify({"success": False, "error": "Server error during generation."}), 500
 
 @routes_bp.route('/challenges')
 def view_challenges():
-    """Actual page render karne ke liye"""
-    if not is_allowed(): return redirect(url_for('routes.login'))
     
+    if not is_allowed(): 
+        return redirect(url_for('routes.login'))
+    
+    # Session se save kiye huye cases uthana
     cases = session.get('active_challenges', [])
+    
     if not cases:
-        flash("No challenges found. Please generate again.", "warning")
+        flash("No active challenges found. Please generate again.", "warning")
         return redirect(url_for('routes.study_hub'))
-        
+    
     return render_template('case_study_mixed.html', cases=cases)
+
 #==========================
 # QUIZ GENERATION ENGINE
 # ==========================================
