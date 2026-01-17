@@ -6,7 +6,7 @@
 <div class="container py-5 animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div>
-            <h1 class="fw-bold" style="color: var(--primary-gold);">✨ Your AI Study Bundle</h1>
+            <h1 class="fw-bold" style="color: #FFB300;">✨ Your AI Study Bundle</h1>
             <p class="text-muted fs-5">Interactive Analysis, Flashcards, and Shorthand Notes.</p>
         </div>
         <div class="d-flex gap-2">
@@ -27,7 +27,7 @@
             <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold m-0"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
-                    <span class="badge bg-light text-muted border rounded-pill">Click logic for quick revision</span>
+                    <span class="badge bg-light text-muted border rounded-pill">Click for quick revision</span>
                 </div>
                 
                 <div class="list-group list-group-flush">
@@ -141,47 +141,51 @@
 </style>
 
 <script>
-    // 1. Toggle Shorthand Detail
+    // 1. Toggle Shorthand Detail View
     function toggleDetail(element) {
         const card = element.closest('.note-interactive-card');
         const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.toggle('d-none');
     }
 
-    // 2. NEW: Redirect Logic for Interactive Case Study
+    // 2. Start AI Case Challenge (Cleaned up logic)
     async function startInteractiveChallenge() {
         const btn = document.getElementById('gen-btn');
-        const contentToAnalyze = document.getElementById('hidden-content').value;
+        const content = document.getElementById('hidden-content').value;
 
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI is Generating...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI Generating...';
         btn.disabled = true;
 
         try {
-            const response = await fetch('/setup-challenge', {
+            // Using your updated endpoint '/start-challenge'
+            const response = await fetch('/start-challenge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: contentToAnalyze })
+                body: JSON.stringify({ content_to_study: content })
             });
 
             const result = await response.json();
 
             if (result.success) {
-                // Takes user to a new dedicated page for the first question
-                window.location.href = "/challenge/0";
+                // Redirect user to the interactive challenges page
+                window.location.href = result.redirect;
             } else {
-                alert("Failed to setup challenge: " + (result.error || "Unknown Error"));
-                btn.innerHTML = '<i class="fa-solid fa-brain me-2"></i>Start Case Challenge';
-                btn.disabled = false;
+                alert("AI Error: " + (result.error || "Failed to generate challenges."));
+                resetButton(btn);
             }
         } catch (error) {
             console.error("Error:", error);
-            alert("Could not connect to AI service.");
-            btn.innerHTML = '<i class="fa-solid fa-brain me-2"></i>Start Case Challenge';
-            btn.disabled = false;
+            alert("Server connection failed.");
+            resetButton(btn);
         }
     }
 
-    // 3. Deep Dive Logic
+    function resetButton(btn) {
+        btn.innerHTML = '<i class="fa-solid fa-brain me-2"></i>Start Case Challenge';
+        btn.disabled = false;
+    }
+
+    // 3. Deep Dive Logic (Explanation for specific concepts)
     async function deepDive(btn, text) {
         if (window.event) window.event.stopPropagation();
         
@@ -210,7 +214,7 @@
                     <div class="text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</div>
                 </div>`;
         } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 text-danger">Deep Dive failed.</div>`;
+            detailDiv.innerHTML = `<div class="p-3 text-danger">Deep Dive failed. Please try again.</div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
