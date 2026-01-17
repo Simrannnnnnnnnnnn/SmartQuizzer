@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<input type="hidden" id="hidden-content" value="{{ data.detailed_revision|e }}">
+
 <div class="container py-5 animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div>
@@ -8,7 +10,7 @@
             <p class="text-muted fs-5">Deep Dive Analysis, Flashcards, and Shorthand Notes generated for you.</p>
         </div>
         <div class="d-flex gap-2">
-            <button onclick="getCaseStudy('{{ data.topic }}')" class="btn btn-info text-white rounded-pill px-4 shadow-sm fw-bold">
+            <button id="gen-btn" onclick="getCaseStudy()" class="btn btn-info text-white rounded-pill px-4 shadow-sm fw-bold">
                 <i class="fa-solid fa-file-invoice me-2"></i>Generate Case Study
             </button>
             <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 shadow-sm border-2">
@@ -27,8 +29,8 @@
                     <h4 class="fw-bold text-info m-0"><i class="fa-solid fa-paste me-2"></i>Scenario-Based Case Study</h4>
                     <button class="btn-close" onclick="document.getElementById('caseStudyBox').style.display='none'"></button>
                 </div>
-                <div id="caseStudyContent" class="text-dark text-break" style="white-space: pre-line; line-height: 1.7; font-size: 1.05rem;">
-                </div>
+                <div id="caseStudyContent" class="text-dark text-break" style="line-height: 1.7; font-size: 1.05rem;">
+                    </div>
             </div>
 
             <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
@@ -57,10 +59,9 @@
                             </div>
                             
                             <div class="note-detail-content d-none mt-3 pt-3 border-top animate__animated animate__fadeIn">
-                                <div class="p-3 bg-light rounded-4">
-                                    <p class="mb-0 text-muted" style="font-size: 0.95rem; line-height: 1.6;">
-                                        Click Deep Dive for professional analysis.
-                                    </p>
+                                <div class="p-3 bg-light rounded-4 text-center">
+                                    <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                    <span class="text-muted">Analyzing concept details...</span>
                                 </div>
                             </div>
                         </div>
@@ -145,55 +146,77 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
     .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-2px); transition: 0.3s; }
     
+    .case-card { background: white; border-radius: 15px; border-left: 5px solid #0dcaf0; transition: 0.3s; }
+    .case-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
     @media print { .no-print { display: none !important; } }
 </style>
 
 <script>
-    // 1. Sidebar/Detail Toggle Logic
+    // 1. Toggle Shorthand Detail
     function toggleDetail(element) {
         const card = element.closest('.note-interactive-card');
         const detailDiv = card.querySelector('.note-detail-content');
         detailDiv.classList.toggle('d-none');
     }
 
-    // 2. ✅ FIXED CASE STUDY LOGIC
-    async function getCaseStudy(topic) {
-        const box = document.getElementById('caseStudyBox');
-        const content = document.getElementById('caseStudyContent');
-        
-        box.style.display = 'block';
-        box.scrollIntoView({ behavior: 'smooth' });
-        content.innerHTML = `
-            <div class="d-flex align-items-center p-3">
-                <div class="spinner-border text-info me-3"></div>
-                <span class="fw-bold">AI is generating a complex case study for "${topic}"...</span>
-            </div>`;
+    // 2. Fetch and Display Case Study
+    async function getCaseStudy() {
+        const btn = document.getElementById('gen-btn');
+        const caseBox = document.getElementById('caseStudyBox');
+        const caseContent = document.getElementById('caseStudyContent');
+        const contentToAnalyze = document.getElementById('hidden-content').value;
+
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+        btn.disabled = true;
 
         try {
             const response = await fetch('/generate-case-study', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    topic: topic, 
-                    content_to_study: `{{ data.detailed_revision|e }}` 
-                })
+                body: JSON.stringify({ content_to_study: contentToAnalyze })
             });
 
             const result = await response.json();
 
-            if (result.success && result.case_study) {
-                // Fixed: Replace markdown bolding (**) with HTML if AI sends it
-                let formattedText = result.case_study.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                content.innerHTML = formattedText;
+            if (result.success && result.cases) {
+                caseContent.innerHTML = ""; // Clear loader
+                
+                result.cases.forEach((item, index) => {
+                    const caseHtml = `
+                        <div class="case-card mb-4 p-4 border shadow-sm animate__animated animate__fadeInUp">
+                            <h5 class="fw-bold text-info"><i class="fa-solid fa-lightbulb me-2"></i>Scenario ${index + 1}: ${item.title || 'Topic Analysis'}</h5>
+                            <p class="mt-3"><strong>The Situation:</strong><br>${item.scenario}</p>
+                            <div class="p-3 rounded-3" style="background: #eefbff; border: 1px dashed #0dcaf0;">
+                                <p class="mb-0"><strong><i class="fa-solid fa-circle-question me-2"></i>Think About:</strong> ${item.question}</p>
+                            </div>
+                            <div class="mt-3 small">
+                                <strong>Key Pillars:</strong>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    ${item.key_points ? item.key_points.map(p => `<span class="badge bg-white text-dark border">${p}</span>`).join('') : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    caseContent.innerHTML += caseHtml;
+                });
+
+                caseBox.style.display = 'block';
+                caseBox.scrollIntoView({ behavior: 'smooth' });
+
             } else {
-                throw new Error(result.error || 'Generation failed');
+                alert("Generation failed: " + (result.error || "Unknown Error"));
             }
-        } catch (e) {
-            content.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Could not connect to AI service.");
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-file-invoice me-2"></i>Generate Case Study';
+            btn.disabled = false;
         }
     }
 
-    // 3. ✅ COMPLETE DEEP DIVE LOGIC
+    // 3. Deep Dive Logic
     async function deepDive(btn, text) {
         if (window.event) window.event.stopPropagation();
         
