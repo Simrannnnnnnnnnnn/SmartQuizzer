@@ -181,43 +181,27 @@ def extend_concept():
 # ==========================================
 # INTERACTIVE CASE CHALLENGE ROUTES
 # ==========================================
-
-@routes_bp.route('/start-challenge', methods=['POST'])
+@routes.route('/start-challenge', methods=['POST'])
+@login_required
 def start_challenge():
-    if not is_allowed():
-        return jsonify({"success": False, "error": "Unauthorized"}), 401
-    
-    data = request.get_json()
-    content = data.get('content_to_study', '')
-
-    if not content:
-        return jsonify({"success": False, "error": "No content provided!"}), 400
-
     try:
-        # AI Question Generation (Mixed Case Studies & Reasoning)
-        data_dict = llm.get_mixed_cases(content)
-        
-        # String handle karne ke liye (Safety Check agar AI JSON string bhej de)
-        if isinstance(data_dict, str):
-            data_dict = json.loads(data_dict)
+        data = request.get_json()
+        content = data.get('content_to_study')
 
-        mixed_data = data_dict.get('cases', [])
+        # Yahan 'mixed_cases' ki jagah llm_client ka method call karein
+        # 'llm_client' aapka object hona chahiye jo LLMClient() se bana ho
+        response = llm_client.get_mixed_cases(content) 
         
-        if not mixed_cases:
-            return jsonify({"success": False, "error": "AI could not create challenges."}), 500
-
-        # Session mein data save karna taaki naye page par display ho sake
-        session['active_challenges'] = mixed_data
+        # Session mein save karein taaki template use kar sake
+        session['active_challenges'] = response.get('cases', [])
         
-        # JavaScript ko redirect URL bhej rahe hain
         return jsonify({
             "success": True, 
-            "redirect": url_for('routes.view_challenges')
+            "redirect": url_for('routes.display_challenges') # Aapka challenge page route
         })
-        
     except Exception as e:
-        print(f"Challenge Gen Error: {str(e)}")
-        return jsonify({"success": False, "error": "Server error during generation."}), 500
+        print(f"Challenge Gen Error: {e}") # Yahi error logs mein aa rahi thi
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @routes_bp.route('/challenges')
 def view_challenges():
