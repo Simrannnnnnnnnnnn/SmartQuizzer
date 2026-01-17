@@ -27,8 +27,8 @@
                     <h4 class="fw-bold text-info m-0"><i class="fa-solid fa-paste me-2"></i>Scenario-Based Case Study</h4>
                     <button class="btn-close" onclick="document.getElementById('caseStudyBox').style.display='none'"></button>
                 </div>
-                <div id="caseStudyContent" class="text-dark" style="white-space: pre-wrap; line-height: 1.7;">
-                    </div>
+                <div id="caseStudyContent" class="text-dark text-break" style="white-space: pre-line; line-height: 1.7; font-size: 1.05rem;">
+                </div>
             </div>
 
             <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
@@ -128,7 +128,7 @@
 <style>
     :root { --primary-gold: #FFB300; }
     .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
-    .glass-card { border-radius: 24px; border: 1px solid #eee; }
+    .glass-card { border-radius: 24px; border: 1px solid #eee; background: white; }
     .icon-circle { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     .bullet-point { width: 35px; height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
@@ -144,7 +144,10 @@
     .custom-scrollbar::-webkit-scrollbar { width: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
     .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-2px); transition: 0.3s; }
+    
+    @media print { .no-print { display: none !important; } }
 </style>
+
 <script>
     // 1. Sidebar/Detail Toggle Logic
     function toggleDetail(element) {
@@ -153,12 +156,11 @@
         detailDiv.classList.toggle('d-none');
     }
 
-    // 2. ✅ COMPLETE CASE STUDY LOGIC
+    // 2. ✅ FIXED CASE STUDY LOGIC
     async function getCaseStudy(topic) {
         const box = document.getElementById('caseStudyBox');
         const content = document.getElementById('caseStudyContent');
         
-        // Show box and loading state
         box.style.display = 'block';
         box.scrollIntoView({ behavior: 'smooth' });
         content.innerHTML = `
@@ -173,36 +175,26 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     topic: topic, 
-                    content_to_study: `{{ data.detailed_revision|e }}` // Sending full content to AI
+                    content_to_study: `{{ data.detailed_revision|e }}` 
                 })
             });
 
-            if (!response.ok) throw new Error('Network response was not ok');
-            
             const result = await response.json();
 
             if (result.success && result.case_study) {
-                // Formatting the result to handle line breaks properly
-                content.innerHTML = result.case_study;
+                // Fixed: Replace markdown bolding (**) with HTML if AI sends it
+                let formattedText = result.case_study.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                content.innerHTML = formattedText;
             } else {
                 throw new Error(result.error || 'Generation failed');
             }
         } catch (e) {
-            console.error("Case Study Error:", e);
-            content.innerHTML = `
-                <div class="alert alert-danger d-flex align-items-center rounded-4 shadow-sm">
-                    <i class="fa-solid fa-triangle-exclamation me-3 fs-4"></i>
-                    <div>
-                        <strong class="d-block">Generation Failed!</strong>
-                        <small>Check if your AI route is properly configured in routes.py and the content isn't too long.</small>
-                    </div>
-                </div>`;
+            content.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
         }
     }
 
     // 3. ✅ COMPLETE DEEP DIVE LOGIC
     async function deepDive(btn, text) {
-        // Prevent parent click event
         if (window.event) window.event.stopPropagation();
         
         const card = btn.closest('.note-interactive-card');
@@ -213,39 +205,28 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
         
-        detailDiv.innerHTML = `
-            <div class="p-3 bg-light rounded-4 d-flex align-items-center border shadow-sm">
-                <div class="spinner-grow spinner-grow-sm text-primary me-3"></div>
-                <small class="fw-bold text-dark">AI is performing a professional Deep Dive...</small>
-            </div>`;
-        
         try {
             const response = await fetch('/deep-dive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ concept: text })
             });
-
-            if (!response.ok) throw new Error('Deep dive request failed');
             
             const result = await response.json();
             
             detailDiv.innerHTML = `
-                <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border-left: 5px solid #0f172a; border: 1px solid #e2e8f0;">
+                <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a;">
                     <strong class="d-block mb-2 text-dark">
                         <i class="fa-solid fa-microchip me-2 text-primary"></i>Advanced Technical Analysis:
                     </strong>
                     <div class="text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</div>
                 </div>`;
         } catch (e) {
-            console.error("Deep Dive Error:", e);
-            detailDiv.innerHTML = `
-                <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 fw-bold border border-danger border-opacity-25">
-                    <i class="fa-solid fa-circle-xmark me-2"></i>Deep Dive failed. Try again soon.
-                </div>`;
+            detailDiv.innerHTML = `<div class="p-3 text-danger">Deep Dive failed.</div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     }
 </script>
+{% endblock %}
