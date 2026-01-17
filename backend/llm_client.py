@@ -37,7 +37,6 @@ class LLMClient:
         except Exception:
             return "AI can process data millions of times faster than a human brain!"
 
-    # FIXED INDENTATION HERE
     def get_random_tech_fact(self):
         try:
             response = self.client.chat.completions.create(
@@ -50,7 +49,6 @@ class LLMClient:
 
     def get_topic_from_content(self, text):
         try:
-            # Added "Direct answer only" to stop AI from talking too much
             prompt = f"Identify the main subject of this text. Return ONLY the topic name in 2-3 words. No extra text: {text}"
             response = self.client.chat.completions.create(
                 model=self.POWER_MODEL,
@@ -92,33 +90,33 @@ class LLMClient:
             print(f"Error in Gen: {e}")
             return []
             
-     def get_mixed_cases(self, content):
-         system_prompt = (
-             "You are an expert educator. Output ONLY valid JSON. "
-             "The root must be an object with a key 'cases' containing a list. "
-             "JSON Structure: "
-             "{"
-             "  \"cases\": ["
-             "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
-             "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
-             "  ]"
-             "}"
-         )
-         user_prompt = f"Generate 3-4 mixed conceptual questions: {content[:3000]}"
-         try:
-             completion = self._safe_request(
-                 self.client.chat.completions.create,
-                 model=self.POWER_MODEL,
-                 messages=[
-                     {"role": "system", "content": system_prompt},
-                     {"role": "user", "content": user_prompt}
-                 ],
-                 response_format={"type": "json_object"}
-             )
-             return json.loads(completion.choices[0].message.content)
-         except Exception as e:
-        # Crash hone par empty valid JSON return karega
-             return json.dumps({"cases": []})  
+    def get_mixed_cases(self, content):
+        system_prompt = (
+            "You are an expert educator. Output ONLY valid JSON. "
+            "The root must be an object with a key 'cases' containing a list. "
+            "JSON Structure: "
+            "{"
+            "  \"cases\": ["
+            "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
+            "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
+            "  ]"
+            "}"
+        )
+        user_prompt = f"Generate 3-4 mixed conceptual questions: {content[:3000]}"
+        try:
+            completion = self._safe_request(
+                self.client.chat.completions.create,
+                model=self.POWER_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                response_format={"type": "json_object"}
+            )
+            return json.loads(completion.choices[0].message.content)
+        except Exception as e:
+            print(f"Error in get_mixed_cases: {e}")
+            return {"cases": []} 
              
     def deep_dive(self, text):
         prompt = (
@@ -178,4 +176,3 @@ class LLMClient:
             return completion.choices[0].message.content
         except Exception:
             return f"Keep practicing {topic}! Review your mistakes to strengthen your core concepts."
-    
