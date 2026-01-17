@@ -177,29 +177,49 @@ def extend_concept():
         return jsonify({"error": str(e)}), 500
         
 @routes_bp.route('/generate-case-study', methods=['POST'])
+@login_required
 def generate_case_study():
-    if not is_allowed(): return redirect(url_for('routes.login'))
+    # 1. Access Check
+    if not is_allowed(): 
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
     
-    content = request.form.get('content_to_study', '')
+    # 2. Get content (handles both AJAX JSON and standard Form data)
+    if request.is_json:
+        data = request.get_json()
+        content = data.get('content_to_study', '')
+    else:
+        content = request.form.get('content_to_study', '')
+
     if not content:
-        flash("No content found!", "warning")
-        return redirect(url_for('routes.study_hub'))
+        return jsonify({"success": False, "error": "No content found to analyze."}), 400
 
     try:
-        # Client ab direct DICT bhej raha hai upar wale fix ke baad
+        # 3. Call AI logic to get the dictionary
         data_dict = llm.get_mixed_cases(content)
         
-        # Safety check
-        if not data_dict or 'cases' not in data_dict:
-            raise ValueError("Invalid format from AI")
+        # 4. Extract the cases list
+        # Ensure the AI response actually contains the 'cases' key
+        mixed_data = data_dict.get('cases', []) if isinstance(data_dict, dict) else []
+        
+        if not mixed_data:
+            return jsonify({
+                "success": False, 
+                "error": "AI could not generate specific cases for this topic."
+            }), 422
             
-        mixed_data = data_dict.get('cases', [])
-        return render_template('case_study_mixed.html', cases=mixed_data)
+        # 5. RETURN JSON (This is the fix!)
+        # The frontend JavaScript will receive this and render the cards
+        return jsonify({
+            "success": True,
+            "cases": mixed_data
+        })
         
     except Exception as e:
         print(f"Route Error: {e}")
-        flash("AI failed to generate specific case studies for this text.", "danger")
-        return redirect(url_for('routes.study_hub'))
+        return jsonify({
+            "success": False, 
+            "error": "Internal AI Processing Error"
+        }), 500
 # ==========================================
 # QUIZ GENERATION ENGINE
 # ==========================================
