@@ -80,6 +80,7 @@ class LLMClient:
                     {"role": "user", "content": user_prompt}
                 ],
                 model=self.POWER_MODEL,
+                # JSON Mode is crucial here
                 response_format={"type": "json_object"},
                 temperature=0.3,
                 timeout=30.0
@@ -91,18 +92,21 @@ class LLMClient:
             return []
             
     def get_mixed_cases(self, content):
+        """
+        UPDATED: Explicitly asks for 'title' and 'key_points' to match frontend loop.
+        """
         system_prompt = (
             "You are an expert educator. Output ONLY valid JSON. "
-            "The root must be an object with a key 'cases' containing a list. "
-            "JSON Structure: "
+            "The root must be an object with a key 'cases' containing a list of objects. "
+            "Each object MUST contain: 'title', 'scenario', 'question', and 'key_points' (a list of strings). "
+            "Structure: "
             "{"
             "  \"cases\": ["
-            "    {\"type\": \"case\", \"scenario\": \"...\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}, "
-            "    {\"type\": \"reason\", \"question\": \"...\", \"answer\": \"...\", \"key_points\": [\"word1\"]}"
+            "    {\"title\": \"...\", \"scenario\": \"...\", \"question\": \"...\", \"key_points\": [\"...\", \"...\"]}"
             "  ]"
             "}"
         )
-        user_prompt = f"Generate 3-4 mixed conceptual questions: {content[:3000]}"
+        user_prompt = f"Generate 3 diverse case study scenarios based on this content: {content[:3000]}"
         try:
             completion = self._safe_request(
                 self.client.chat.completions.create,
