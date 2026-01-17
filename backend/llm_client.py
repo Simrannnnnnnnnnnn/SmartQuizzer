@@ -93,11 +93,13 @@ class LLMClient:
             
     def get_mixed_cases(self, content):
         system_prompt = (
-            "You are an interactive Socratic tutor. Create high-stakes scenarios. "
-            "Output ONLY valid JSON with a root key 'cases'. "
-            "Each case MUST have: 'title', 'scenario', 'critical_question', 'correct_analysis_points', and 'difficulty'."
+            "You are an expert tutor. Create 3 high-stakes interactive challenges based on the content. "
+            "Output ONLY valid JSON. "
+            "Format: {'cases': [{"
+            "'type': 'case', 'scenario': '...', 'question': '...', 'answer': '...', 'key_points': ['point1', 'point2']"
+            "}]}"
         )
-        user_prompt = f"Create 3 interactive problem-solving scenarios for: {content[:3000]}"
+        user_prompt = f"Create 3 interactive cases (1 scenario-based, 1 reasoning-based) for: {content[:3000]}"
         try:
             completion = self._safe_request(
                 self.client.chat.completions.create,
