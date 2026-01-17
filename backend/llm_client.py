@@ -92,36 +92,24 @@ class LLMClient:
             return []
             
     def get_mixed_cases(self, content):
-        """
-        UPDATED: Explicitly asks for 'title' and 'key_points' to match frontend loop.
-        """
         system_prompt = (
-            "You are an expert educator. Output ONLY valid JSON. "
-            "The root must be an object with a key 'cases' containing a list of objects. "
-            "Each object MUST contain: 'title', 'scenario', 'question', and 'key_points' (a list of strings). "
-            "Structure: "
-            "{"
-            "  \"cases\": ["
-            "    {\"title\": \"...\", \"scenario\": \"...\", \"question\": \"...\", \"key_points\": [\"...\", \"...\"]}"
-            "  ]"
-            "}"
+            "You are an interactive Socratic tutor. Create high-stakes scenarios. "
+            "Output ONLY valid JSON with a root key 'cases'. "
+            "Each case MUST have: 'title', 'scenario', 'critical_question', 'correct_analysis_points', and 'difficulty'."
         )
-        user_prompt = f"Generate 3 diverse case study scenarios based on this content: {content[:3000]}"
+        user_prompt = f"Create 3 interactive problem-solving scenarios for: {content[:3000]}"
         try:
             completion = self._safe_request(
                 self.client.chat.completions.create,
                 model=self.POWER_MODEL,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
+                messages=[{"role": "system", "content": system_prompt},
+                          {"role": "user", "content": user_prompt}],
                 response_format={"type": "json_object"}
             )
             return json.loads(completion.choices[0].message.content)
         except Exception as e:
-            print(f"Error in get_mixed_cases: {e}")
-            return {"cases": []} 
-             
+            return {"cases": []}
+            
     def deep_dive(self, text):
         prompt = (
             f"Provide a sophisticated, deep-dive analysis of: {text}. "
