@@ -181,29 +181,31 @@ def extend_concept():
 # ==========================================
 # INTERACTIVE CASE CHALLENGE ROUTES
 # ==========================================
-@routes.route('/start-challenge', methods=['POST'])
+@routes_bp.route('/start-challenge', methods=['POST'])
 @login_required
 def start_challenge():
     try:
         data = request.get_json()
         content = data.get('content_to_study')
-
+        if not content:
+            return jsonify({"success": False, "error": "No content provided"}), 400
         # Yahan 'mixed_cases' ki jagah llm_client ka method call karein
         # 'llm_client' aapka object hona chahiye jo LLMClient() se bana ho
-        response = llm_client.get_mixed_cases(content) 
+        response = llm.get_mixed_cases(content) 
         
         # Session mein save karein taaki template use kar sake
         session['active_challenges'] = response.get('cases', [])
         
         return jsonify({
             "success": True, 
-            "redirect": url_for('routes.display_challenges') # Aapka challenge page route
+            "redirect": url_for('routes.view_challenges') # Aapka challenge page route
         })
     except Exception as e:
         print(f"Challenge Gen Error: {e}") # Yahi error logs mein aa rahi thi
         return jsonify({"success": False, "error": str(e)}), 500
 
 @routes_bp.route('/challenges')
+@login_required
 def view_challenges():
     
     if not is_allowed(): 
