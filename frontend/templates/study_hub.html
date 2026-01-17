@@ -78,25 +78,46 @@
     /* Show overlay when this class is added */
     .show-loading { display: flex !important; }
 </style>
-
 <script>
     const sourceField = document.getElementById('source_type_field');
     
-    // Tab switching logic
-    document.getElementById('topic-tab').addEventListener('click', () => sourceField.value = 'topic');
-    document.getElementById('text-tab').addEventListener('click', () => sourceField.value = 'text');
-    document.getElementById('pdf-tab').addEventListener('click', () => sourceField.value = 'pdf');
+    // Tab switching logic using Bootstrap events (more reliable)
+    document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            const targetId = event.target.id;
+            if (targetId === 'topic-tab') sourceField.value = 'topic';
+            if (targetId === 'text-tab') sourceField.value = 'text';
+            if (targetId === 'pdf-tab') sourceField.value = 'pdf';
+        });
+    });
 
-    // Loading Logic: Sirf submit par dikhega
+    // Submit logic with basic validation
     document.getElementById('studyForm').addEventListener('submit', function(e) {
-        // Overlay ko dikhao
+        const activeTab = sourceField.value;
+        let isValid = true;
+
+        // Simple check to ensure input isn't empty
+        if (activeTab === 'topic') {
+            if (!document.querySelector('input[name="topic_name"]').value.trim()) isValid = false;
+        } else if (activeTab === 'text') {
+            if (!document.querySelector('textarea[name="raw_text"]').value.trim()) isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            alert("Please provide some input before generating.");
+            return;
+        }
+
+        // Show loading overlay
         const overlay = document.getElementById('loadingOverlay');
         overlay.classList.remove('d-none');
         overlay.classList.add('show-loading');
         
-        // Button ko disable kardo taaki double click na ho
-        document.getElementById('generateBtn').disabled = true;
-        document.getElementById('generateBtn').innerHTML = "Processing...";
+        // Disable button
+        const btn = document.getElementById('generateBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
     });
 </script>
 
