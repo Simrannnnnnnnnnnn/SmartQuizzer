@@ -5,13 +5,14 @@ Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Werkzeug==3.0.1
 
-# AI & API (DO NOT CHANGE THESE - Important for SmartQuizzer Logic)
+# AI & API
 groq==0.5.0
 python-dotenv==1.0.1
 
 # Document Processing
 pypdf==4.1.0
-pillow==10.2.0
+# UPDATE PILLOW TO THIS VERSION
+Pillow==11.0.0
 
 # PDF Generation
 reportlab==4.1.0
