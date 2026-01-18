@@ -25,14 +25,6 @@
         </div>
     </div>
 
-    {% if not questions %}
-    <div class="text-center py-5 glass-card animate__animated animate__zoomIn">
-        <div style="font-size: 5rem;">🏜️</div>
-        <h4 class="mt-3 fw-bold text-muted">Your vault is empty!</h4>
-        <p>Complete a quiz in the dashboard to start building your personal library.</p>
-        <a href="{{ url_for('routes.dashboard') }}" class="sunshine-btn mt-3 text-decoration-none">Go to Dashboard</a>
-    </div>
-    {% else %}
     <div class="row" id="questionGrid">
         {% for q in questions %}
         <div class="col-md-6 col-lg-4 mb-4 question-card">
@@ -57,11 +49,10 @@
         </div>
         {% endfor %}
     </div>
-    {% endif %}
 </div>
 
 <div class="modal fade" id="dynamicInsightModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 25px;">
             <div class="modal-header border-0 px-4 pt-4">
                 <h5 class="modal-title fw-bold" style="color: var(--primary-gold);">Question Insight</h5>
@@ -69,12 +60,13 @@
             </div>
             <div class="modal-body px-4 pb-4">
                 <h4 id="modalQuestionText" class="fw-bold mb-4" style="line-height: 1.4; color: #2d3436;"></h4>
-                
-                <div class="ai-breakdown-wrapper p-4 rounded-4 shadow-sm" style="background: #FFFDF5; border-left: 6px solid var(--primary-gold);">
-                    <h6 class="fw-bold mb-2 text-warning"><i class="fas fa-robot me-2"></i>AI Breakdown & Solution</h6>
-                    <div id="modalExplanationText" style="max-height: 350px; overflow-y: auto; font-size: 1rem; line-height: 1.6; color: #333;">
-                    </div>
+                <div class="p-4 rounded-4 shadow-sm" style="background: #FFFDF5; border-left: 6px solid var(--primary-gold);">
+                    <h6 class="fw-bold mb-2 text-warning"><i class="fas fa-robot me-2"></i>AI Breakdown</h6>
+                    <div id="modalExplanationText" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -82,98 +74,49 @@
 
 <style>
     :root { --primary-gold: #FFB300; }
-    
-    .sunshine-btn {
-        background: linear-gradient(135deg, #FFD700, #FFB300);
-        color: white;
-        border: none;
-        padding: 10px 25px;
-        border-radius: 50px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        display: inline-block;
-    }
-
-    .sunshine-btn:hover {
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(255, 179, 0, 0.4);
-        color: white;
-    }
-
+    .sunshine-btn { background: linear-gradient(135deg, #FFD700, #FFB300); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; text-decoration: none; }
     .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
-    
-    .transition-hover { transition: all 0.3s ease; }
-    .transition-hover:hover { 
-        transform: translateY(-8px); 
-        box-shadow: 0 15px 30px rgba(255,179,0,0.15) !important; 
-    }
-    
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
+    .glass-card { background: white; border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.05); }
     .hidden-card { display: none !important; }
-    
-    .glass-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    }
 
-    #modalExplanationText::-webkit-scrollbar { width: 6px; }
-    #modalExplanationText::-webkit-scrollbar-thumb { background-color: var(--primary-gold); border-radius: 10px; }
-    
-    /* Search highlighting effect */
-    #librarySearch:focus {
-        box-shadow: 0 0 0 0.25 rbg(255 179 0 / 25%);
-        border-color: var(--primary-gold);
+    /* BRAHMASTRA FIX: Isse screen kabhi stuck nahi hogi */
+    .modal-backdrop {
+        display: none !important; /* Default kaali layer khatam */
+    }
+    .modal {
+        background: rgba(0, 0, 0, 0.5); /* Modal khud hi piche parda banayega */
+    }
+    body.modal-open {
+        overflow: auto !important; /* Body hamesha scrollable rahegi */
+        padding-right: 0 !important;
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Modal Logic
     const modalEl = document.getElementById('dynamicInsightModal');
     const modalQuestion = document.getElementById('modalQuestionText');
     const modalExpl = document.getElementById('modalExplanationText');
-    const bModal = new bootstrap.Modal(modalEl);
-
+    
+    // Simple Modal trigger
     document.querySelectorAll('.view-sol-btn').forEach(button => {
         button.addEventListener('click', function() {
             modalQuestion.innerText = this.getAttribute('data-question');
             modalExpl.innerText = this.getAttribute('data-explanation');
-            bModal.show();
+            
+            var myModal = new bootstrap.Modal(modalEl);
+            myModal.show();
         });
     });
 
-    // 2. Search Functionality
+    // Search logic
     const searchInput = document.getElementById('librarySearch');
-    const cards = document.querySelectorAll('.question-card');
-
     searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        
-        cards.forEach(card => {
-            const questionText = card.querySelector('h6').innerText.toLowerCase();
-            if (questionText.includes(searchTerm)) {
-                card.classList.remove('hidden-card');
-                card.classList.add('animate__animated', 'animate__fadeIn');
-            } else {
-                card.classList.add('hidden-card');
-            }
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('.question-card').forEach(card => {
+            const text = card.querySelector('h6').innerText.toLowerCase();
+            card.classList.toggle('hidden-card', !text.includes(term));
         });
-    });
-
-    // Fix for Modal Backdrop issues
-    modalEl.addEventListener('hidden.bs.modal', function () {
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
     });
 });
 </script>

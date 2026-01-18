@@ -55,7 +55,6 @@
                                         onclick='analyzeLogic({{ loop.index0 }}, {{ item.key_points | tojson }})'>
                                     Check My Answer 🪄
                                 </button>
-                                
                                 <div id="result-{{ loop.index0 }}" class="mt-4 d-none p-4 rounded-4 animate__animated"></div>
                             </div>
 
@@ -63,7 +62,6 @@
                                 <div class="p-4 rounded-4 border-0 shadow-sm" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
                                     <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-certificate me-2"></i>Ideal Solution Strategy:</h6>
                                     <p class="mb-0 text-dark fs-5" style="line-height: 1.8;">{{ item.answer }}</p>
-                                    
                                     <div class="mt-4 pt-3 border-top">
                                         <small class="text-muted fw-bold text-uppercase">Critical Concepts:</small>
                                         <div class="d-flex flex-wrap gap-2 mt-2">
@@ -88,9 +86,14 @@
                         Next Challenge <i class="fa-solid fa-chevron-right ms-2"></i>
                     </button>
                     {% else %}
-                    <a href="{{ url_for('routes.study_hub') }}" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-sm">
-                        Complete Hub <i class="fa-solid fa-check-double ms-2"></i>
-                    </a>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
+                            <i class="fa-solid fa-house me-2"></i>Dashboard
+                        </a>
+                        <button type ="button" onclick="backToStudyContent()" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm">
+                            <i class="fa-solid fa-book-open me-2"></i>Back to My Notes 📖
+                        </button>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -112,17 +115,31 @@
 <script>
 let totalChallenges = {{ cases|length }};
 
-// Progress bar ko update karne ka function
+// --- IMPROVED BACK REDIRECTION ---
+function backToStudyContent() {
+    // Sabse pehle static URL try karo jo Flask provide karta hai
+    const fallbackUrl = "{{ url_for('routes.study_result') }}";
+    
+    // Phir check karo localStorage mein kuch hai ya nahi
+    const savedUrl = localStorage.getItem('last_notes_url');
+    
+    console.log("Navigating back to notes...");
+
+    if (savedUrl) {
+        window.location.href = savedUrl;
+    } else {
+        window.location.href = fallbackUrl;
+    }
+}
+
 function updateProgressBar(index) {
     const percent = ((index + 1) / totalChallenges) * 100;
     const bar = document.getElementById('challenge-progress');
     if(bar) bar.style.width = percent + '%';
-    
     const display = document.getElementById('current-idx-display');
     if(display) display.innerText = index + 1;   
 }
 
-// Cards ke beech navigate karne ka function
 function navigateChallenge(newIndex) {
     if (newIndex >= 0 && newIndex < totalChallenges) {
         document.querySelectorAll('.challenge-card').forEach(card => card.classList.add('d-none'));
@@ -135,13 +152,11 @@ function navigateChallenge(newIndex) {
     }
 }
 
-// Write aur Read tabs switch karne ka function
 function setView(mode, id) {
     const writeDiv = document.getElementById(`write-${id}`);
     const readDiv = document.getElementById(`read-${id}`);
     const writeBtn = document.getElementById(`write-tab-${id}`);
     const readBtn = document.getElementById(`read-tab-${id}`);
-
     if (mode === 'read') {
         writeDiv.classList.add('d-none');
         readDiv.classList.remove('d-none');
@@ -155,69 +170,40 @@ function setView(mode, id) {
     }
 }
 
-// LOGIC ANALYSIS FUNCTION (The one you asked for)
+function smartNormalize(text) {
+    return text.toLowerCase().trim().replace(/(ing|ed|s|es)\b/g, '').replace(/[^\w\s]/gi, '');      
+}
+
 function analyzeLogic(id, keys) {
     const textArea = document.getElementById(`ans-${id}`);
     const res = document.getElementById(`result-${id}`);
-    
-    if (!textArea || !textArea.value.trim()) {
-        alert("Please write your answer first! ✍️");
-        return;
-    }
+    if (!textArea || !textArea.value.trim()) { alert("Please write your answer first! ✍️"); return; }
 
-    const input = textArea.value.toLowerCase();
-    
-    // Keyword Matching
-    let found = keys.filter(k => input.includes(k.toLowerCase().trim()));
-    let missing = keys.filter(k => !found.includes(k));
+    const inputNormalized = smartNormalize(textArea.value);
+    let found = keys.filter(k => inputNormalized.includes(smartNormalize(k)));
 
     res.classList.remove('d-none', 'animate__fadeInUp', 'animate__shakeX');
     res.style.borderLeft = "8px solid";
 
     if (found.length === keys.length) {
-        // CASE: Perfect Answer
         res.classList.add('animate__fadeInUp');
-        res.style.backgroundColor = "#dcfce7";
-        res.style.borderColor = "#16a34a";
-        res.style.color = "#166534";
-        res.innerHTML = `
-            <h5 class="fw-bold"><i class="fa-solid fa-circle-check"></i> Perfect Analysis!</h5>
-            <p class="mb-0">Excellent work! You included all key concepts: <strong>${found.join(', ')}</strong>.</p>
-        `;
+        res.style.backgroundColor = "#dcfce7"; res.style.borderColor = "#16a34a"; res.style.color = "#166534";
+        res.innerHTML = `<h5 class="fw-bold">Perfect Analysis!</h5><p class="mb-0">Excellent work! You covered all key points.</p>`;
     } else if (found.length > 0) {
-        // CASE: Partial Answer
         res.classList.add('animate__fadeInUp');
-        res.style.backgroundColor = "#fffbeb";
-        res.style.borderColor = "#f59e0b";
-        res.style.color = "#92400e";
-        res.innerHTML = `
-            <h5 class="fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Good Progress!</h5>
-            <p class="mb-2">You correctly identified: <strong>${found.join(', ')}</strong>.</p>
-            <p class="mb-0 small" style="color: #444;">
-                <span class="fw-bold text-danger">Hint:</span> To make it professional, try to also mention: <b>${missing.join(', ')}</b>.
-            </p>
-        `;
+        res.style.backgroundColor = "#fffbeb"; res.style.borderColor = "#f59e0b"; res.style.color = "#92400e";
+        res.innerHTML = `<h5 class="fw-bold">Good Progress!</h5><p class="mb-0">You identified: <b>${found.join(', ')}</b>. Try to include the others!</p>`;
     } else {
-        // CASE: Wrong/Missing Logic
         res.classList.add('animate__shakeX');
-        res.style.backgroundColor = "#fef2f2";
-        res.style.borderColor = "#ef4444";
-        res.style.color = "#991b1b";
-        res.innerHTML = `
-            <h5 class="fw-bold"><i class="fa-solid fa-circle-xmark"></i> Incomplete Logic</h5>
-            <p class="mb-0">Your analysis is missing core concepts. Try focusing on: <strong>${keys.join(', ')}</strong>.</p>
-        `;
+        res.style.backgroundColor = "#fef2f2"; res.style.borderColor = "#ef4444"; res.style.color = "#991b1b";
+        res.innerHTML = `<h5 class="fw-bold">Keep Thinking...</h5><p class="mb-0">Focus on concepts like: <b>${keys.join(', ')}</b>.</p>`;
     }
-
-    // Scroll automatically so student sees the feedback
-    setTimeout(() => {
-        res.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 150);
+    setTimeout(() => res.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
 }
 
-// PAGE LOAD PAR PROGRESS BAR SET KAREIN
 document.addEventListener('DOMContentLoaded', function() {
-    updateProgressBar(0);
+    localStorage.setItem('last_notes_url', window.location.href);
+    
 });
 </script>
 {% endblock %}

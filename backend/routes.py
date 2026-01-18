@@ -5,12 +5,16 @@ from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import or_
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from flask import request, render_template, redirect, url_for
+#import pytesseract # Image se text nikaalne ke liye
+from PIL import Image # Image open karne ke liye
+import pdfplumber
 from dotenv import load_dotenv
 from flask import session 
 from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, db
 from backend.services import extract_text_from_pdf
 from backend.llm_client import LLMClient
-
+from backend.services import extract_text_from_image
 load_dotenv()
 routes_bp = Blueprint('routes', __name__)
 
@@ -145,10 +149,15 @@ def study_hub():
                 return redirect(url_for('routes.study_hub'))
 
             study_bundle = llm.generate_study_material(content)
-            return render_template('study_hub_result.html', data=study_bundle)
+            session['last_study_data'] = study_bundle
+            session.modified = True # Ensure session updates
+            return redirect(url_for('routes.study_result'))
+        
         except Exception as e:
             flash(f"AI Study Hub Error: {str(e)}", "danger")
             return redirect(url_for('routes.study_hub'))
+    if 'last_study_data' in session:
+        return redirect(url_for('routes.study_result'))
             
     return render_template('study_hub.html')
 
@@ -176,8 +185,18 @@ def extend_concept():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ... (Baaki imports same rahenge)
-
+@routes_bp.route('/study-result')
+def study_result():
+    if not is_allowed(): return redirect(url_for('routes.login'))
+    
+    # Session se data uthao
+    data = session.get('last_study_data')
+    
+    if not data:
+        flash("No active study session found.", "info")
+        return redirect(url_for('routes.study_hub'))
+        
+    return render_template('study_hub_result.html', data=data)
 # ==========================================
 # INTERACTIVE CASE CHALLENGE ROUTES
 # ==========================================
@@ -247,48 +266,63 @@ def handle_generation():
             
             for m in mistakes:
                 new_q = Question(
-                    question_text=m.question_text, 
-                    options_json=m.options_json, 
-                    correct_answer=m.correct_answer, 
-                    explanation=m.explanation, 
+                    question_text=q_data.get('question'), 
+                    options_json=json.dumps(q_data.get('options')), 
+                    correct_answer=q_data.get('correct_answer'), 
+                    explanation=q_data.get('explanation',"Study Hard"), 
                     user_id=current_user.id
                 )
                 db.session.add(new_q)
                 db.session.flush()
                 q_ids.append(new_q.id)
+            db.session.commit()
         
         else:
             content = ""
-            if source_type == 'pdf':
-                file = request.files.get('pdf_file')
-                # Check: File empty toh nahi hai?
+            if source_type == 'image':
+                file = request.files.get('image_file')
                 if file and file.filename != '':
-                    content = extract_text_from_pdf(file)
-                    # Check: Kya extraction fail hui?
+                    
+                    content = extract_text_from_image(file)
+                    mastery_label = f"Image Scan ({file.filename})"
                     if not content:
-                        flash("PDF se text nahi nikal paya. Please try another file.", "danger")
+                        flash("Image se text nahi nikal paya. Clear photo upload karein.", "danger")
                         return redirect(url_for('routes.dashboard'))
                 else:
-                    flash("Please upload a PDF file first!", "danger")
+                    flash("Please upload an image first!", "danger")
+                    return redirect(url_for('routes.dashboard'))
+            # --- IMAGE UPLOAD LOGIC END ---
+
+            elif source_type == 'pdf':
+                file = request.files.get('pdf_file')
+                if file and file.filename != '':
+                    content = extract_text_from_pdf(file)
+                    mastery_label = f"PDF: {file.filename}"
+                    if not content:
+                        flash("PDF se text nahi nikal paya.", "danger")
+                        return redirect(url_for('routes.dashboard'))
+                else:
+                    flash("Please upload a PDF file!", "danger")
                     return redirect(url_for('routes.dashboard'))
             
             elif source_type == 'text':
                 content = request.form.get('raw_text', "")
+                mastery_label = "Custom Text"
             
             elif source_type == 'topic':
                 mastery_label = request.form.get('topic_name', "General Study")
                 content = f"Create a quiz on: {mastery_label}"
 
-            # Final validation check before AI call
+            # Final validation before Groq Call
             if not content or content.strip() == "":
-                flash("Kuch toh content provide karo generate karne ke liye!", "warning")
+                flash("Kuch toh content provide karo!", "warning")
                 return redirect(url_for('routes.dashboard'))
 
-            # AI Question Generation
+            # AI Question Generation (Groq Call)
             raw_qs = llm.generate_questions(content, count)
             
             if not raw_qs:
-                flash("AI questions generate nahi kar paya. Content badal kar try karein!", "danger")
+                flash("AI fails to generate questions. Try again!", "danger")
                 return redirect(url_for('routes.dashboard'))
                 
             for q_data in raw_qs:
@@ -303,10 +337,8 @@ def handle_generation():
                 db.session.flush()
                 q_ids.append(new_q.id)
 
-        # Commit all new questions
         db.session.commit()
         
-        # Update Session with quiz info
         session.update({
             'active_questions': q_ids, 
             'current_idx': 0, 
@@ -320,10 +352,10 @@ def handle_generation():
 
     except Exception as e:
         db.session.rollback()
-        print(f"Quiz Generation Error: {str(e)}") # Terminal mein error dikhega
-        flash(f"Error: {str(e)}", "danger")
+        print(f"Generation Error: {str(e)}")
+        flash(f"System Error: {str(e)}", "danger")
         return redirect(url_for('routes.dashboard'))
-
+      
 # ==========================================
 # QUIZ PAGE & ANSWERS
 # ==========================================
@@ -476,12 +508,9 @@ def library():
     if session.get('is_guest'):
         flash("Library is only for registered users to track progress! 🚀", "info")
         return redirect(url_for('routes.signup'))
-    
-    user_quizzes = QuizResult.query.filter_by(user_id=current_user.id)\
-                                   .order_by(QuizResult.timestamp.desc())\
-                                   .all()
-    
-    return render_template('library.html', quizzes=user_quizzes)
+    user_questions = Question.query.filter_by(user_id=current_user.id).all()
+    print(f"DEBUG: User ID {current_user.id} has {len(user_questions)} quizzes in DB")
+    return render_template('library.html', questions=user_questions)
 
 @routes_bp.route('/review-mistakes')
 @login_required

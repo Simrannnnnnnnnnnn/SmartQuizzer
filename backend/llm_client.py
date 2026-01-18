@@ -93,13 +93,21 @@ class LLMClient:
             
     def get_mixed_cases(self, content):
         system_prompt = (
-            "You are an expert tutor. Create 3 high-stakes interactive challenges based on the content. "
-            "Output ONLY valid JSON. "
-            "Format: {'cases': [{"
-            "'type': 'case', 'scenario': '...', 'question': '...', 'answer': '...', 'key_points': ['point1', 'point2']"
-            "}]}"
+            "You are an expert tutor. Create 5 high-stakes interactive challenges. "
+            "STRICT RULES FOR 'key_points':\n"
+            "1. Key points must be single conceptual words or very short phrases.\n"
+            "2. Focus on the MEANING and LOGIC, not specific tenses.\n"
+            "3. Ensure the 'answer' explains the reasoning clearly.\n"
+            "Output ONLY valid JSON.\n"
+            "Format: {'cases': [{'type': 'case', 'scenario': '...', 'question': '...', 'answer': '...', 'key_points': ['point1', 'point2']}]}"
+            
         )
-        user_prompt = f"Create 3 interactive cases (1 scenario-based, 1 reasoning-based) for: {content[:3000]}"
+        user_prompt = (
+            f"Based on this content: {content[:3000]}\n"
+            "Create 5 interactive cases. \n"
+            "IMPORTANT: Choose key_points that represent core concepts so that if a user writes "
+            "in past tense or different wording, it still matches the logic."
+        )
         try:
             completion = self._safe_request(
                 self.client.chat.completions.create,
@@ -107,6 +115,7 @@ class LLMClient:
                 messages=[{"role": "system", "content": system_prompt},
                           {"role": "user", "content": user_prompt}],
                 response_format={"type": "json_object"}
+                
             )
             return json.loads(completion.choices[0].message.content)
         except Exception as e:

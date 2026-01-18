@@ -1,7 +1,10 @@
 import pypdf
 import os
 from flask import current_app
-
+import easyocr
+import numpy as np
+from PIL import Image
+reader = easyocr.Reader(['en'],gpu = False)
 def extract_text_from_pdf(file):
     """
     Lightweight PDF text extraction using pypdf.
@@ -22,3 +25,14 @@ def extract_text_from_pdf(file):
         print(f"Error extracting PDF: {e}")
         return ""
 
+def extract_text_from_image(image_file):
+    try:
+        img = Image.open(image_file)
+        img_np = np.array(img)
+        results = reader.readtext(img_np, detail =0)
+        full_text = " ".join(results)
+        print(f"Debug OCR Success")
+        return full_text 
+    except Exception as e:
+        print(f"Error during ocr: {e}")
+        return None

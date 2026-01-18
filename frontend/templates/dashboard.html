@@ -61,6 +61,7 @@
                             <label class="form-label fw-bold small text-muted ms-2">INPUT SOURCE</label>
                             <select name="source_type" id="source-select" class="form-select sunshine-input p-3 fw-bold">
                                 <option value="pdf">📄 Smart PDF Upload</option>
+                                <option value="image">📸 Upload Image (OCR)</option>
                                 <option value="text">✍️ Quick Text Paste</option>
                                 <option value="topic">🌐 Explore a Topic</option>
                             </select>
@@ -124,7 +125,11 @@
                                     <span style="color: #ff9900;">{{ topic.percentage }}%</span> 
                                 </div>
                                 <div class="progress rounded-pill" style="height: 8px; background: #fff9db;">
-                                    <div class="progress-bar" style="width: {{ topic.percentage }}%; background: linear-gradient(90deg, #ffcc00, #ff9900); border-radius: 50px;"></div>
+                                    <div class="progress-bar" 
+                                         style="width: {{ topic.percentage }}%; 
+                                         background: {% if topic.percentage > 70 %}linear-gradient(90deg, #2ecc71, #27ae60){% elif topic.percentage > 40 %}linear-gradient(90deg, #ffcc00, #ff9900){% else %}linear-gradient(90deg, #ff7675, #d63031){% endif %}; 
+                                         border-radius: 50px;">
+                                    </div>
                                 </div>
                             </div>
                             {% endfor %}
@@ -157,7 +162,7 @@
                     </div>
                     <h5 class="fw-bold" style="color: #333;">Unlock Full Potential</h5>
                     <p class="text-muted small mb-4">Register now to track your <b>Daily Streaks</b>, save <b>Knowledge Vaults</b>, and review <b>Mistakes</b>.</p>
-                    <a href="{{ url_for('routes.register') }}" class="btn sunshine-main-btn w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">Join Sunshine AI</a>
+                    <a href="{{ url_for('routes.signup') }}" class="btn sunshine-main-btn w-100 py-3 rounded-pill fw-bold shadow-sm mb-3">Join Sunshine AI</a>
                     <p class="small text-muted">Already have an account? <a href="{{ url_for('routes.login') }}" class="text-warning fw-bold text-decoration-none">Login</a></p>
                 </div>
             {% endif %}
@@ -218,23 +223,35 @@
 <script>
     function updateFileName(input) {
         const display = document.getElementById('fileNameDisplay');
-        display.innerText = input.files[0] ? input.files[0].name : "Drop your PDF here or click";
+        display.innerText = input.files[0] ? input.files[0].name : "File selected: " + input.files[0].name;
     }
 
     document.getElementById('source-select').onchange = function() {
         const area = document.getElementById('input-area');
+        const submitBtn = document.getElementById('submitBtn');
+        const currentCount = document.getElementById('countRange').value;
+
         const configs = {
             pdf: {
-                html: '<div class="upload-zone p-5 text-center rounded-4" style="background: #fffef0; border: 2px dashed #ffe082;"><input type="file" name="pdf_file" class="form-control d-none" id="fileInput" required onchange="updateFileName(this)"><label for="fileInput" style="cursor: pointer;"><i class="fa-solid fa-cloud-arrow-up fs-1 text-warning mb-3"></i><h6 class="fw-bold" id="fileNameDisplay">Drop your PDF here or click</h6><p class="text-muted small mb-0">Sunshine AI will read it in seconds</p></label></div>'
+                html: '<div class="upload-zone p-5 text-center rounded-4" style="background: #fffef0; border: 2px dashed #ffe082;"><input type="file" name="pdf_file" class="form-control d-none" id="fileInput" required onchange="updateFileName(this)"><label for="fileInput" style="cursor: pointer;"><i class="fa-solid fa-cloud-arrow-up fs-1 text-warning mb-3"></i><h6 class="fw-bold" id="fileNameDisplay">Drop your PDF here or click</h6><p class="text-muted small mb-0">Sunshine AI will read it in seconds</p></label></div>',
+                btnText: `Generate ${currentCount} Questions Now 🪄`
+            },
+            image: {
+                html: '<div class="upload-zone p-5 text-center rounded-4" style="background: #f0faff; border: 2px dashed #82ccff;"><input type="file" name="image_file" class="form-control d-none" id="imageInput" accept="image/*" required onchange="updateFileName(this)"><label for="imageInput" style="cursor: pointer;"><i class="fa-solid fa-file-image fs-1 text-primary mb-3"></i><h6 class="fw-bold" id="fileNameDisplay">Upload a clear photo of your notes</h6><p class="text-muted small mb-0">OCR will extract the text for your quiz</p></label></div>',
+                btnText: `Scan & Generate ${currentCount} Questions 📸`
             },
             text: {
-                html: '<textarea name="raw_text" class="form-control sunshine-input p-4" rows="6" placeholder="Paste your study notes here and let the sun shine..." required></textarea>'
+                html: '<textarea name="raw_text" class="form-control sunshine-input p-4" rows="6" placeholder="Paste your study notes here and let the sun shine..." required></textarea>',
+                btnText: `Create ${currentCount} Questions ✍️`
             },
             topic: {
-                html: '<input type="text" name="topic_name" class="form-control sunshine-input p-4 rounded-pill" placeholder="Enter topic (e.g. photosynthesis)..." required>'
+                html: '<input type="text" name="topic_name" class="form-control sunshine-input p-4 rounded-pill" placeholder="Enter topic (e.g. photosynthesis)..." required>',
+                btnText: `Explore & Generate ${currentCount} Questions 🌐`
             }
         };
+
         area.innerHTML = `<div class="animate__animated animate__fadeIn">${configs[this.value].html}</div>`;
+        submitBtn.innerHTML = configs[this.value].btnText;
     };
 
     document.getElementById('quiz-form').onsubmit = function() {

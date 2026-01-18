@@ -141,6 +141,13 @@
 </style>
 
 <script>
+    // URL Save logic - Ensuring it stays for Case Challenge
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentUrl = window.location.href;
+        localStorage.setItem('last_notes_url', currentUrl);
+        console.log("Notes URL Locked in LocalStorage:", currentUrl);
+    });
+
     // 1. Toggle Shorthand Detail View
     function toggleDetail(element) {
         const card = element.closest('.note-interactive-card');
@@ -148,8 +155,11 @@
         detailDiv.classList.toggle('d-none');
     }
 
-    // 2. Start AI Case Challenge (Cleaned up logic)
+    // 2. Start AI Case Challenge (Fixed Redirection Safety)
     async function startInteractiveChallenge() {
+        // Double Lock: Save again just before moving
+        localStorage.setItem('last_notes_url', window.location.href);
+       
         const btn = document.getElementById('gen-btn');
         const content = document.getElementById('hidden-content').value;
 
@@ -157,7 +167,6 @@
         btn.disabled = true;
 
         try {
-            // Using your updated endpoint '/start-challenge'
             const response = await fetch('/start-challenge', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -167,7 +176,7 @@
             const result = await response.json();
 
             if (result.success) {
-                // Redirect user to the interactive challenges page
+                // Moving to Case Study Page
                 window.location.href = result.redirect;
             } else {
                 alert("AI Error: " + (result.error || "Failed to generate challenges."));
@@ -185,7 +194,7 @@
         btn.disabled = false;
     }
 
-    // 3. Deep Dive Logic (Explanation for specific concepts)
+    // 3. Deep Dive Logic
     async function deepDive(btn, text) {
         if (window.event) window.event.stopPropagation();
         
@@ -209,7 +218,7 @@
             detailDiv.innerHTML = `
                 <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a;">
                     <strong class="d-block mb-2 text-dark">
-                        <i class="fa-solid fa-microchip me-2 text-primary"></i>Advanced Technical Analysis:
+                        <i class="fa-solid fa-microchip me-2 text-primary"></i>Advanced Analysis:
                     </strong>
                     <div class="text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</div>
                 </div>`;
