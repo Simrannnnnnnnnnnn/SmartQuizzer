@@ -1,24 +1,28 @@
-# Web Framework
+# Web Framework & Security
 Flask==3.0.2
 Flask-Bcrypt==1.0.1
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-CORS==4.0.0
 Werkzeug==3.0.1
 
 # AI & API
 groq==0.5.0
 python-dotenv==1.0.1
 
-# Document Processing
-pypdf==4.1.0
-# UPDATE PILLOW TO THIS VERSION
+# OCR & Image Processing (EASYOCR SPECIFIC)
+easyocr==1.7.1
+torch==2.2.0
+torchvision==0.17.0
+opencv-python-headless==4.9.0.80
 Pillow==11.0.0
 
-# PDF Generation
+# Document Processing
+pypdf==4.1.0
 reportlab==4.1.0
 
-# Database & Utilities
-SQLAlchemy==2.0.27
+# Database & Production
+SQLAlchemy==2.0.36
 requests==2.31.0
 gunicorn==21.2.0
-Flask-Migrate==4.0.7
