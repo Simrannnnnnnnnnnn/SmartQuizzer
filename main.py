@@ -1,5 +1,6 @@
 import os
 import json
+import tempfile
 from flask import Flask
 from flask_login import LoginManager
 from flask_cors import CORS  # <--- Naya add kiya
@@ -19,7 +20,8 @@ CORS(app) # <--- Isse Vercel se backend connect ho payega
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
 # SQLite ki jagah agar koi cloud DB hai toh uska URL dena, 
 # warna HF restart hone par data ud jayega. Demo ke liye theek hai.
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///smartquizzer.db')
+db_path = os.path.join(tempfile.gettempdir(), 'smartquizzer.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Setup for PDF uploads - Server ke liye safe path
@@ -51,6 +53,7 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
+application = app
 if __name__ == '__main__':
     # Hugging Face hamesha 7860 port maangta hai
     port = int(os.environ.get("PORT", 7860)) 
