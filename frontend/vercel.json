@@ -1,13 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/templates/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/templates/$1"
-    }
+    { "source": "/", "destination": "/templates/index.html" },
+    { "source": "/(.*)", "destination": "/templates/$1" }
   ]
 }
