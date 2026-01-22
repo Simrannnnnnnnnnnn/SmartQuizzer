@@ -1,30 +1,122 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="auth-wrapper" style="background: white;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Researching... | SmartQuizzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --brand-midnight: #1a2a6c; 
+            --brand-accent: #ffcc00; 
+            --text-muted: #64748b;
+        }
+        body { font-family: 'Fredoka', sans-serif; background: #ffffff; }
+
+        .auth-wrapper {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pulse-loader {
+            width: 100px;
+            height: 100px;
+            background: var(--brand-midnight);
+            border-radius: 50%;
+            margin: 0 auto;
+            animation: pulse-ring 1.5s infinite ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+
+        @keyframes loadingBar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 0 0 rgba(26, 42, 108, 0.4); }
+            70% { transform: scale(1.05); opacity: 1; box-shadow: 0 0 0 30px rgba(26, 42, 108, 0); }
+            100% { transform: scale(0.9); opacity: 0.5; }
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            margin-top: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            width: 40%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-midnight), var(--brand-accent));
+            border-radius: 10px;
+            animation: loadingBar 1.5s infinite linear;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
     <div style="text-align: center; max-width: 500px;">
-        <div class="pulse-loader" style="width: 100px; height: 100px; background: var(--brand-midnight); border-radius: 50%; margin: 0 auto; animation: pulse-ring 1.5s infinite ease-in-out;"></div>
-        
-        <h1 style="color: var(--brand-midnight); margin-top: 40px; font-size: 2.5rem;">AI is Researching...</h1>
-        <p style="color: var(--text-muted); font-weight: 600; line-height: 1.6;">Our Llama-3 engine is reading your content and crafting high-quality questions. This usually takes 5-10 seconds.</p>
-        
-        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; margin-top: 40px; overflow: hidden; border: 1px solid #eee;">
-            <div style="width: 100%; height: 100%; background: linear-gradient(90deg, var(--brand-midnight), var(--brand-accent)); animation: loadingBar 2s infinite ease-in-out;"></div>
+        <div class="pulse-loader">
+            <span id="ai-emoji">🧠</span>
         </div>
         
-        <p style="margin-top: 20px; font-size: 0.8rem; font-weight: 800; color: var(--brand-accent); letter-spacing: 1px; text-transform: uppercase;">Adapting to your level...</p>
+        <h1 style="color: var(--brand-midnight); margin-top: 40px; font-size: 2.2rem; font-weight: 800;">AI is Researching...</h1>
+        <p style="color: var(--text-muted); font-weight: 500; line-height: 1.6; font-size: 1.1rem;">
+            Our Llama-3 engine is reading your content and crafting high-quality questions.
+        </p>
+        
+        <div class="progress-container">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <p id="status-text" style="margin-top: 25px; font-size: 0.85rem; font-weight: 800; color: #ff9800; letter-spacing: 1px; text-transform: uppercase;">
+            Analyzing context...
+        </p>
     </div>
 </div>
 
-<style>
-@keyframes loadingBar {
-    0% { transform: translateX(-100%); }
-    50% { transform: translateX(0); }
-    100% { transform: translateX(100%); }
-}
-@keyframes pulse-ring {
-    0% { transform: scale(0.9); opacity: 0.5; box-shadow: 0 0 0 0 rgba(26, 42, 108, 0.4); }
-    70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 20px rgba(26, 42, 108, 0); }
-    100% { transform: scale(0.9); opacity: 0.5; }
-}
-</style>
-{% endblock %}
+<script>
+    // Simulate AI thinking process
+    const statuses = [
+        "Analyzing context...",
+        "Identifying key concepts...",
+        "Generating logical challenges...",
+        "Polishing your experience...",
+        "Ready! Launching now..."
+    ];
+
+    const emojis = ["🧠", "📚", "✨", "🔍", "🚀"];
+    let step = 0;
+
+    const interval = setInterval(() => {
+        if (step < statuses.length) {
+            document.getElementById('status-text').innerText = statuses[step];
+            document.getElementById('ai-emoji').innerText = emojis[step];
+            step++;
+        }
+    }, 1200);
+
+    // After 6 seconds, go to the Case Study page
+    setTimeout(() => {
+        window.location.href = "case_study.html";
+    }, 6500);
+</script>
+
+</body>
+</html>
