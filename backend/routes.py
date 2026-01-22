@@ -15,6 +15,8 @@ from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank
 from backend.services import extract_text_from_pdf
 from backend.llm_client import LLMClient
 from backend.services import extract_text_from_image
+def is_allowed():
+    return current_user.is_authenticated or session.get('is_guest')
 load_dotenv()
 routes_bp = Blueprint('routes', __name__)
 
