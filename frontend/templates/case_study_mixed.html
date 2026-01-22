@@ -1,6 +1,35 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartQuizzer | Case Study 📁</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-{% block content %}
+    <style>
+        :root { --primary-gold: #FFB300; }
+        body { background-color: #f1f5f9; font-family: 'Fredoka', sans-serif; }
+        .challenge-card { min-height: 600px; }
+        .nav-pills .nav-link.active { background-color: white !important; color: black !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .hover-up:hover { transform: translateY(-2px); transition: 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+        .scenario-box p { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 500; }
+        .progress-bar { transition: width 0.8s ease-in-out; }
+        .nav-top { background: white; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<nav class="nav-top no-print">
+    <a href="index.html" style="text-decoration: none; font-weight: 900; color: var(--primary-gold); font-size: 1.6rem;">SmartQuizzer 🚀</a>
+    <div class="d-flex align-items-center">
+        <a href="dashboard.html" class="btn btn-outline-dark btn-sm rounded-pill px-3">Dashboard</a>
+    </div>
+</nav>
+
 <div class="container py-5 animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div class="flex-grow-1 me-4">
@@ -11,199 +40,133 @@
         </div>
         <div class="text-end">
             <span class="badge bg-dark rounded-pill px-3 py-2">
-                Challenge <span id="current-idx-display">1</span> of {{ cases|length }}
+                Challenge <span id="current-idx-display">1</span> of <span id="total-count">1</span>
             </span>
         </div>
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-lg-9">
-            {% for item in cases %}
-            <div id="challenge-card-{{ loop.index0 }}" class="challenge-card {% if not loop.first %}d-none{% endif %}">
-                <div class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden animate__animated animate__fadeInRight">
-                    
-                    <div class="px-4 py-3 {% if item.type == 'case' %}bg-primary text-white{% else %}bg-warning text-dark{% endif %} fw-bold d-flex justify-content-between align-items-center">
-                        <span class="text-uppercase tracking-wider">
-                            {% if item.type == 'case' %} 📁 Case Study {% else %} 💡 Reasoning Challenge {% endif %}
-                        </span>
-                        <i class="fa-solid {% if item.type == 'case' %}fa-briefcase{% else %}fa-lightbulb{% endif %} fa-lg"></i>
-                    </div>
-
-                    <div class="card-body p-4 p-md-5">
-                        {% if item.type == 'case' %}
-                        <div class="scenario-box p-4 rounded-4 mb-4" style="background: #f0f7ff; border-left: 8px solid #0d6efd;">
-                            <h6 class="text-primary fw-bold text-uppercase small mb-2">The Situation:</h6>
-                            <p class="mb-0 fs-5" style="line-height: 1.6; font-style: italic; color: #1e293b;">"{{ item.scenario }}"</p>
-                        </div>
-                        {% endif %}
-
-                        <div class="question-box mb-4">
-                            <h3 class="fw-bold text-dark">
-                                <span class="text-danger me-2">Q:</span>{{ item.question }}
-                            </h3>
-                        </div>
-
-                        <div class="interaction-zone">
-                            <div class="nav nav-pills mb-4 bg-light p-1 rounded-pill d-inline-flex border">
-                                <button class="nav-link active rounded-pill px-4 fw-bold" id="write-tab-{{ loop.index0 }}" onclick="setView('write', {{ loop.index0 }})">Write Answer ✍️</button>
-                                <button class="nav-link rounded-pill px-4 fw-bold text-dark" id="read-tab-{{ loop.index0 }}" onclick="setView('read', {{ loop.index0 }})">Quick Reveal 📖</button>
-                            </div>
-
-                            <div id="write-{{ loop.index0 }}" class="mt-2">
-                                <textarea id="ans-{{ loop.index0 }}" class="form-control border-2 rounded-4 p-3 mb-3 shadow-sm" rows="5" placeholder="Analyze the situation and provide your reasoning..."></textarea>
-                                <button type="button" class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow hover-up" 
-                                        onclick='analyzeLogic({{ loop.index0 }}, {{ item.key_points | tojson }})'>
-                                    Check My Answer 🪄
-                                </button>
-                                <div id="result-{{ loop.index0 }}" class="mt-4 d-none p-4 rounded-4 animate__animated"></div>
-                            </div>
-
-                            <div id="read-{{ loop.index0 }}" class="d-none mt-2 animate__animated animate__fadeIn">
-                                <div class="p-4 rounded-4 border-0 shadow-sm" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
-                                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-certificate me-2"></i>Ideal Solution Strategy:</h6>
-                                    <p class="mb-0 text-dark fs-5" style="line-height: 1.8;">{{ item.answer }}</p>
-                                    <div class="mt-4 pt-3 border-top">
-                                        <small class="text-muted fw-bold text-uppercase">Critical Concepts:</small>
-                                        <div class="d-flex flex-wrap gap-2 mt-2">
-                                            {% for point in item.key_points %}
-                                            <span class="badge bg-white text-primary border rounded-pill px-3 py-2 shadow-sm">{{ point }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-4 mb-5">
-                    <button class="btn btn-link text-decoration-none text-muted fw-bold" {% if loop.first %}disabled{% endif %} onclick="navigateChallenge({{ loop.index0 - 1 }})">
-                        <i class="fa-solid fa-chevron-left me-2"></i> Previous
-                    </button>
-                    
-                    {% if not loop.last %}
-                    <button class="btn btn-warning rounded-pill px-5 py-2 fw-bold shadow-sm" onclick="navigateChallenge({{ loop.index0 + 1 }})">
-                        Next Challenge <i class="fa-solid fa-chevron-right ms-2"></i>
-                    </button>
-                    {% else %}
-                    <div class="d-flex gap-3">
-                        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm">
-                            <i class="fa-solid fa-house me-2"></i>Dashboard
-                        </a>
-                        <button type ="button" onclick="backToStudyContent()" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm">
-                            <i class="fa-solid fa-book-open me-2"></i>Back to My Notes 📖
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
+        <div class="col-lg-9" id="challenges-wrapper">
             </div>
-            {% endfor %}
-        </div>
     </div>
 </div>
 
-<style>
-    :root { --primary-gold: #FFB300; }
-    body { background-color: #f1f5f9; }
-    .challenge-card { min-height: 600px; }
-    .nav-pills .nav-link.active { background-color: white !important; color: black !important; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .hover-up:hover { transform: translateY(-2px); transition: 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-    .scenario-box p { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-weight: 500; }
-    .progress-bar { transition: width 0.8s ease-in-out; }
-</style>
-
 <script>
-let totalChallenges = {{ cases|length }};
+// --- CASE STUDY DATA (Replacing Flask cases) ---
+const casesData = [
+    {
+        type: 'case',
+        scenario: 'A large tech company is facing a sudden 40% drop in user engagement after a UI update.',
+        question: 'What immediate steps should the Product Manager take to identify the root cause?',
+        answer: 'The PM should perform A/B testing, analyze session recordings, and gather direct user feedback to identify friction points.',
+        key_points: ['A/B testing', 'user feedback', 'session recordings', 'friction points']
+    },
+    {
+        type: 'reasoning',
+        scenario: '',
+        question: 'If all A are B and some B are C, can we definitively say some A are C?',
+        answer: 'No, because the "some B" that are C might not overlap with the set of A.',
+        key_points: ['overlap', 'sets', 'overlap', 'logical fallacy']
+    }
+];
 
-// --- IMPROVED BACK REDIRECTION ---
-function backToStudyContent() {
-    // Sabse pehle static URL try karo jo Flask provide karta hai
-    const fallbackUrl = "{{ url_for('routes.study_result') }}";
+let currentIndex = 0;
+const totalChallenges = casesData.length;
+
+function renderChallenge(index) {
+    const item = casesData[index];
+    const wrapper = document.getElementById('challenges-wrapper');
+    document.getElementById('total-count').innerText = totalChallenges;
+    document.getElementById('current-idx-display').innerText = index + 1;
     
-    // Phir check karo localStorage mein kuch hai ya nahi
-    const savedUrl = localStorage.getItem('last_notes_url');
+    const isCase = item.type === 'case';
     
-    console.log("Navigating back to notes...");
+    wrapper.innerHTML = `
+        <div class="challenge-card animate__animated animate__fadeInRight">
+            <div class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden">
+                <div class="px-4 py-3 ${isCase ? 'bg-primary text-white' : 'bg-warning text-dark'} fw-bold d-flex justify-content-between align-items-center">
+                    <span class="text-uppercase tracking-wider">${isCase ? '📁 Case Study' : '💡 Reasoning Challenge'}</span>
+                    <i class="fa-solid ${isCase ? 'fa-briefcase' : 'fa-lightbulb'} fa-lg"></i>
+                </div>
 
-    if (savedUrl) {
-        window.location.href = savedUrl;
-    } else {
-        window.location.href = fallbackUrl;
-    }
+                <div class="card-body p-4 p-md-5">
+                    ${isCase ? `
+                    <div class="scenario-box p-4 rounded-4 mb-4" style="background: #f0f7ff; border-left: 8px solid #0d6efd;">
+                        <h6 class="text-primary fw-bold text-uppercase small mb-2">The Situation:</h6>
+                        <p class="mb-0 fs-5" style="line-height: 1.6; font-style: italic; color: #1e293b;">"${item.scenario}"</p>
+                    </div>` : ''}
+
+                    <div class="question-box mb-4">
+                        <h3 class="fw-bold text-dark"><span class="text-danger me-2">Q:</span>${item.question}</h3>
+                    </div>
+
+                    <div class="interaction-zone">
+                        <div class="nav nav-pills mb-4 bg-light p-1 rounded-pill d-inline-flex border">
+                            <button class="nav-link active rounded-pill px-4 fw-bold" id="write-tab" onclick="toggleView('write')">Write Answer ✍️</button>
+                            <button class="nav-link rounded-pill px-4 fw-bold text-dark" id="read-tab" onclick="toggleView('read')">Quick Reveal 📖</button>
+                        </div>
+
+                        <div id="write-zone" class="mt-2">
+                            <textarea id="user-ans" class="form-control border-2 rounded-4 p-3 mb-3 shadow-sm" rows="5" placeholder="Analyze the situation..."></textarea>
+                            <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow hover-up" onclick="analyzeLogic()">Check My Answer 🪄</button>
+                            <div id="result-box" class="mt-4 d-none p-4 rounded-4 animate__animated"></div>
+                        </div>
+
+                        <div id="read-zone" class="d-none mt-2 animate__animated animate__fadeIn">
+                            <div class="p-4 rounded-4 border-0 shadow-sm" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-certificate me-2"></i>Ideal Solution Strategy:</h6>
+                                <p class="mb-0 text-dark fs-5" style="line-height: 1.8;">${item.answer}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button class="btn btn-link text-muted fw-bold" ${index === 0 ? 'disabled' : ''} onclick="prev()">Previous</button>
+                ${index === totalChallenges - 1 ? 
+                    `<button class="btn btn-success rounded-pill px-5" onclick="location.href='dashboard.html'">Finish ✅</button>` : 
+                    `<button class="btn btn-warning rounded-pill px-5 fw-bold shadow-sm" onclick="next()">Next Challenge <i class="fa-solid fa-chevron-right ms-2"></i></button>`}
+            </div>
+        </div>
+    `;
+    updateProgress(index);
 }
 
-function updateProgressBar(index) {
-    const percent = ((index + 1) / totalChallenges) * 100;
-    const bar = document.getElementById('challenge-progress');
-    if(bar) bar.style.width = percent + '%';
-    const display = document.getElementById('current-idx-display');
-    if(display) display.innerText = index + 1;   
+function toggleView(mode) {
+    document.getElementById('write-zone').classList.toggle('d-none', mode === 'read');
+    document.getElementById('read-zone').classList.toggle('d-none', mode === 'write');
+    document.getElementById('write-tab').classList.toggle('active', mode === 'write');
+    document.getElementById('read-tab').classList.toggle('active', mode === 'read');
 }
 
-function navigateChallenge(newIndex) {
-    if (newIndex >= 0 && newIndex < totalChallenges) {
-        document.querySelectorAll('.challenge-card').forEach(card => card.classList.add('d-none'));
-        const nextCard = document.getElementById(`challenge-card-${newIndex}`);
-        if(nextCard) {
-            nextCard.classList.remove('d-none');
-            updateProgressBar(newIndex);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
-}
-
-function setView(mode, id) {
-    const writeDiv = document.getElementById(`write-${id}`);
-    const readDiv = document.getElementById(`read-${id}`);
-    const writeBtn = document.getElementById(`write-tab-${id}`);
-    const readBtn = document.getElementById(`read-tab-${id}`);
-    if (mode === 'read') {
-        writeDiv.classList.add('d-none');
-        readDiv.classList.remove('d-none');
-        readBtn.classList.add('active');
-        writeBtn.classList.remove('active');
-    } else {
-        readDiv.classList.add('d-none');
-        writeDiv.classList.remove('d-none');
-        writeBtn.classList.add('active');
-        readBtn.classList.remove('active');
-    }
-}
-
-function smartNormalize(text) {
-    return text.toLowerCase().trim().replace(/(ing|ed|s|es)\b/g, '').replace(/[^\w\s]/gi, '');      
-}
-
-function analyzeLogic(id, keys) {
-    const textArea = document.getElementById(`ans-${id}`);
-    const res = document.getElementById(`result-${id}`);
-    if (!textArea || !textArea.value.trim()) { alert("Please write your answer first! ✍️"); return; }
-
-    const inputNormalized = smartNormalize(textArea.value);
-    let found = keys.filter(k => inputNormalized.includes(smartNormalize(k)));
-
+function analyzeLogic() {
+    const input = document.getElementById('user-ans').value.toLowerCase();
+    const keys = casesData[currentIndex].key_points;
+    const found = keys.filter(k => input.includes(k.toLowerCase()));
+    const res = document.getElementById('result-box');
+    
     res.classList.remove('d-none', 'animate__fadeInUp', 'animate__shakeX');
-    res.style.borderLeft = "8px solid";
-
     if (found.length === keys.length) {
-        res.classList.add('animate__fadeInUp');
-        res.style.backgroundColor = "#dcfce7"; res.style.borderColor = "#16a34a"; res.style.color = "#166534";
-        res.innerHTML = `<h5 class="fw-bold">Perfect Analysis!</h5><p class="mb-0">Excellent work! You covered all key points.</p>`;
-    } else if (found.length > 0) {
-        res.classList.add('animate__fadeInUp');
-        res.style.backgroundColor = "#fffbeb"; res.style.borderColor = "#f59e0b"; res.style.color = "#92400e";
-        res.innerHTML = `<h5 class="fw-bold">Good Progress!</h5><p class="mb-0">You identified: <b>${found.join(', ')}</b>. Try to include the others!</p>`;
+        res.innerHTML = "<h5>Perfect Analysis!</h5><p>You covered all points.</p>";
+        res.className = "mt-4 p-4 rounded-4 animate__animated animate__fadeInUp bg-success text-white";
     } else {
-        res.classList.add('animate__shakeX');
-        res.style.backgroundColor = "#fef2f2"; res.style.borderColor = "#ef4444"; res.style.color = "#991b1b";
-        res.innerHTML = `<h5 class="fw-bold">Keep Thinking...</h5><p class="mb-0">Focus on concepts like: <b>${keys.join(', ')}</b>.</p>`;
+        res.innerHTML = `<h5>Good effort!</h5><p>Try focusing on: ${keys.join(', ')}</p>`;
+        res.className = "mt-4 p-4 rounded-4 animate__animated animate__shakeX bg-warning text-dark";
     }
-    setTimeout(() => res.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    localStorage.setItem('last_notes_url', window.location.href);
-    
-});
+function updateProgress(idx) {
+    const pct = ((idx + 1) / totalChallenges) * 100;
+    document.getElementById('challenge-progress').style.width = pct + '%';
+}
+
+function next() { if(currentIndex < totalChallenges-1) { currentIndex++; renderChallenge(currentIndex); } }
+function prev() { if(currentIndex > 0) { currentIndex--; renderChallenge(currentIndex); } }
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', () => renderChallenge(0));
 </script>
-{% endblock %}
+
+</body>
+</html>
