@@ -1,234 +1,157 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Bundle | SmartQuizzer 📚</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-{% block content %}
-<input type="hidden" id="hidden-content" value="{{ data.detailed_revision|e }}">
+    <style>
+        :root { --primary-gold: #FFB300; --active-recall-blue: #3b82f6; }
+        body { font-family: 'Fredoka', sans-serif; background: #f8fafc; color: #1e293b; }
+        
+        .glass-card { border-radius: 24px; background: white; border: 1px solid #e2e8f0; transition: 0.3s; }
+        .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
+
+        /* 3D Flashcards */
+        .flashcard { perspective: 1000px; height: 260px; cursor: pointer; margin-bottom: 25px; }
+        .flashcard-inner { 
+            position: relative; width: 100%; height: 100%; 
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+            transform-style: preserve-3d; 
+        }
+        .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+        .flashcard-front, .flashcard-back { 
+            position: absolute; width: 100%; height: 100%; 
+            backface-visibility: hidden; border-radius: 24px; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; padding: 30px; border: 2px solid #000;
+        }
+        .flashcard-front { background: white; }
+        .flashcard-back { background: var(--primary-gold); transform: rotateY(180deg); color: #000; }
+
+        /* Shorthand Notes */
+        .note-card { 
+            border-radius: 18px; border: 1px solid #f1f5f9; 
+            transition: 0.3s; background: white;
+        }
+        .note-card:hover { border-color: var(--primary-gold); transform: translateX(5px); }
+        
+        .deep-dive-btn {
+            background: #f1f5f9; color: #1e293b; border: none;
+            font-weight: 700; border-radius: 50px; padding: 5px 15px; font-size: 0.8rem;
+        }
+
+        .mnemonic-box {
+            background: #fff9db; border-left: 6px solid var(--primary-gold);
+            border-radius: 20px; font-style: italic; line-height: 1.6;
+        }
+
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
 
 <div class="container py-5 animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-5 no-print">
         <div>
-            <h1 class="fw-bold" style="color: #FFB300;">✨ Your AI Study Bundle</h1>
-            <p class="text-muted fs-5">Interactive Analysis, Flashcards, and Shorthand Notes.</p>
+            <h1 class="fw-bold" style="color: var(--primary-gold);">✨ Your AI Study Bundle</h1>
+            <p class="text-muted fs-5">Active Recall Mode: <b>Enabled</b></p>
         </div>
         <div class="d-flex gap-2">
-            <button id="gen-btn" onclick="startInteractiveChallenge()" class="btn btn-info text-white rounded-pill px-4 shadow-sm fw-bold">
-                <i class="fa-solid fa-brain me-2"></i>Start Case Challenge
+            <button class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fa-solid fa-brain me-2 text-warning"></i>Case Challenge
             </button>
-            <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 shadow-sm border-2">
-                <i class="fa-solid fa-file-pdf me-2"></i>Export PDF
+            <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-file-pdf me-2"></i>Export
             </button>
-            <a href="{{ url_for('routes.study_hub') }}" class="btn btn-warning text-white rounded-pill px-4 shadow-sm fw-bold">
-                <i class="fa-solid fa-plus me-2"></i>New Topic
-            </a>
         </div>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-7">
-            <div class="glass-card p-4 mb-4 border-top-gold shadow-sm bg-white border-2">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="fw-bold m-0"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
-                    <span class="badge bg-light text-muted border rounded-pill">Click for quick revision</span>
-                </div>
+            <div class="glass-card p-4 mb-4 border-top-gold shadow-sm">
+                <h4 class="fw-bold mb-4"><i class="fa-solid fa-feather-pointed text-warning me-2"></i>Shorthand Notes</h4>
                 
-                <div class="list-group list-group-flush">
-                    {% for note in data.shorthand_notes %}
-                    <div class="list-group-item bg-transparent border-0 mb-3 px-0">
-                        <div class="note-interactive-card p-3 rounded-4 border shadow-sm transition-all bg-white">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="d-flex align-items-start flex-grow-1" style="cursor: pointer;" onclick="toggleDetail(this)">
-                                    <div class="bullet-point bg-warning bg-opacity-10 text-warning rounded-circle me-3 mt-1">
-                                        <i class="fa-solid fa-bolt-lightning p-2"></i>
-                                    </div>
-                                    <span class="fs-6 fw-bold text-dark mt-1">{{ note }}</span>
-                                </div>
-                                <div class="d-flex gap-2 no-print">
-                                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm" 
-                                            onclick="deepDive(this, '{{ note|e }}')">
-                                        🚀 Deep Dive
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="note-detail-content d-none mt-3 pt-3 border-top animate__animated animate__fadeIn">
-                                <div class="p-3 bg-light rounded-4 text-center">
-                                    <div class="spinner-border spinner-border-sm text-warning me-2"></div>
-                                    <span class="text-muted">Analyzing concept details...</span>
-                                </div>
-                            </div>
+                <div class="note-card p-3 mb-3 shadow-sm border">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-bolt-lightning text-warning me-3"></i>
+                            <span class="fw-bold">Mitochondria = Powerhouse (ATP Synthesis)</span>
                         </div>
+                        <button class="deep-dive-btn" onclick="showDive('dive-1')">🚀 Deep Dive</button>
                     </div>
-                    {% endfor %}
+                    <div id="dive-1" class="d-none mt-3 p-3 bg-light rounded-4 small border-start border-dark border-4 animate__animated animate__fadeIn">
+                        <b>AI Analysis:</b> Mitochondria converts chemical energy from food into adenosine triphosphate (ATP) through oxidative phosphorylation.
+                    </div>
+                </div>
+
+                <div class="note-card p-3 mb-3 shadow-sm border">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-bolt-lightning text-warning me-3"></i>
+                            <span class="fw-bold">Ribosomes = Protein Factories</span>
+                        </div>
+                        <button class="deep-dive-btn">🚀 Deep Dive</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="glass-card p-4 shadow-sm mb-4 border-0 position-relative overflow-hidden border-2" style="background: #FFF9E6;">
-                <h4 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Memory Palace Story</h4>
-                <div class="mnemonic-box p-4 bg-white rounded-4 border-start border-warning border-5 shadow-sm">
-                    <p class="mb-0 text-dark fw-bold" style="font-size: 1.1rem; line-height: 1.8; font-style: italic;">
-                        "{{ data.mnemonic_story }}"
-                    </p>
-                </div>
-            </div>
             
-            <div class="glass-card p-4 shadow-sm border-0 mb-4 bg-dark text-white no-print">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-circle bg-warning text-dark me-3">
-                            <i class="fa-solid fa-rocket"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-0">Mastered the concepts?</h5>
-                            <p class="small mb-0 text-white-50">Test your knowledge with AI Quiz.</p>
-                        </div>
-                    </div>
-                    <form action="{{ url_for('routes.handle_generation') }}" method="POST">
-                        <input type="hidden" name="source_type" value="text">
-                        <input type="hidden" name="raw_text" value="{{ data.detailed_revision }}">
-                        <input type="hidden" name="count" value="5">
-                        <button type="submit" class="btn btn-warning rounded-pill fw-bold px-4 text-dark">Start Quiz</button>
-                    </form>
+            <div class="glass-card p-4 shadow-sm" style="background: #fffdf5;">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Memory Palace Story</h4>
+                <div class="mnemonic-box p-4 shadow-sm">
+                    "Imagine a huge <b>Powerhouse</b> factory (Mitochondria) where workers are making <b>Energy Batteries</b> (ATP) while reading <b>Protein Recipes</b> (Ribosomes)."
                 </div>
             </div>
         </div>
 
         <div class="col-lg-5">
-            <div class="sticky-top" style="top: 20px;">
-                <h4 class="fw-bold mb-4"><i class="fa-solid fa-layer-group text-primary me-2"></i>Active Recall</h4>
-                <div class="flashcard-stack custom-scrollbar pe-2" style="max-height: 85vh; overflow-y: auto;">
-                    {% for card in data.flashcards %}
-                    <div class="flashcard mb-4" onclick="this.classList.toggle('flipped')">
-                        <div class="flashcard-inner">
-                            <div class="flashcard-front d-flex flex-column align-items-center justify-content-center p-4">
-                                <div class="card-type-tag mb-3 border">QUESTION</div>
-                                <h5 class="fw-bold text-center px-3 text-dark">{{ card.front or card.question }}</h5>
-                                <div class="mt-auto text-muted small fw-bold"><i class="fa-solid fa-hand-pointer me-2"></i>Flip for Answer</div>
-                            </div>
-                            <div class="flashcard-back d-flex flex-column align-items-center justify-content-center p-4">
-                                <div class="card-type-tag bg-white text-dark mb-3 border">ANSWER</div>
-                                <p class="text-center fs-6 fw-bold text-dark">{{ card.back or card.answer }}</p>
-                                <div class="mt-auto"><i class="fa-solid fa-check-double text-dark"></i></div>
-                            </div>
+            <h4 class="fw-bold mb-4"><i class="fa-solid fa-layer-group text-primary me-2"></i>Active Recall</h4>
+            <div style="max-height: 80vh; overflow-y: auto; padding-right: 10px;" class="custom-scrollbar">
+                
+                <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <span class="badge bg-light text-muted border rounded-pill mb-3">QUESTION</span>
+                            <h5 class="fw-bold text-center">What is the main function of Mitochondria?</h5>
+                            <small class="mt-auto text-muted"><i class="fa-solid fa-hand-pointer"></i> Click to Flip</small>
+                        </div>
+                        <div class="flashcard-back">
+                            <span class="badge bg-white text-dark border rounded-pill mb-3">ANSWER</span>
+                            <p class="fw-bold text-center fs-5">To produce energy (ATP) through cellular respiration.</p>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
+
+                <div class="flashcard" onclick="this.classList.toggle('flipped')">
+                    <div class="flashcard-inner">
+                        <div class="flashcard-front">
+                            <span class="badge bg-light text-muted border rounded-pill mb-3">QUESTION</span>
+                            <h5 class="fw-bold text-center">Where does Protein Synthesis happen?</h5>
+                            <small class="mt-auto text-muted"><i class="fa-solid fa-hand-pointer"></i> Click to Flip</small>
+                        </div>
+                        <div class="flashcard-back">
+                            <span class="badge bg-white text-dark border rounded-pill mb-3">ANSWER</span>
+                            <p class="fw-bold text-center fs-5">In the Ribosomes.</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    :root { --primary-gold: #FFB300; }
-    .border-top-gold { border-top: 6px solid var(--primary-gold) !important; }
-    .glass-card { border-radius: 24px; border: 1px solid #eee; background: white; }
-    .icon-circle { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-    .bullet-point { width: 35px; height: 35px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-
-    /* 3D Flashcard Effect */
-    .flashcard { perspective: 1200px; height: 280px; cursor: pointer; }
-    .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
-    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
-    .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border: 2px solid #000; }
-    .flashcard-front { background: white; color: #333; }
-    .flashcard-back { background: #FFB300; color: #000; transform: rotateY(180deg); }
-    .card-type-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; padding: 4px 12px; background: #f8f9fa; border-radius: 50px; }
-
-    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #FFB300; border-radius: 10px; }
-    .note-interactive-card:hover { border-color: var(--primary-gold) !important; transform: translateY(-2px); transition: 0.3s; }
-
-    @media print { .no-print { display: none !important; } }
-</style>
-
 <script>
-    // URL Save logic - Ensuring it stays for Case Challenge
-    document.addEventListener('DOMContentLoaded', function() {
-        const currentUrl = window.location.href;
-        localStorage.setItem('last_notes_url', currentUrl);
-        console.log("Notes URL Locked in LocalStorage:", currentUrl);
-    });
-
-    // 1. Toggle Shorthand Detail View
-    function toggleDetail(element) {
-        const card = element.closest('.note-interactive-card');
-        const detailDiv = card.querySelector('.note-detail-content');
-        detailDiv.classList.toggle('d-none');
-    }
-
-    // 2. Start AI Case Challenge (Fixed Redirection Safety)
-    async function startInteractiveChallenge() {
-        // Double Lock: Save again just before moving
-        localStorage.setItem('last_notes_url', window.location.href);
-       
-        const btn = document.getElementById('gen-btn');
-        const content = document.getElementById('hidden-content').value;
-
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>AI Generating...';
-        btn.disabled = true;
-
-        try {
-            const response = await fetch('/start-challenge', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content_to_study: content })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Moving to Case Study Page
-                window.location.href = result.redirect;
-            } else {
-                alert("AI Error: " + (result.error || "Failed to generate challenges."));
-                resetButton(btn);
-            }
-        } catch (error) {
-            console.error("Error:", error);
-            alert("Server connection failed.");
-            resetButton(btn);
-        }
-    }
-
-    function resetButton(btn) {
-        btn.innerHTML = '<i class="fa-solid fa-brain me-2"></i>Start Case Challenge';
-        btn.disabled = false;
-    }
-
-    // 3. Deep Dive Logic
-    async function deepDive(btn, text) {
-        if (window.event) window.event.stopPropagation();
-        
-        const card = btn.closest('.note-interactive-card');
-        const detailDiv = card.querySelector('.note-detail-content');
-        detailDiv.classList.remove('d-none');
-        
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        
-        try {
-            const response = await fetch('https://simrankaurrrrrr-smartquizzer-backend.hf.space/deep-dive', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ concept: text })
-            
-            });
-            
-            const result = await response.json();
-            
-            detailDiv.innerHTML = `
-                <div class="p-4 rounded-4 animate__animated animate__fadeIn" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a;">
-                    <strong class="d-block mb-2 text-dark">
-                        <i class="fa-solid fa-microchip me-2 text-primary"></i>Advanced Analysis:
-                    </strong>
-                    <div class="text-dark" style="font-size: 0.95rem; line-height:1.7; white-space: pre-wrap;">${result.analysis}</div>
-                </div>`;
-        } catch (e) {
-            detailDiv.innerHTML = `<div class="p-3 text-danger">Deep Dive failed. Please try again.</div>`;
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-        }
+    function showDive(id) {
+        document.getElementById(id).classList.toggle('d-none');
     }
 </script>
-{% endblock %}
+
+</body>
+</html>
