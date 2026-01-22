@@ -1,8 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-light glass-nav sticky-top">
     <div class="container">
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="{{ url_for('routes.index') }}">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
             <span style="color: var(--primary-gold); font-size: 1.5rem;">🧠 Adaptive</span>
-            <span class="ms-1" style="color: #666;">Learn</span>
+            <span class="ms-1 brand-text-mode" style="color: #666;">Learn</span>
         </a>
 
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -11,43 +11,34 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
-                {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link px-3 fw-medium" href="{{ url_for('routes.dashboard') }}">
+                    <a class="nav-link px-3 fw-medium" href="dashboard.html">
                         <i class="fa-solid fa-house-chimney me-1"></i> Dashboard
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link px-3 fw-bold text-primary" href="{{ url_for('routes.study_hub') }}">
+                    <a class="nav-link px-3 fw-bold text-primary" href="get-started.html">
                         <i class="fa-solid fa-rocket me-1"></i> Study Hub
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link px-3 fw-medium" href="{{ url_for('routes.library') }}">
+                    <a class="nav-link px-3 fw-medium" href="library.html">
                         <i class="fa-solid fa-book-bookmark me-1"></i> Library
                     </a>
                 </li>
 
                 <li class="nav-item dropdown ms-lg-3">
-                    <a class="nav-link dropdown-toggle btn btn-light rounded-pill px-4 border" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                        <i class="fa-solid fa-user-circle me-1"></i> {{ current_user.username }}
+                    <a class="nav-link dropdown-toggle btn btn-light rounded-pill px-4 border shadow-sm" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-user-circle me-1"></i> Student Mode
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="border-radius: 15px;">
-                        <li><a class="dropdown-item py-2" href="#"><i class="fa-solid fa-gear me-2"></i> Settings</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" style="border-radius: 20px; min-width: 200px;">
+                        <li><a class="dropdown-item py-2 rounded-3" href="#"><i class="fa-solid fa-gear me-2 text-muted"></i> Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('routes.logout') }}"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a></li>
+                        <li><a class="dropdown-item py-2 rounded-3 text-danger" href="login.html"><i class="fa-solid fa-right-from-bracket me-2"></i> Logout</a></li>
                     </ul>
                 </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link fw-medium" href="{{ url_for('routes.login') }}">Login</a>
-                </li>
-                <li class="nav-item ms-lg-2">
-                    <a class="btn sunshine-btn rounded-pill px-4" href="{{ url_for('routes.signup') }}">Join for Free</a>
-                </li>
-                {% endif %}
 
                 <li class="nav-item ms-lg-4">
                     <div class="theme-switch-wrapper">
@@ -68,22 +59,33 @@
     :root {
         --primary-gold: #FFB300;
         --nav-bg: rgba(255, 255, 255, 0.85);
+        --text-main: #333;
     }
 
-    [data-theme='dark'] :root {
-        --nav-bg: rgba(26, 26, 26, 0.9);
+    /* Dark Mode Variables */
+    [data-theme='dark'] {
+        --nav-bg: rgba(15, 23, 42, 0.9);
+        --text-main: #f8fafc;
+        background-color: #0f172a;
     }
+
+    [data-theme='dark'] .brand-text-mode { color: #cbd5e1 !important; }
+    [data-theme='dark'] .nav-link { color: #cbd5e1 !important; }
+    [data-theme='dark'] .btn-light { background: #1e293b; border-color: #334155 !important; color: white; }
 
     .glass-nav {
         background: var(--nav-bg);
         backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(0,0,0,0.05);
         z-index: 1000;
+        transition: background 0.3s ease;
     }
 
     .nav-link {
         transition: all 0.3s ease;
         font-size: 0.95rem;
+        color: #475569;
     }
 
     .nav-link:hover {
@@ -96,23 +98,24 @@
         cursor: pointer;
         padding: 8px;
         border-radius: 50%;
-        background: #f0f0f0;
-        width: 40px;
-        height: 40px;
+        background: #f1f5f9;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #475569;
     }
 
     [data-theme='dark'] .mode-icon {
-        background: #333;
+        background: #334155;
         color: #FFD700;
     }
 
     .mode-icon:hover {
-        transform: scale(1.1);
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        transform: rotate(15deg) scale(1.1);
+        box-shadow: 0 0 15px rgba(255, 179, 0, 0.2);
     }
 </style>
 
@@ -121,7 +124,6 @@
     const currentTheme = localStorage.getItem('theme');
     const icon = document.querySelector('#mode-icon');
 
-    // Initial Theme Check
     if (currentTheme) {
         document.documentElement.setAttribute('data-theme', currentTheme);
         if (currentTheme === 'dark') {
@@ -130,7 +132,6 @@
         }
     }
 
-    // Toggle Listener
     toggleSwitch.addEventListener('change', (e) => {
         if (e.target.checked) {
             document.documentElement.setAttribute('data-theme', 'dark');
