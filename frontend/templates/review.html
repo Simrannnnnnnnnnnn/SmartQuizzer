@@ -1,88 +1,159 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mistake Bank | SmartQuizzer AI 📝</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
-{% block content %}
+    <style>
+        :root { --primary-gold: #FFB300; --bg-soft: #f8fafc; }
+        body { font-family: 'Fredoka', sans-serif; background-color: var(--bg-soft); color: #2d3436; }
+        
+        .glass-card { 
+            border-radius: 28px; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white;
+            border: 1px solid #f1f5f9;
+        }
+        .glass-card:hover { 
+            transform: translateY(-8px); 
+            border-color: var(--primary-gold) !important; 
+            box-shadow: 0 15px 40px rgba(255, 179, 0, 0.12) !important;
+        }
+
+        .option-preview {
+            padding: 12px 18px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+        }
+
+        .correct-bg { background: #ecfdf5; border-color: #10b981; color: #065f46; font-weight: 700; }
+        .incorrect-muted { background: #f8fafc; opacity: 0.7; border-color: #e2e8f0; }
+
+        .letter-pill {
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            background: white; border-radius: 50%;
+            border: 1px solid #ddd; font-size: 0.75rem;
+            margin-right: 12px; color: #475569; font-weight: 800;
+        }
+
+        .explanation-box {
+            background: #fff9db;
+            border-left: 5px solid var(--primary-gold);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
 <div class="container py-5 animate__animated animate__fadeIn">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
             <h1 class="fw-bold" style="color: var(--primary-gold);">📝 Mistake Bank</h1>
-            <p class="text-muted fs-5">Review your weak spots and turn them into strengths.</p>
+            <p class="text-muted fs-5">Review weak spots in <b>Active Recall</b> mode.</p>
         </div>
-        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-outline-dark rounded-pill px-4 shadow-sm fw-bold">
+        <a href="dashboard.html" class="btn btn-outline-dark rounded-pill px-4 shadow-sm fw-bold">
             <i class="fa-solid fa-arrow-left me-2"></i>Dashboard
         </a>
     </div>
 
-    {% if not mistakes %}
-    <div class="text-center py-5">
-        <div class="mb-4">
-            <i class="fa-solid fa-circle-check text-success display-1 opacity-25"></i>
-        </div>
-        <h3 class="fw-bold text-muted">No Mistakes Found!</h3>
-        <p class="text-muted">You're doing great!</p>
-        <a href="{{ url_for('routes.study_hub') }}" class="btn btn-warning rounded-pill px-5 fw-bold mt-3">Start Learning</a>
-    </div>
-    {% else %}
     <div class="row g-4">
-        {% for m in mistakes %}
         <div class="col-lg-6">
-            <div class="glass-card p-4 border-2 h-100 position-relative transition-all shadow-sm bg-white" style="border-radius: 24px; border: 1px solid #eee;">
+            <div class="glass-card p-4 h-100 shadow-sm">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge rounded-pill px-3 py-2 bg-warning text-dark fw-bold border">
-                        <i class="fa-solid fa-tag me-1"></i> {{ m.topic }}
+                    <span class="badge rounded-pill px-3 py-2 bg-warning text-dark fw-bold">
+                        <i class="fa-solid fa-tag me-1"></i> Biology
                     </span>
-                    <small class="text-muted fw-bold">Mistake #{{ loop.index }}</small>
+                    <small class="text-muted fw-bold">Mistake #1</small>
                 </div>
 
-                <h5 class="fw-bold mb-4 text-dark" style="line-height: 1.5;">{{ m.question }}</h5>
+                <h5 class="fw-bold mb-4" style="line-height: 1.5;">Which organelle is known as the "Powerhouse" of the cell?</h5>
 
                 <div class="options-grid mb-4">
-                    {% if m.options %}
-                        {% for key, val in m.options.items() %}
-                        <div class="p-3 rounded-4 mb-2 border d-flex align-items-center {% if key == m.correct_answer %}bg-success bg-opacity-10 border-success text-success fw-bold{% else %}bg-light opacity-75{% endif %}">
-                            <span class="fw-bold me-3 text-uppercase" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 1px solid #ddd; font-size: 0.8rem; color: #333;">
-                                {{ key }}
-                            </span>
-                            <span>{{ val }}</span>
-                            {% if key == m.correct_answer %}
-                                <i class="fa-solid fa-check-circle ms-auto text-success"></i>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                    {% endif %}
+                    <div class="option-preview incorrect-muted">
+                        <span class="letter-pill">A</span> Nucleus
+                    </div>
+                    <div class="option-preview correct-bg">
+                        <span class="letter-pill">B</span> Mitochondria
+                        <i class="fa-solid fa-check-circle ms-auto"></i>
+                    </div>
+                    <div class="option-preview incorrect-muted">
+                        <span class="letter-pill">C</span> Ribosome
+                    </div>
                 </div>
 
                 <div class="mt-3">
                     <button class="btn btn-sm rounded-pill border-warning text-dark fw-bold bg-warning bg-opacity-10 w-100 py-2" 
-                            onclick="toggleExpl('expl-{{ m.id }}', this)">
+                            onclick="toggleExpl('expl-1')">
                         <i class="fa-solid fa-lightbulb me-2"></i> Why did I get this wrong?
                     </button>
-                    <div id="expl-{{ m.id }}" class="d-none mt-3 p-3 rounded-4 bg-light border-start border-warning border-4 animate__animated animate__fadeIn">
-                        <p class="small mb-0 text-dark" style="line-height: 1.6;">
-                            <strong>AI Explanation:</strong> {{ m.explanation or "This topic focuses on core principles. Understanding the 'why' helps in long-term retention." }}
+                    <div id="expl-1" class="d-none explanation-box animate__animated animate__fadeIn">
+                        <p class="small mb-0">
+                            <strong>AI Insight:</strong> You confused this with the Nucleus (the "Brain"). Remember, Mitochondria generates ATP, which is the cell's energy currency.
                         </p>
                     </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
+
+        <div class="col-lg-6">
+            <div class="glass-card p-4 h-100 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge rounded-pill px-3 py-2 bg-warning text-dark fw-bold">
+                        <i class="fa-solid fa-tag me-1"></i> Physics
+                    </span>
+                    <small class="text-muted fw-bold">Mistake #2</small>
+                </div>
+
+                <h5 class="fw-bold mb-4" style="line-height: 1.5;">What is the SI unit of Force?</h5>
+
+                <div class="options-grid mb-4">
+                    <div class="option-preview incorrect-muted">
+                        <span class="letter-pill">A</span> Joule
+                    </div>
+                    <div class="option-preview correct-bg">
+                        <span class="letter-pill">B</span> Newton
+                        <i class="fa-solid fa-check-circle ms-auto"></i>
+                    </div>
+                    <div class="option-preview incorrect-muted">
+                        <span class="letter-pill">C</span> Watt
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-sm rounded-pill border-warning text-dark fw-bold bg-warning bg-opacity-10 w-100 py-2" 
+                            onclick="toggleExpl('expl-2')">
+                        <i class="fa-solid fa-lightbulb me-2"></i> Why did I get this wrong?
+                    </button>
+                    <div id="expl-2" class="d-none explanation-box animate__animated animate__fadeIn">
+                        <p class="small mb-0">
+                            <strong>AI Insight:</strong> Joule is for Energy/Work. Force is always measured in Newtons ($F = ma$).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    {% endif %}
 </div>
 
 <script>
-    function toggleExpl(id, btn) {
+    function toggleExpl(id) {
         const div = document.getElementById(id);
         div.classList.toggle('d-none');
-        btn.classList.toggle('shadow-sm');
     }
 </script>
 
-<style>
-    :root { --primary-gold: #FFB300; }
-    .glass-card:hover { 
-        transform: translateY(-5px); 
-        border-color: var(--primary-gold) !important; 
-        box-shadow: 0 10px 30px rgba(255, 179, 0, 0.1) !important;
-    }
-</style>
-{% endblock %}
+</body>
+</html>
