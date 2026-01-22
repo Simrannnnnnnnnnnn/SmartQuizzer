@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartQuizzer 🚀</title>
+    <title>SmartQuizzer 🚀 - AI Powered Learning</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
@@ -28,30 +28,26 @@
             --nav-bg: #1e1e1e;
             --text-color: #e0e0e0;
             --card-bg: #222222;
-            --border-color: #444;
-            --shadow: rgba(0,0,0,0.3);
+            --border-color: #333;
+            --shadow: rgba(0,0,0,0.4);
         }
 
         body { 
             background: var(--warm-white); 
             font-family: 'Fredoka', sans-serif; 
-            margin: 0; 
-            padding-bottom: 80px; 
             color: var(--text-color);
-            transition: all 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
         }
 
-        /* Navbar Styling */
         .nav-top { 
             background: var(--nav-bg); 
-            padding: 10px 25px; 
+            padding: 15px 25px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             box-shadow: 0 4px 12px var(--shadow); 
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            position: sticky; top: 0; z-index: 1000;
         }
 
         .nav-links a {
@@ -59,164 +55,110 @@
             color: var(--text-color);
             font-weight: 700;
             margin-left: 20px;
-            transition: 0.2s;
         }
 
-        .nav-links a:hover { 
-            color: var(--primary-gold); 
-            transform: translateY(-1px);
-        }
-
-        /* 🚀 Study Hub Special Link */
-        .study-hub-btn {
-            color: var(--primary-gold) !important;
-            border: 2px solid var(--primary-gold);
-            padding: 6px 18px;
-            border-radius: 20px;
-            background: transparent;
-            transition: all 0.3s ease;
-        }
-
-        .study-hub-btn:hover {
-            background: var(--primary-gold);
-            color: white !important;
-            box-shadow: 0 0 15px rgba(255, 179, 0, 0.3);
-        }
-
-        /* Reusable Card Component */
-        .glass-card { 
-            background: var(--card-bg); 
-            border: 3px solid var(--border-color); 
-            border-radius: 30px; 
-            padding: 25px; 
-            box-shadow: 0 10px 20px var(--shadow); 
-            transition: transform 0.3s ease;
-            color: var(--text-color);
-        }
-
-        /* Dark Mode Toggle Switch */
-        .theme-switch-wrapper {
-            margin-left: 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .mode-icon {
-            cursor: pointer;
-            font-size: 1.3rem;
-            color: var(--primary-gold);
-            transition: transform 0.3s ease;
-        }
-
-        .mode-icon:hover { transform: scale(1.2) rotate(15deg); }
-
-        /* Sunshine Button */
         .sunshine-btn { 
             background: linear-gradient(to right, var(--primary-gold), var(--accent-orange)); 
             color: white !important; 
-            border: none; 
-            padding: 12px 25px; 
+            padding: 10px 25px; 
             border-radius: 20px; 
             font-weight: 700; 
-            box-shadow: 0 5px 0 #E69B00; 
-            display: inline-block;
+            box-shadow: 0 4px 0 #E69B00;
+            text-decoration: none;
         }
-        
-        /* Alert Styling */
-        .alert { border-radius: 20px; background: var(--card-bg); color: var(--text-color); border: 2px solid var(--border-color); }
+
+        .glass-card { 
+            background: var(--card-bg); 
+            border: 3px solid var(--border-color); 
+            border-radius: 35px; 
+            padding: 40px; 
+            box-shadow: 0 10px 30px var(--shadow);
+            margin-top: 50px;
+        }
+
+        /* Dark Mode Switch Styling */
+        .mode-toggle-btn {
+            background: var(--border-color);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-gold);
+            font-size: 1.4rem;
+            transition: 0.3s;
+            margin-left: 20px;
+        }
+
+        .mode-toggle-btn:hover { transform: scale(1.1) rotate(15deg); }
     </style>
 </head>
 <body>
 
     <nav class="nav-top">
-        <a href="{{ url_for('routes.index') }}" style="text-decoration: none; font-weight: 900; color: var(--primary-gold); font-size: 1.6rem;">
+        <a href="index.html" style="text-decoration: none; font-weight: 900; color: var(--primary-gold); font-size: 1.8rem;">
             SmartQuizzer 🚀
         </a>
         
         <div class="nav-links d-flex align-items-center">
-            {% if current_user.is_authenticated %}
-                <a href="{{ url_for('routes.dashboard') }}"><i class="fa-solid fa-house me-1"></i> Dashboard</a>
-                
-                <a href="{{ url_for('routes.study_hub') }}" class="study-hub-btn">
-                    <i class="fa-solid fa-rocket me-1"></i> Study Hub
-                </a>
-
-                <a href="{{ url_for('routes.library') }}"><i class="fa-solid fa-book me-1"></i> Library</a>
-                <a href="{{ url_for('routes.review_mistakes') }}"><i class="fa-solid fa-brain me-1"></i> Review</a>
-                
-                <div class="ms-4 d-none d-md-block" 
-                     style="background: #FFF4E6; padding: 5px 15px; border-radius: 20px; color: var(--accent-orange); font-weight: 800; border: 2px solid #FFEBB7;">
-                    🔥 <span class="streak-val">
-                        {% if current_user.is_authenticated %}
-                            {{ current_user.streak }}
-                        {% else %}
-                            {{ session.get('streak', 0) }}
-                        {% endif %}
-                    </span>
-                </div>
-                
-                <a href="{{ url_for('routes.logout') }}" class="ms-3 text-danger small">Logout</a>
-            {% else %}
-                <a href="{{ url_for('routes.login') }}">Login</a>
-                <a href="{{ url_for('routes.signup') }}" class="sunshine-btn ms-3 py-2">Sign Up</a>
-            {% endif %}
-
-            <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox" style="cursor: pointer;">
-                    <input type="checkbox" id="checkbox" style="display:none;" />
-                    <div class="mode-icon" id="mode-icon">
-                        <i class="fas fa-moon"></i>
-                    </div>
-                </label>
+            <a href="index.html">Home</a>
+            <div class="ms-4 d-none d-md-block" style="background: #FFF4E6; padding: 5px 15px; border-radius: 20px; color: var(--accent-orange); font-weight: 800; border: 2px solid #FFEBB7;">
+                🔥 <span class="streak-val">3</span>
             </div>
+            <a href="login.html" class="ms-3">Login</a>
+            <a href="signup.html" class="sunshine-btn ms-3">Sign Up</a>
+
+            <button class="mode-toggle-btn" id="theme-toggle">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
         </div>
     </nav>
 
-    <div class="container mt-4 animate__animated animate__fadeIn">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                <i class="fa-solid fa-circle-info me-2"></i> {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
+    <div class="container animate__animated animate__fadeIn">
+        <div class="row justify-content-center text-center">
+            <div class="col-md-9">
+                <div class="glass-card">
+                    <h1 class="display-3 fw-bold mb-4" style="color: var(--primary-gold);">Unlock Your Brain Power! 🧠</h1>
+                    <p class="fs-4 mb-5">AI-powered quizzes designed specifically for your growth. Track streaks, earn badges, and master any subject.</p>
+                    <a href="signup.html" class="sunshine-btn py-3 px-5 fs-5">Start Your Journey</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <footer class="text-center mt-5 mb-4 text-muted small">
-        <p>© 2026 SmartQuizzer AI | Build Chronologically ☀️</p>
+    <footer class="text-center mt-5 text-muted small">
+        <p>© 2026 SmartQuizzer AI | Helping you learn faster ☀️</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        const toggleSwitch = document.querySelector('#checkbox');
-        const currentTheme = localStorage.getItem('theme');
-        const icon = document.querySelector('#mode-icon');
+        const themeToggle = document.querySelector('#theme-toggle');
+        const themeIcon = document.querySelector('#theme-icon');
+        const htmlElement = document.documentElement;
 
-        if (currentTheme) {
-            document.documentElement.setAttribute('data-theme', currentTheme);
-            if (currentTheme === 'dark') {
-                toggleSwitch.checked = true;
-                icon.innerHTML = '<i class="fas fa-sun"></i>';
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            let currentTheme = htmlElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
             }
         }
-
-        toggleSwitch.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-                icon.innerHTML = '<i class="fas fa-sun"></i>';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-                icon.innerHTML = '<i class="fas fa-moon"></i>';
-            }
-        });
     </script>
 </body>
 </html>
