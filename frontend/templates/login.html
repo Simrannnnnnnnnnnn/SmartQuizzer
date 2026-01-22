@@ -1,71 +1,152 @@
-{% extends "base.html" %}
-{% block content %}
-<div style="max-width: 400px; margin: 50px auto; padding: 0 20px;">
-    <div class="glass-card" style="text-align: center; padding: 40px 30px; border-radius: 25px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 15px 35px rgba(0,0,0,0.1);">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | SmartQuizzer AI ✨</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --primary-gold: #FFB300; 
+            --accent-orange: #FF8E53; 
+            --bg-yellow: #fffdf5;
+        }
+
+        body { 
+            font-family: 'Fredoka', sans-serif; 
+            background: var(--bg-yellow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container { max-width: 400px; width: 90%; padding: 0 20px; }
+
+        .glass-card {
+            text-align: center;
+            padding: 45px 35px;
+            border-radius: 35px;
+            background: white;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sunshine-btn {
+            background: linear-gradient(135deg, #FFD700, #FFB300);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .sunshine-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px rgba(255, 179, 0, 0.3);
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #f8fafc;
+            background: #f8fafc;
+            font-family: inherit;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        input:focus {
+            border-color: var(--primary-gold);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 179, 0, 0.1);
+        }
+
+        .guest-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 700;
+            transition: 0.3s;
+            box-sizing: border-box;
+        }
+
+        .guest-btn:hover {
+            border-color: var(--primary-gold);
+            color: var(--primary-gold);
+            background: #fffdf5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="glass-card">
+        <h2 style="color: #1e293b; font-weight: 900; margin-bottom: 10px; font-size: 2rem; letter-spacing: -1px;">Welcome Back! ✨</h2>
+        <p style="color: #64748b; margin-bottom: 35px; font-weight: 500;">Ready for another study sprint?</p>
         
-        <h2 style="color: var(--primary-gold); font-weight: 900; margin-bottom: 30px; font-size: 2rem; letter-spacing: -1px;">Welcome Back! ✨</h2>
-        
-        <form method="POST">
-            <div style="text-align: left; margin-bottom: 15px;">
-                <input type="text" name="login_id" placeholder="Username or Email" required 
-                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #f0f0f0; font-family: inherit; outline: none; transition: 0.3s;">
-            </div>
+        <form id="loginForm">
+            <input type="text" id="user_id" placeholder="Username or Email" required>
+            <input type="password" id="password" placeholder="Password" required>
             
-            <div style="text-align: left; margin-bottom: 25px;">
-                <input type="password" name="password" placeholder="Password" required 
-                       style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #f0f0f0; font-family: inherit; outline: none; transition: 0.3s;">
-            </div>
-            
-            <button type="submit" class="sunshine-btn" style="width: 100%; padding: 15px; font-weight: 800; letter-spacing: 1px; cursor: pointer;">
+            <button type="submit" class="sunshine-btn">
                 LET'S GO 🚀
             </button>
         </form>
 
-        <div style="margin: 25px 0; display: flex; align-items: center; justify-content: center; opacity: 0.6;">
-            <div style="flex: 1; height: 1px; background: #EEE;"></div>
-            <span style="margin: 0 15px; font-size: 0.8rem; font-weight: 700; color: #666;">OR</span>
-            <div style="flex: 1; height: 1px; background: #EEE;"></div>
+        <div style="margin: 30px 0; display: flex; align-items: center; justify-content: center; opacity: 0.5;">
+            <div style="flex: 1; height: 1px; background: #cbd5e1;"></div>
+            <span style="margin: 0 15px; font-size: 0.8rem; font-weight: 800; color: #64748b;">OR</span>
+            <div style="flex: 1; height: 1px; background: #cbd5e1;"></div>
         </div>
 
-        <a href="{{ url_for('routes.guest_login') }}" class="guest-btn" 
-           style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 2px solid var(--primary-gold); border-radius: 15px; text-decoration: none; color: var(--primary-gold); font-weight: 700; transition: 0.3s; background: transparent;">
-           <span style="font-size: 1.2rem;">🕵️‍♂️</span> Continue as Guest
+        <a href="dashboard.html" class="guest-btn">
+            <span>🕵️‍♂️</span> Continue as Guest
         </a>
 
-        <p style="margin-top: 25px; font-size: 0.95rem; color: #555;">
-            New here? <a href="{{ url_for('routes.signup') }}" style="color: var(--accent-orange); font-weight: 700; text-decoration: none; border-bottom: 2px solid transparent; transition: 0.3s;">Create an account</a>
+        <p style="margin-top: 30px; font-size: 0.95rem; color: #64748b; font-weight: 500;">
+            New here? <a href="#" style="color: var(--primary-gold); font-weight: 700; text-decoration: none;">Create an account</a>
         </p>
     </div>
 </div>
 
-<style>
-    /* Input Focus Effects */
-    input:focus {
-        border-color: var(--primary-gold) !important;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+<script>
+    document.getElementById('loginForm').onsubmit = function(e) {
+        e.preventDefault();
+        // Static simulation of login
+        const btn = document.querySelector('.sunshine-btn');
+        btn.innerHTML = 'Signing in...';
+        btn.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 1200);
     }
+</script>
 
-    /* Guest Button Hover */
-    .guest-btn:hover {
-        background-color: var(--primary-gold) !important;
-        color: white !important;
-        box-shadow: 0 8px 20px rgba(255, 215, 0, 0.25);
-        transform: translateY(-2px);
-    }
-
-    /* Sign up Link Hover */
-    a[href="{{ url_for('routes.signup') }}"]:hover {
-        border-bottom: 2px solid var(--accent-orange);
-    }
-
-    /* Animation for the card */
-    .glass-card {
-        animation: fadeIn 0.6s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
-{% endblock %}
+</body>
+</html>
