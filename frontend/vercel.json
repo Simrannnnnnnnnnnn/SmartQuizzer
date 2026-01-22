@@ -2,6 +2,7 @@
   "version": 2,
   "rewrites": [
     { "source": "/", "destination": "/templates/index.html" },
+    { "source": "/static/(.*)", "destination": "static/$1" },
     { "source": "/(.*)", "destination": "/templates/$1" }
   ]
 }
