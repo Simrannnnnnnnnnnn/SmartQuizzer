@@ -1,14 +1,82 @@
-<div class="quiz-card-box" style="background: white; border-radius: 35px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+<div class="quiz-card-box" style="background: white; border-radius: 35px; padding: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; position: relative; overflow: hidden;">
+    
     <div class="quiz-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
-        <div class="q-status-badge" style="background: var(--brand-bg); color: var(--brand-midnight); padding: 8px 20px; border-radius: 50px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.5px; border: 2px solid var(--brand-midnight);">
+        <div class="q-status-badge" style="background: #FFF9C4; color: #1a2a6c; padding: 8px 20px; border-radius: 50px; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.5px; border: 2px solid #1a2a6c;">
             QUESTION <span id="current-num">1</span> OF 10
         </div>
-        <div class="timer-display" id="quiz-timer" style="font-family: monospace; color: #ef4444; font-weight: 800; font-size: 1.4rem; background: #fee2e2; padding: 5px 15px; border-radius: 12px;">10:00</div>
+        <div class="timer-display" id="quiz-timer" style="font-family: 'Courier New', monospace; color: #ef4444; font-weight: 800; font-size: 1.4rem; background: #fee2e2; padding: 5px 15px; border-radius: 15px; border: 1px solid #fecaca;">
+            10:00
+        </div>
     </div>
 
     <div id="question-container">
-        <h2 class="question-text" id="main-question" style="color: var(--brand-midnight); font-size: 1.8rem; margin-bottom: 30px; line-height: 1.4;">Fetching AI insights...</h2>
+        <h2 class="question-text" id="main-question" style="color: #1a2a6c; font-size: 1.6rem; margin-bottom: 30px; line-height: 1.4; font-weight: 800;">
+            Wait a moment, AI is fetching your insights...
+        </h2>
+        
         <div class="options-list" id="options-grid" style="display: grid; gap: 15px;">
+            <div class="option-item" onclick="selectOption(this)" style="padding: 20px; border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; transition: 0.3s; font-weight: 600; color: #475569;">
+                A) Loading Option...
             </div>
+            <div class="option-item" onclick="selectOption(this)" style="padding: 20px; border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; transition: 0.3s; font-weight: 600; color: #475569;">
+                B) Loading Option...
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; display: flex; justify-content: flex-end;">
+        <button id="next-btn" style="background: #1a2a6c; color: white; border: none; padding: 15px 40px; border-radius: 18px; font-weight: 800; cursor: pointer; transition: 0.3s; opacity: 0.5;" disabled>
+            Next Question <i class="fa-solid fa-arrow-right ms-2"></i>
+        </button>
     </div>
 </div>
+
+<style>
+    .option-item:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1 !important;
+        transform: translateX(10px);
+    }
+    .option-selected {
+        background: #fff9db !important;
+        border-color: #ffcc00 !important;
+        color: #1a2a6c !important;
+        box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2);
+    }
+</style>
+
+<script>
+    // 1. Timer Logic
+    let timeLeft = 600; // 10 minutes
+    const timerDisplay = document.getElementById('quiz-timer');
+
+    const countdown = setInterval(() => {
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        seconds = seconds < 10 ? '0' + seconds : seconds;
+        timerDisplay.innerHTML = `${minutes}:${seconds}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+            timerDisplay.innerHTML = "0:00";
+            alert("Time's up, Bhai! Let's see your score.");
+        }
+        timeLeft--;
+    }, 1000);
+
+    // 2. Option Selection Logic
+    function selectOption(element) {
+        // Unselect all others
+        document.querySelectorAll('.option-item').forEach(opt => {
+            opt.classList.remove('option-selected');
+        });
+        
+        // Select current
+        element.classList.add('option-selected');
+        
+        // Enable Next Button
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.style.opacity = "1";
+        nextBtn.disabled = false;
+    }
+</script>
