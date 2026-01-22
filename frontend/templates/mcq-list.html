@@ -1,139 +1,162 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Material | SmartQuizzer AI 📚</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block content %}
-<style>
-    :root {
-        --mauve: #987079;
-        --peach-bg:#b46f45;
-        --card-white: #ffffff;
-        --neumorphic-shadow: 10px 10px 20px #e0d8d3, -10px -10px 20px #ffffff;
-        --neumorphic-inset: inset 4px 4px 8px #d1c9c4, inset -4px -4px 8px #ffffff;
-    }
+    <style>
+        :root {
+            --mauve: #987079;
+            --peach-bg: #fdf6f0; /* Thoda light kiya background reading ke liye */
+            --card-white: #ffffff;
+            --neumorphic-shadow: 10px 10px 20px #e0d8d3, -10px -10px 20px #ffffff;
+            --neumorphic-inset: inset 2px 2px 5px #d1c9c4, inset -2px -2px 5px #ffffff;
+        }
 
-    body { background-color: var(--peach-bg); color: #5a5450; }
+        body { 
+            font-family: 'Fredoka', sans-serif; 
+            background-color: var(--peach-bg); 
+            color: #5a5450; 
+            margin: 0;
+        }
 
-    .study-wrapper {
-        max-width: 850px;
-        margin: 0 auto;
-        padding: 60px 20px;
-    }
+        .study-wrapper {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
 
-    .list-header {
-        text-align: center;
-        margin-bottom: 50px;
-    }
+        .list-header { text-align: center; margin-bottom: 50px; }
+        .list-header h1 { color: var(--mauve); font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; }
 
-    .list-header h1 {
-        color: var(--mauve);
-        font-size: 2.2rem;
-        margin-bottom: 10px;
-    }
+        /* NEUMORPHIC QUESTION CARD */
+        .mcq-card {
+            background: var(--card-white);
+            padding: 35px;
+            border-radius: 40px;
+            box-shadow: var(--neumorphic-shadow);
+            margin-bottom: 40px;
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: 0.3s;
+        }
 
-    /* NEUMORPHIC QUESTION CARD */
-    .mcq-card {
-        background: var(--card-white);
-        padding: 35px;
-        border-radius: 40px;
-        box-shadow: var(--neumorphic-shadow);
-        margin-bottom: 30px;
-        border: 1px solid rgba(255,255,255,0.5);
-    }
+        .q-number {
+            display: inline-block;
+            background: var(--mauve);
+            color: white;
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
 
-    .q-number {
-        display: inline-block;
-        background: var(--mauve);
-        color: white;
-        padding: 5px 15px;
-        border-radius: 50px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-bottom: 15px;
-    }
+        .q-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
 
-    .q-text {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--mauve);
-        margin-bottom: 20px;
-        line-height: 1.4;
-    }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
 
-    .options-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
+        .option-item {
+            background: #fafafa;
+            padding: 15px 20px;
+            border-radius: 20px;
+            box-shadow: var(--neumorphic-inset);
+            font-size: 1rem;
+            color: #636e72;
+            border: 1px solid #f1f1f1;
+        }
 
-    .option-item {
-        background: var(--peach-bg);
-        padding: 15px 20px;
-        border-radius: 20px;
-        box-shadow: var(--neumorphic-inset);
-        font-size: 0.95rem;
-        color: #7a716c;
-    }
+        .answer-box {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8fff9; /* Light Green for clarity */
+            border-radius: 25px;
+            border: 2px dashed #d1e7dd;
+        }
 
-    .answer-box {
-        margin-top: 25px;
-        padding: 20px;
-        background: #fdf6f0;
-        border-radius: 25px;
-        border-top: 2px dashed #e0d8d3;
-    }
+        .btn-print {
+            background: var(--mauve);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(152, 112, 121, 0.3);
+            margin: 50px auto;
+            display: block;
+            transition: 0.3s;
+        }
 
-    .btn-print {
-        background: var(--mauve);
-        color: white;
-        padding: 15px 35px;
-        border-radius: 50px;
-        border: none;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 10px 20px rgba(150, 120, 127, 0.2);
-        margin-top: 40px;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-    }
+        .btn-print:hover { transform: scale(1.05); background: #825d65; }
 
-    @media print {
-        .btn-print, .navbar { display: none; }
-        body { background: white; }
-        .mcq-card { box-shadow: none; border: 1px solid #eee; break-inside: avoid; }
-    }
-</style>
+        /* Print Optimization */
+        @media print {
+            .btn-print { display: none; }
+            body { background: white; padding: 0; }
+            .study-wrapper { max-width: 100%; padding: 0; }
+            .mcq-card { 
+                box-shadow: none !important; 
+                border: 1px solid #eee; 
+                break-inside: avoid; 
+                margin-bottom: 20px;
+                border-radius: 15px;
+            }
+            .option-item { box-shadow: none; border: 1px solid #eee; }
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
 
 <div class="study-wrapper">
     <div class="list-header">
-        <h1>Study Material</h1>
-        <p>Review the generated questions and explanations below.</p>
+        <h1>Study Material 📖</h1>
+        <p>Master your concepts with AI-curated logic.</p>
     </div>
 
-    {% for q in questions %}
     <div class="mcq-card">
-        <span class="q-number">Question {{ loop.index }}</span>
-        <div class="q-text">{{ q.question_text }}</div>
+        <span class="q-number">Question 1</span>
+        <div class="q-text">Which principle of Relativity states that the laws of physics are the same for all observers in uniform motion?</div>
 
         <div class="options-grid">
-            <div class="option-item"><strong>A)</strong> {{ q.options.A }}</div>
-            <div class="option-item"><strong>B)</strong> {{ q.options.B }}</div>
-            <div class="option-item"><strong>C)</strong> {{ q.options.C }}</div>
-            <div class="option-item"><strong>D)</strong> {{ q.options.D }}</div>
+            <div class="option-item"><strong>A)</strong> General Relativity</div>
+            <div class="option-item"><strong>B)</strong> Special Relativity</div>
+            <div class="option-item"><strong>C)</strong> Quantum Mechanics</div>
+            <div class="option-item"><strong>D)</strong> Classical Mechanics</div>
         </div>
 
         <div class="answer-box">
-            <p style="color: #4CC790; font-weight: 800; margin-bottom: 10px;">
-                <i class="fas fa-check-circle"></i> Correct Answer: {{ q.correct_answer }}
+            <p style="color: #27ae60; font-weight: 800; margin-bottom: 10px; font-size: 1.1rem;">
+                <i class="fas fa-check-circle"></i> Correct Answer: B
             </p>
-            <p style="font-size: 0.9rem; color: #8c827d; font-style: italic;">
-                <strong>Explanation:</strong> {{ q.explanation }}
+            <p style="font-size: 0.95rem; color: #535c68; line-height: 1.6;">
+                <strong>Explanation:</strong> Special Relativity, proposed by Einstein in 1905, deals with observers in uniform (constant speed) motion.
             </p>
         </div>
     </div>
-    {% endfor %}
 
     <button onclick="window.print()" class="btn-print">
-        <i class="fas fa-print"></i> DOWNLOAD AS PDF
+        <i class="fas fa-file-pdf"></i> DOWNLOAD AS PDF
     </button>
 </div>
-{% endblock %}
+
+</body>
+</html>
