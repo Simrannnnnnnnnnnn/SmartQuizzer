@@ -1,176 +1,160 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container py-4">
-    {% if session.get('quiz_goal') == 'quiz' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Quiz | SmartQuizzer AI ⚡</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { --primary-gold: #FFD700; --text-color: #1e293b; }
+        body { font-family: 'Fredoka', sans-serif; background-color: #f8fafc; color: var(--text-color); }
+        
+        .glass-card { background: white; border-radius: 35px; border: 1px solid #f1f5f9; box-shadow: 0 20px 50px rgba(0,0,0,0.05); }
+        .option-card { border: 2px solid #f1f5f9; background-color: #ffffff; transition: all 0.2s ease-in-out; cursor: pointer; color: #475569; }
+        
+        /* Selected State */
+        .btn-check:checked + .option-card { 
+            border-color: #FFB300 !important; 
+            background-color: #FFFDE7 !important; 
+            color: #1a2a6c !important; 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.2) !important; 
+        }
+
+        .sunshine-btn { 
+            background: var(--primary-gold); 
+            border: none; border-radius: 20px; 
+            font-weight: 800; color: #1a2a6c; 
+            box-shadow: 0 6px 0 #D4A017; 
+            transition: all 0.1s; 
+            letter-spacing: 1px;
+        }
+        .sunshine-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #D4A017; }
+        
+        #ghost-bar { transition: width 1s linear; border-radius: 20px; }
+        .theory-box textarea { resize: none; border: 2px solid #f1f5f9; }
+        .theory-box textarea:focus { border-color: var(--primary-gold); box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); outline: none; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
     <div class="mb-4 animate__animated animate__fadeInDown">
-        <div class="d-flex justify-content-between small fw-bold mb-1">
-            <span style="color: var(--text-color);">You 🏃</span>
-            <span class="text-danger">AI Rival 👻</span>
+        <div class="d-flex justify-content-between small fw-bold mb-2">
+            <span>🚀 YOU (CHALLENGER)</span>
+            <span class="text-danger">👻 AI RIVAL (GHOST)</span>
         </div>
-        <div class="progress rounded-pill shadow-sm" style="height: 14px; background: #eee; border: 2px solid #fff;">
-            <div id="ghost-bar" class="progress-bar bg-danger" style="width: 0%; transition: linear; border-radius: 20px;"></div>
+        <div class="progress rounded-pill shadow-sm" style="height: 12px; background: #e2e8f0; border: 2px solid #fff;">
+            <div id="ghost-bar" class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 0%;"></div>
         </div>
     </div>
-    {% endif %}
 
-    <div class="glass-card shadow-lg p-4 p-md-5 animate__animated animate__fadeIn">
-        
+    <div class="glass-card p-4 p-md-5 animate__animated animate__fadeIn">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <span class="badge {% if session.get('quiz_goal') == 'quiz' %}bg-danger{% else %}bg-warning text-dark{% endif %} px-4 py-2 rounded-pill fs-6 shadow-sm">
-                {{ session.get('quiz_goal').upper() }} MODE
-            </span>
-            {% if session.get('quiz_goal') == 'quiz' %}
-            <div class="h3 mb-0 text-danger fw-bold">⏳ <span id="timer">{{ remaining_time or 30 }}</span>s</div>
-            {% endif %}
+            <span class="badge bg-danger px-4 py-2 rounded-pill fs-6">QUIZ MODE</span>
+            <div class="h3 mb-0 text-danger fw-bold">⏳ <span id="timer">30</span>s</div>
         </div>
 
-        <div class="mb-4">
-            <div class="d-flex justify-content-between align-items-end mb-1">
-                <h5 class="fw-bold mb-0">Question {{ current_num }} <span class="text-muted fs-6">of {{ total_num }}</span></h5>
-                <span class="small fw-bold text-primary">{{ ((current_num / total_num) * 100)|int }}%</span>
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-2">
+                <h5 class="fw-bold mb-0">Question 3 <span class="text-muted fs-6">of 10</span></h5>
+                <span class="small fw-bold text-primary">30% Completed</span>
             </div>
-            <div class="progress" style="height: 8px; border-radius: 10px; background-color: #f0f0f0;">
-                <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
-                     style="width: {{ (current_num / total_num) * 100 }}%;">
-                </div>
+            <div class="progress" style="height: 8px; border-radius: 10px; background-color: #f1f5f9;">
+                <div class="progress-bar bg-primary" style="width: 30%;"></div>
             </div>
         </div>
 
-        <hr class="mb-5 opacity-10">
+        <h2 class="fw-bold mb-5" style="line-height: 1.4;">
+            Which part of the plant cell is responsible for converting sunlight into chemical energy?
+        </h2>
 
-        <h2 class="fw-bold mb-5" style="line-height: 1.4; color: var(--text-color);">{{ question.question_text }}</h2>
-
-        <div id="feedback-area" class="alert d-none mb-4 rounded-4 shadow-sm animate__animated animate__bounceIn" style="border-left: 8px solid;">
-            <h4 id="feedback-status" class="fw-bold"></h4>
-            <p id="explanation-text" class="fs-5"></p>
-        </div>
-
-        <form id="quiz-form" action="{{ url_for('routes.submit_answer', q_id=question.id) }}" method="POST">
-            
-            {% if options and options.items()|length > 0 %}
-                <div class="row g-3">
-                    {% for key, val in options.items() %}
-                    <div class="col-md-6">
-                        <input type="radio" class="btn-check" name="answer" value="{{ key }}" id="opt-{{ key }}" required>
-                        <label class="btn btn-outline-dark w-100 py-3 text-start rounded-4 fs-5 fw-bold shadow-sm option-card" for="opt-{{ key }}">
-                            <span class="text-warning me-2">{{ key }}.</span> {{ val }}
-                        </label>
-                    </div>
-                    {% endfor %}
+        <form id="quiz-form">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <input type="radio" class="btn-check" name="answer" value="A" id="opt-A">
+                    <label class="btn btn-outline-dark w-100 py-3 text-start rounded-4 fs-5 fw-bold option-card" for="opt-A">
+                        <span class="text-warning me-2">A.</span> Nucleus
+                    </label>
                 </div>
-            {% else %}
-                <div class="theory-box p-1">
-                    <label class="form-label fw-bold text-muted mb-3">WRITE YOUR ANSWER BELOW:</label>
-                    <textarea name="answer" class="form-control rounded-4 p-4 fs-5 shadow-sm border-2" 
-                              rows="6" placeholder="Explain your answer in detail..." required 
-                              style="border-color: #eee; background: #fafafa;"></textarea>
-                    <div class="mt-2 text-muted small">
-                        <i class="fa-solid fa-circle-info me-1"></i> AI will evaluate your conceptual accuracy.
-                    </div>
+                <div class="col-md-6">
+                    <input type="radio" class="btn-check" name="answer" value="B" id="opt-B">
+                    <label class="btn btn-outline-dark w-100 py-3 text-start rounded-4 fs-5 fw-bold option-card" for="opt-B">
+                        <span class="text-warning me-2">B.</span> Chloroplast
+                    </label>
                 </div>
-            {% endif %}
+                <div class="col-md-6">
+                    <input type="radio" class="btn-check" name="answer" value="C" id="opt-C">
+                    <label class="btn btn-outline-dark w-100 py-3 text-start rounded-4 fs-5 fw-bold option-card" for="opt-C">
+                        <span class="text-warning me-2">C.</span> Mitochondria
+                    </label>
+                </div>
+                <div class="col-md-6">
+                    <input type="radio" class="btn-check" name="answer" value="D" id="opt-D">
+                    <label class="btn btn-outline-dark w-100 py-3 text-start rounded-4 fs-5 fw-bold option-card" for="opt-D">
+                        <span class="text-warning me-2">D.</span> Cell Wall
+                    </label>
+                </div>
+            </div>
 
             <div class="mt-5 p-4 rounded-4 text-center" style="background: #FFF9E6; border: 2px dashed #D4A017;">
                 <p class="small fw-bold text-muted mb-3">HOW CONFIDENT ARE YOU?</p>
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
                     <input type="radio" class="btn-check" name="confidence" value="low" id="c1">
-                    <label class="btn btn-outline-secondary rounded-pill px-4" for="c1">😬 Unsure</label>
+                    <label class="btn btn-outline-secondary rounded-pill px-4 fw-bold" for="c1">😬 Unsure</label>
                     <input type="radio" class="btn-check" name="confidence" value="medium" id="c2" checked>
-                    <label class="btn btn-outline-secondary rounded-pill px-4" for="c2">🤔 Guess</label>
+                    <label class="btn btn-outline-secondary rounded-pill px-4 fw-bold" for="c2">🤔 Guess</label>
                     <input type="radio" class="btn-check" name="confidence" value="high" id="c3">
-                    <label class="btn btn-outline-secondary rounded-pill px-4" for="c3">😎 Expert</label>
+                    <label class="btn btn-outline-secondary rounded-pill px-4 fw-bold" for="c3">😎 Expert</label>
                 </div>
             </div>
 
             <div class="mt-5">
-                {% if session.get('quiz_goal') == 'revision' %}
-                    <button type="button" id="check-btn" class="sunshine-btn w-100 py-3 fs-4">Check Answer</button>
-                    <button type="submit" id="next-btn" class="sunshine-btn w-100 py-3 fs-4 d-none" style="background: #333; box-shadow: 0 5px 0 #000;">
-                        Next Question <i class="fa-solid fa-arrow-right ms-2"></i>
-                    </button>
-                {% else %}
-                    <button type="submit" class="sunshine-btn w-100 py-3 fs-4" style="background: linear-gradient(to right, #dc3545, #b02a37); box-shadow: 0 5px 0 #842029;">
-                        Lock In Answer 🔒
-                    </button>
-                {% endif %}
+                <button type="submit" class="sunshine-btn w-100 py-3 fs-4">
+                    LOCK IN ANSWER 🔒
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<style>
-    .option-card { border: 2px solid #eee; background-color: #ffffff; transition: all 0.2s ease-in-out; cursor: pointer; color: #333; }
-    .btn-check:checked + .option-card { border-color: #D4A017 !important; background-color: #FFD700 !important; color: #000 !important; transform: translateY(-3px); box-shadow: 0 4px 12px rgba(212, 160, 23, 0.4) !important; }
-    .sunshine-btn { background: var(--primary-gold, #FFD700); border: none; border-radius: 15px; font-weight: bold; color: black; box-shadow: 0 5px 0 #D4A017; transition: all 0.1s; }
-    .sunshine-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #D4A017; }
-    textarea:focus { border-color: #FFD700 !important; box-shadow: 0 0 15px rgba(255, 215, 0, 0.2) !important; outline: none; }
-    #ghost-bar { transition: width 1s linear; }
-</style>
-
 <script>
-    const mode = "{{ session.get('quiz_goal') }}";
-    const correct = "{{ question.correct_answer }}".toLowerCase();
-    const isTheory = {% if options %} false {% else %} true {% endif %};
+    // 1. Timer & Ghost Logic (Mocking 30s)
+    let timeLeft = 30;
+    const totalTime = 30;
+    const timerDisplay = document.getElementById('timer');
+    const ghostBar = document.getElementById('ghost-bar');
 
-    // 1. Timer & Ghost Logic
-    if (mode === 'quiz') {
-        let timeLeft = parseInt("{{ remaining_time or 30 }}");
-        let totalTime = 30; // Assuming 30s base for ghost speed
+    const countdown = setInterval(() => {
+        timeLeft--;
+        if(timerDisplay) timerDisplay.innerText = timeLeft;
         
-        const tInt = setInterval(() => {
-            timeLeft--;
-            const timerDisplay = document.getElementById('timer');
-            if(timerDisplay) timerDisplay.innerText = timeLeft;
-            
-            // AI Rival Movement
-            const ghostBar = document.getElementById('ghost-bar');
-            if(ghostBar) {
-                let progress = ((totalTime - timeLeft) / totalTime) * 100;
-                ghostBar.style.width = progress + "%";
-            }
+        // AI Rival progress (Inverse of your time)
+        let progress = ((totalTime - timeLeft) / totalTime) * 100;
+        if(ghostBar) ghostBar.style.width = progress + "%";
 
-            if(timeLeft <= 0) {
-                clearInterval(tInt);
-                document.getElementById('quiz-form').submit();
-            }
-        }, 1000);
-    }
+        if(timeLeft <= 0) {
+            clearInterval(countdown);
+            alert("Ghost beat you! Time's up.");
+            window.location.href = "library.html"; // Redirect to results
+        }
+    }, 1000);
 
-    // 2. Feedback Logic
-    const checkBtn = document.getElementById('check-btn');
-    if(checkBtn) {
-        checkBtn.onclick = () => {
-            const area = document.getElementById('feedback-area');
-            const status = document.getElementById('feedback-status');
-            const expl = document.getElementById('explanation-text');
-            
-            if (isTheory) {
-                const userText = document.querySelector('textarea[name="answer"]').value;
-                if(userText.trim().length < 5) return alert("Please write a bit more!");
-
-                area.classList.remove('d-none');
-                area.className = "alert alert-info mb-4 rounded-4 shadow-sm";
-                status.innerText = "💡 Conceptual Guide:";
-                expl.innerText = "{{ question.explanation }}";
-            } else {
-                const selected = document.querySelector('input[name="answer"]:checked');
-                if(!selected) return alert("Please pick an answer first!");
-
-                area.classList.remove('d-none');
-                expl.innerText = "{{ question.explanation }}";
-
-                if(selected.value.toLowerCase() === correct) {
-                    area.className = "alert alert-success mb-4 rounded-4 shadow-sm";
-                    status.innerText = "✨ Correct!";
-                } else {
-                    area.className = "alert alert-danger mb-4 rounded-4 shadow-sm";
-                    status.innerText = "❌ Correct Answer: " + correct.toUpperCase();
-                }
-            }
-            // Transition to Next Button
-            checkBtn.classList.add('d-none');
-            document.getElementById('next-btn').classList.remove('d-none');
-        };
-    }
+    // 2. Submit Logic
+    document.getElementById('quiz-form').onsubmit = (e) => {
+        e.preventDefault();
+        const selected = document.querySelector('input[name="answer"]:checked');
+        if(!selected) return alert("Bhai, answer toh choose karo!");
+        
+        alert("Answer Locked! Moving to next question...");
+        window.location.reload(); // Simulate next question
+    };
 </script>
-{% endblock %}
+
+</body>
+</html>
