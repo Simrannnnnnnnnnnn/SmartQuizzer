@@ -1,28 +1,124 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="quiz-container-wrapper" style="background: linear-gradient(180deg, var(--brand-midnight) 0%, #0d1430 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
-    <div class="auth-glass-card" style="max-width: 700px; text-align: center; padding: 60px;">
-        <div style="background: var(--brand-accent); color: white; display: inline-block; padding: 8px 25px; border-radius: 50px; margin-bottom: 30px; font-weight: 800; font-size: 0.75rem; letter-spacing: 2px;">READY TO START</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Ready | SmartQuizzer AI 🚀</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <style>
+        :root { 
+            --brand-midnight: #1a2a6c; 
+            --brand-accent: #ffcc00; 
+            --text-muted: #64748b;
+        }
+        body { font-family: 'Fredoka', sans-serif; margin: 0; overflow: hidden; }
+
+        .quiz-container-wrapper {
+            background: linear-gradient(135deg, #1a2a6c 0%, #0d1430 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+            padding: 60px 40px;
+            border-radius: 40px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--brand-accent); }
+        .stat-card p { margin-bottom: 5px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+        .stat-card h4 { margin: 0; color: var(--brand-midnight); font-weight: 800; }
+
+        .btn-main {
+            background: var(--brand-midnight);
+            color: white;
+            text-decoration: none;
+            padding: 20px 60px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            border-radius: 25px;
+            display: inline-block;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 30px rgba(26, 42, 108, 0.3);
+        }
+
+        .btn-main:hover {
+            transform: scale(1.05);
+            background: var(--brand-accent);
+            color: var(--brand-midnight);
+            box-shadow: 0 20px 40px rgba(255, 204, 0, 0.3);
+        }
+
+        /* Responsive Grid */
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        @media (max-width: 500px) {
+            .analysis-grid { grid-template-columns: 1fr; }
+            .auth-glass-card { padding: 40px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container-wrapper">
+    <div class="auth-glass-card animate__animated animate__zoomIn">
+        <div class="animate__animated animate__fadeInDown animate__delay-1s" 
+             style="background: var(--brand-accent); color: var(--brand-midnight); display: inline-block; padding: 10px 30px; border-radius: 50px; margin-bottom: 30px; font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">
+            <i class="fas fa-bolt me-2"></i>AI GENERATED READY
+        </div>
         
-        <h1 style="font-size: 3.5rem; margin-bottom: 15px; color: var(--brand-midnight);">{{ topic }} Quiz</h1>
-        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 40px; font-weight: 600;">Challenge yourself. You have <span style="color: var(--brand-midnight); font-weight: 800;">60 seconds</span> per question.</p>
+        <h1 style="font-size: 3rem; margin-bottom: 15px; color: var(--brand-midnight); font-weight: 900;">
+            Quantum Physics Quiz
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 40px; font-weight: 500;">
+            Our Llama-3 model has tailored this for you. <br>
+            Time: <span style="color: var(--brand-midnight); font-weight: 800;">60 sec / question</span>
+        </p>
         
-        <div class="analysis-grid" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 50px;">
-            <div class="stat-card" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                <p style="font-size: 0.7rem;">Questions</p>
+        <div class="analysis-grid">
+            <div class="stat-card">
+                <p style="font-size: 0.75rem;">Questions</p>
                 <h4 style="font-size: 1.8rem;">10</h4>
             </div>
-            <div class="stat-card" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                <p style="font-size: 0.7rem;">Level</p>
+            <div class="stat-card">
+                <p style="font-size: 0.75rem;">Difficulty</p>
                 <h4 style="font-size: 1.8rem;">Adaptive</h4>
             </div>
-            <div class="stat-card" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                <p style="font-size: 0.7rem;">Type</p>
-                <h4 style="font-size: 1.8rem;">MCQ</h4>
+            <div class="stat-card">
+                <p style="font-size: 0.75rem;">Subject</p>
+                <h4 style="font-size: 1.8rem;">Science</h4>
             </div>
         </div>
 
-        <a href="{{ url_for('routes.quiz_page', q_id=first_q_id) }}" class="btn-main" style="text-decoration: none; padding: 22px 80px; font-size: 1.4rem; border-radius: 20px; display: inline-block;">Begin Assessment</a>
+        <a href="case_study.html" class="btn-main animate__animated animate__pulse animate__infinite">
+            Begin Assessment <i class="fas fa-arrow-right ms-2"></i>
+        </a>
     </div>
 </div>
-{% endblock %}
+
+</body>
+</html>
