@@ -2,21 +2,23 @@ import json, os, io
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_file, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from sqlalchemy import or_
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from flask import request, render_template, redirect, url_for
-#import pytesseract # Image se text nikaalne ke liye
-from PIL import Image # Image open karne ke liye
+from PIL import Image
 import pdfplumber
 from dotenv import load_dotenv
-from flask import session 
-from backend.models import User, Question, QuizResult, TopicMastery, MistakeBank, db
-from backend.services import extract_text_from_pdf
+
+from backend.services import extract_text_from_pdf, extract_text_from_image
 from backend.llm_client import LLMClient
-from backend.services import extract_text_from_image
-def is_allowed():
-    return current_user.is_authenticated or session.get('is_guest')
+from backend.models import (
+    User, Question, QuizResult, TopicMastery, MistakeBank,
+    get_user_by_email_or_username, user_exists, create_user,
+    save_question, get_question_by_id, get_questions_by_user,
+    save_quiz_result, get_user_results, get_last_result_before_today,
+    get_recent_results, save_mistake, get_mistakes_by_user,
+    count_mistakes, update_mastery, get_mastery_by_user, update_user_streak
+)
+
 load_dotenv()
 routes_bp = Blueprint('routes', __name__)
 
@@ -42,7 +44,7 @@ def login():
     if request.method == 'POST':
         login_id = request.form.get('login_id')
         password = request.form.get('password')
-        user = User.query.filter(or_(User.email == login_id, User.username == login_id)).first()
+        user = get_user_by_email_or_username(login_id)
         if user and user.check_password(password):
             login_user(user)
             session['is_guest'] = False
@@ -56,13 +58,10 @@ def signup():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        if User.query.filter((User.email == email) | (User.username == username)).first():
+        if user_exists(email, username):
             flash("User already exists!", "danger")
             return redirect(url_for('routes.signup'))
-        new_user = User(email=email, username=username)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
+        create_user(username, email, password)
         flash("Account created! Please login.", "success")
         return redirect(url_for('routes.login'))
     return render_template('signup.html')
@@ -101,27 +100,26 @@ def dashboard():
 
     if not is_guest:
         username = current_user.username
-        # 2. Data fetch karein
-        mistake_count = MistakeBank.query.filter_by(user_id=current_user.id).count()
-        results_list = QuizResult.query.filter_by(user_id=current_user.id).all()
+        results_list = get_user_results(current_user.id)
         correct_total = sum([r.score for r in results_list]) if results_list else 0
         total_q = sum([r.total_questions for r in results_list]) if results_list else 0
         user_streak = getattr(current_user, 'streak', 0)
-        mastery_data = TopicMastery.query.filter_by(user_id=current_user.id).all()
+        mistake_count = count_mistakes(current_user.id)
+        mastery_data = get_mastery_by_user(current_user.id)
 
     try:
         ai_fact = llm.get_random_tech_fact()
     except:
         ai_fact = "AI is transforming how students master difficult concepts!"
-    
-    return render_template('dashboard.html', 
+
+    return render_template('dashboard.html',
                            username=username,
                            is_guest=is_guest,
                            fun_fact=llm.get_fun_fact(),
-                           correct_total=correct_total, 
+                           correct_total=correct_total,
                            incorrect_total=total_q - correct_total,
                            mistake_count=mistake_count,
-                           streak=user_streak, # <--- Ye variable HTML mein use hoga
+                           streak=user_streak,
                            ai_fact=ai_fact,
                            topic_mastery=mastery_data)
 
@@ -132,7 +130,7 @@ def dashboard():
 @routes_bp.route('/study-hub', methods=['GET', 'POST'])
 def study_hub():
     if not is_allowed(): return redirect(url_for('routes.login'))
-    
+
     if request.method == 'POST':
         source_type = request.form.get('source_type')
         content = ""
@@ -147,20 +145,21 @@ def study_hub():
                 content = f"Summary for: {topic_name}"
 
             if not content:
-                flash("add some context", "warning")
+                flash("Add some context", "warning")
                 return redirect(url_for('routes.study_hub'))
 
             study_bundle = llm.generate_study_material(content)
             session['last_study_data'] = study_bundle
-            session.modified = True # Ensure session updates
+            session.modified = True
             return redirect(url_for('routes.study_result'))
-        
+
         except Exception as e:
             flash(f"AI Study Hub Error: {str(e)}", "danger")
             return redirect(url_for('routes.study_hub'))
+
     if 'last_study_data' in session:
         return redirect(url_for('routes.study_result'))
-            
+
     return render_template('study_hub.html')
 
 @routes_bp.route('/deep-dive', methods=['POST'])
@@ -170,7 +169,7 @@ def deep_dive():
         data = request.get_json()
         concept = data.get('concept', '')
         if not concept: return jsonify({"error": "No concept provided"}), 400
-        analysis = llm.deep_dive(concept) 
+        analysis = llm.deep_dive(concept)
         return jsonify({"analysis": analysis})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -190,18 +189,16 @@ def extend_concept():
 @routes_bp.route('/study-result')
 def study_result():
     if not is_allowed(): return redirect(url_for('routes.login'))
-    
-    # Session se data uthao
     data = session.get('last_study_data')
-    
     if not data:
         flash("No active study session found.", "info")
         return redirect(url_for('routes.study_hub'))
-        
     return render_template('study_hub_result.html', data=data)
+
 # ==========================================
 # INTERACTIVE CASE CHALLENGE ROUTES
 # ==========================================
+
 @routes_bp.route('/start-challenge', methods=['POST'])
 @login_required
 def start_challenge():
@@ -210,45 +207,35 @@ def start_challenge():
         content = data.get('content_to_study')
         if not content:
             return jsonify({"success": False, "error": "No content provided"}), 400
-        # Yahan 'mixed_cases' ki jagah llm_client ka method call karein
-        # 'llm_client' aapka object hona chahiye jo LLMClient() se bana ho
-        response = llm.get_mixed_cases(content) 
-        
-        # Session mein save karein taaki template use kar sake
+        response = llm.get_mixed_cases(content)
         session['active_challenges'] = response.get('cases', [])
-        
         return jsonify({
-            "success": True, 
-            "redirect": url_for('routes.view_challenges') # Aapka challenge page route
+            "success": True,
+            "redirect": url_for('routes.view_challenges')
         })
     except Exception as e:
-        print(f"Challenge Gen Error: {e}") # Yahi error logs mein aa rahi thi
+        print(f"Challenge Gen Error: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @routes_bp.route('/challenges')
 @login_required
 def view_challenges():
-    
-    if not is_allowed(): 
+    if not is_allowed():
         return redirect(url_for('routes.login'))
-    
-    # Session se save kiye huye cases uthana
     cases = session.get('active_challenges', [])
-    
     if not cases:
         flash("No active challenges found. Please generate again.", "warning")
         return redirect(url_for('routes.study_hub'))
-    
     return render_template('case_study_mixed.html', cases=cases)
 
-#==========================
+# ==========================================
 # QUIZ GENERATION ENGINE
 # ==========================================
 
 @routes_bp.route('/handle_generation', methods=['POST', 'GET'])
 def handle_generation():
     if not is_allowed(): return redirect(url_for('routes.login'))
-    
+
     mode = request.form.get('quiz_goal') or request.args.get('quiz_goal') or 'quiz'
     source_type = request.form.get('source_type') or request.args.get('source_type')
     count = int(request.form.get('count', 5))
@@ -260,31 +247,27 @@ def handle_generation():
             if session.get('is_guest'):
                 flash("Guest users don't have a Mistake Bank!", "warning")
                 return redirect(url_for('routes.dashboard'))
-            
-            mistakes = MistakeBank.query.filter_by(user_id=current_user.id).limit(count).all()
+
+            mistakes = get_mistakes_by_user(current_user.id, limit=count)
             if not mistakes:
                 flash("Mistake Bank khali hai!", "info")
                 return redirect(url_for('routes.dashboard'))
-            
+
             for m in mistakes:
-                new_q = Question(
-                    question_text=q_data.get('question'), 
-                    options_json=json.dumps(q_data.get('options')), 
-                    correct_answer=q_data.get('correct_answer'), 
-                    explanation=q_data.get('explanation',"Study Hard"), 
+                q_id = save_question(
+                    question_text=m.question_text,
+                    options_json=m.options_json,
+                    correct_answer=m.correct_answer,
+                    explanation=m.explanation,
                     user_id=current_user.id
                 )
-                db.session.add(new_q)
-                db.session.flush()
-                q_ids.append(new_q.id)
-            db.session.commit()
-        
+                q_ids.append(q_id)
+
         else:
             content = ""
             if source_type == 'image':
                 file = request.files.get('image_file')
                 if file and file.filename != '':
-                    
                     content = extract_text_from_image(file)
                     mastery_label = f"Image Scan ({file.filename})"
                     if not content:
@@ -293,7 +276,6 @@ def handle_generation():
                 else:
                     flash("Please upload an image first!", "danger")
                     return redirect(url_for('routes.dashboard'))
-            # --- IMAGE UPLOAD LOGIC END ---
 
             elif source_type == 'pdf':
                 file = request.files.get('pdf_file')
@@ -306,92 +288,96 @@ def handle_generation():
                 else:
                     flash("Please upload a PDF file!", "danger")
                     return redirect(url_for('routes.dashboard'))
-            
+
             elif source_type == 'text':
                 content = request.form.get('raw_text', "")
                 mastery_label = "Custom Text"
-            
+
             elif source_type == 'topic':
                 mastery_label = request.form.get('topic_name', "General Study")
                 content = f"Create a quiz on: {mastery_label}"
 
-            # Final validation before Groq Call
             if not content or content.strip() == "":
                 flash("Kuch toh content provide karo!", "warning")
                 return redirect(url_for('routes.dashboard'))
 
-            # AI Question Generation (Groq Call)
+            # AI Question Generation
             raw_qs = llm.generate_questions(content, count)
-            
+
             if not raw_qs:
                 flash("AI fails to generate questions. Try again!", "danger")
                 return redirect(url_for('routes.dashboard'))
-                
+
             for q_data in raw_qs:
-                new_q = Question(
+                q_id = save_question(
                     question_text=q_data.get('question'),
                     options_json=json.dumps(q_data.get('options')),
                     correct_answer=q_data.get('correct_answer'),
-                    explanation=q_data.get('explanation', "Study hard!"),
+                    explanation=q_data.get('explanation', 'Study hard!'),
                     user_id=current_user.id if not session.get('is_guest') else None
                 )
-                db.session.add(new_q)
-                db.session.flush()
-                q_ids.append(new_q.id)
+                q_ids.append(q_id)
 
-        db.session.commit()
-        
         session.update({
-            'active_questions': q_ids, 
-            'current_idx': 0, 
-            'score': 0, 
-            'quiz_topic': mastery_label, 
-            'quiz_goal': mode, 
+            'active_questions': q_ids,
+            'current_idx': 0,
+            'score': 0,
+            'quiz_topic': mastery_label,
+            'quiz_goal': mode,
             'user_answers': []
         })
-        
+
         return redirect(url_for('routes.quiz_page', q_id=q_ids[0]))
 
     except Exception as e:
-        db.session.rollback()
         print(f"Generation Error: {str(e)}")
         flash(f"System Error: {str(e)}", "danger")
         return redirect(url_for('routes.dashboard'))
-      
+
 # ==========================================
 # QUIZ PAGE & ANSWERS
 # ==========================================
 
-@routes_bp.route('/quiz/<int:q_id>')
+@routes_bp.route('/quiz/<q_id>')
 def quiz_page(q_id):
     if not is_allowed(): return redirect(url_for('routes.login'))
-    question = Question.query.get_or_404(q_id)
+    question = get_question_by_id(q_id)
+    if not question: return redirect(url_for('routes.dashboard'))
     options = json.loads(question.options_json)
     q_list = session.get('active_questions', [])
-    return render_template('quiz.html', question=question, options=options, 
-                           current_num=session.get('current_idx', 0) + 1, 
+    return render_template('quiz.html', question=question, options=options,
+                           current_num=session.get('current_idx', 0) + 1,
                            total_num=len(q_list))
 
-@routes_bp.route('/submit_answer/<int:q_id>', methods=['POST'])
+@routes_bp.route('/submit_answer/<q_id>', methods=['POST'])
 def submit_answer(q_id):
-    question = Question.query.get_or_404(q_id)
+    question = get_question_by_id(q_id)
+    if not question: return redirect(url_for('routes.dashboard'))
+
     user_ans = request.form.get('answer', '').strip()
     is_correct = (user_ans.lower() == str(question.correct_answer).lower())
-    
+
     ans_list = session.get('user_answers', [])
-    ans_list.append({'question': question.question_text, 'user_ans': user_ans, 
-                     'correct_ans': question.correct_answer, 'is_correct': is_correct, 
-                     'explanation': question.explanation})
+    ans_list.append({
+        'question': question.question_text,
+        'user_ans': user_ans,
+        'correct_ans': question.correct_answer,
+        'is_correct': is_correct,
+        'explanation': question.explanation
+    })
     session['user_answers'] = ans_list
-    
+
     if is_correct:
         session['score'] = session.get('score', 0) + 1
     elif not session.get('is_guest') and session.get('quiz_goal') == 'quiz':
-        mistake = MistakeBank(user_id=current_user.id, question_text=question.question_text, 
-                              correct_answer=question.correct_answer, options_json=question.options_json,
-                              topic=session.get('quiz_topic', 'General'), explanation=question.explanation)
-        db.session.add(mistake)
-        db.session.commit()
+        save_mistake(
+            user_id=current_user.id,
+            question_text=question.question_text,
+            correct_answer=question.correct_answer,
+            options_json=question.options_json,
+            topic=session.get('quiz_topic', 'General'),
+            explanation=question.explanation
+        )
 
     session['current_idx'] = session.get('current_idx', 0) + 1
     q_list = session.get('active_questions', [])
@@ -402,6 +388,7 @@ def submit_answer(q_id):
 # ==========================================
 # RESULTS, REPORTS & LIBRARY
 # ==========================================
+
 @routes_bp.route('/results')
 def results():
     score = session.get('score', 0)
@@ -409,119 +396,102 @@ def results():
     total = len(user_answers)
     raw_topic = session.get('quiz_topic', 'AI Analysis')
     accuracy = (score / total * 100) if total > 0 else 0
-    
+
     history_labels = []
     history_scores = []
     is_guest = session.get('is_guest', False)
 
     try:
         if not is_guest and current_user.is_authenticated:
-            # 1. Aaj ka result save karo
-            new_res = QuizResult(
-                user_id=current_user.id, 
-                score=score, 
-                total_questions=total,
-                topic=raw_topic,
-                timestamp=datetime.utcnow()
-            )
-            db.session.add(new_res)
-            
-            # 2. STREAK LOGIC (Strict Check)
+            # 1. Result save karo
+            save_quiz_result(current_user.id, score, total, raw_topic)
+
+            # 2. Streak Logic
             today = datetime.utcnow().date()
-            # Pichla result dhoondo jo AAJ se pehle ka ho (timestamp < today)
-            last_res = QuizResult.query.filter(
-                QuizResult.user_id == current_user.id,
-                QuizResult.timestamp < today 
-            ).order_by(QuizResult.timestamp.desc()).first()
-            
+            last_res = get_last_result_before_today(current_user.id, today)
+            streak = current_user.streak
+
             if last_res:
                 last_date = last_res.timestamp.date()
-                # Agar pichla result thik KAL ka tha
                 if last_date == today - timedelta(days=1):
-                    # Check karo ki aaj pehle streak update ho chuki hai? 
-                    # (Taaki ek din mein 10 bar quiz dene par 10 streak na badhe)
                     if current_user.last_quiz_date != today:
-                        current_user.streak += 1
-                # Agar 1 din se zyada ka gap hai
+                        streak += 1
                 elif last_date < today - timedelta(days=1):
-                    current_user.streak = 1
+                    streak = 1
             else:
-                # Agar ye user ka pehla quiz hai
-                if current_user.streak == 0:
-                    current_user.streak = 1
-            
-            # Update last quiz date
-            current_user.last_quiz_date = today
+                if streak == 0:
+                    streak = 1
 
-            # 3. Topic Mastery Update (Dashboard Fix)
-            mastery = TopicMastery.query.filter_by(user_id=current_user.id, topic=raw_topic).first()
-            if not mastery:
-                mastery = TopicMastery(user_id=current_user.id, topic=raw_topic, correct_count=0, total_count=0)
-                db.session.add(mastery)
-            mastery.correct_count += score
-            mastery.total_count += total
+            update_user_streak(current_user.id, streak, today)
 
-            db.session.commit()
-            
-            # Chart Data
-            results_query = QuizResult.query.filter_by(user_id=current_user.id).order_by(QuizResult.timestamp.asc()).all()
-            for r in results_query[-5:]:
-                history_labels.append(r.timestamp.strftime("%d %b"))
-                history_scores.append(r.score)
+            # 3. Topic Mastery Update
+            update_mastery(current_user.id, raw_topic, score, total)
+
+            # 4. Chart Data
+            recent = get_recent_results(current_user.id)
+            history_labels = [r.timestamp.strftime("%d %b") for r in recent]
+            history_scores = [r.score for r in recent]
+
         else:
             history_labels = ["Current"]
             history_scores = [score]
 
     except Exception as e:
-        db.session.rollback()
         print(f"Error in Results: {e}")
 
-    return render_template('results.html', 
-                           score=score, 
-                           total=total, 
-                           accuracy=accuracy, 
-                           user_answers=user_answers, 
+    return render_template('results.html',
+                           score=score,
+                           total=total,
+                           accuracy=accuracy,
+                           user_answers=user_answers,
                            is_guest=is_guest,
                            display_topic=raw_topic,
-                           history_labels=history_labels, 
+                           history_labels=history_labels,
                            history_scores=history_scores)
-    
-@routes_bp.route('/download_report/<int:res_id>')
+
+@routes_bp.route('/download_report/<res_id>')
 @login_required
 def download_report(res_id):
-    res = QuizResult.query.get_or_404(res_id)
-    if res.user_id != current_user.id: return redirect(url_for('routes.dashboard'))
+    from backend.models import quiz_results_col
+    from bson import ObjectId
+    res_data = quiz_results_col.find_one({"_id": ObjectId(res_id)})
+    if not res_data or res_data.get('user_id') != current_user.id:
+        return redirect(url_for('routes.dashboard'))
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     p.setFont("Helvetica-Bold", 16)
     p.drawString(100, 750, "Quiz Performance Report")
     p.setFont("Helvetica", 12)
-    p.drawString(100, 720, f"Score: {res.score} / {res.total_questions}")
-    p.drawString(100, 700, f"Date: {res.timestamp.strftime('%d-%m-%Y %H:%M')}")
+    p.drawString(100, 720, f"Score: {res_data['score']} / {res_data['total_questions']}")
+    p.drawString(100, 700, f"Topic: {res_data.get('topic', 'General')}")
+    p.drawString(100, 680, f"Date: {res_data['timestamp'].strftime('%d-%m-%Y %H:%M')}")
     p.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name=f"Report_{res.id}.pdf")
+    return send_file(buffer, as_attachment=True, download_name=f"Report_{res_id}.pdf")
 
 @routes_bp.route('/library')
-@login_required # Ye zaroori hai taaki anonymous user crash na kare
+@login_required
 def library():
-    # 1. Guest check
     if session.get('is_guest'):
         flash("Library is only for registered users to track progress! 🚀", "info")
         return redirect(url_for('routes.signup'))
-    user_questions = Question.query.filter_by(user_id=current_user.id).all()
+    user_questions = get_questions_by_user(current_user.id)
     print(f"DEBUG: User ID {current_user.id} has {len(user_questions)} quizzes in DB")
     return render_template('library.html', questions=user_questions)
 
 @routes_bp.route('/review-mistakes')
 @login_required
 def review_mistakes():
-    raw_mistakes = MistakeBank.query.filter_by(user_id=current_user.id).all()
+    raw_mistakes = get_mistakes_by_user(current_user.id)
     processed_mistakes = []
     for m in raw_mistakes:
         processed_mistakes.append({
-            "id": m.id, "question": m.question_text, "correct_answer": m.correct_answer,
-            "options": json.loads(m.options_json), "topic": m.topic, "explanation": m.explanation
+            "id": m.id,
+            "question": m.question_text,
+            "correct_answer": m.correct_answer,
+            "options": json.loads(m.options_json),
+            "topic": m.topic,
+            "explanation": m.explanation
         })
     return render_template('review.html', mistakes=processed_mistakes)
