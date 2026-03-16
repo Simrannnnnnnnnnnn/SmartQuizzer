@@ -1,40 +1,33 @@
 import os
 import json
-import tempfile
 from flask import Flask
 from flask_login import LoginManager
-from flask_cors import CORS  # <--- Naya add kiya
+from flask_cors import CORS
 from dotenv import load_dotenv
-from backend.models import db, User 
+from backend.models import get_user_by_id
 
 load_dotenv()
 
-app = Flask(__name__, 
+app = Flask(__name__,
             template_folder=os.path.join('frontend', 'templates'),
             static_folder=os.path.join('frontend', 'static'))
 
 # --- CORS SETUP ---
-CORS(app) # <--- Isse Vercel se backend connect ho payega
+CORS(app)
 
 # --- CONFIGURATION ---
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-123')
-# SQLite ki jagah agar koi cloud DB hai toh uska URL dena, 
-# warna HF restart hone par data ud jayega. Demo ke liye theek hai.
-db_path = os.path.join(tempfile.gettempdir(), 'smartquizzer.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Setup for PDF uploads - Server ke liye safe path
-app.config['UPLOAD_FOLDER'] = '/tmp/uploads' 
+# Upload folder (PDF/Image ke liye)
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads'
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# --- DATABASE & LOGIN INITIALIZATION ---
-db.init_app(app) 
-
+# --- LOGIN INITIALIZATION ---
 login_manager = LoginManager(app)
 login_manager.login_view = 'routes.login'
 
+# --- TEMPLATE FILTER ---
 @app.template_filter('from_json')
 def from_json_filter(value):
     try:
@@ -46,15 +39,13 @@ def from_json_filter(value):
 from backend.routes import routes_bp
 app.register_blueprint(routes_bp)
 
+# --- USER LOADER (MongoDB se) ---
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
-
-with app.app_context():
-    db.create_all()
+    return get_user_by_id(user_id)
 
 application = app
+
 if __name__ == '__main__':
-    # Hugging Face hamesha 7860 port maangta hai
-    port = int(os.environ.get("PORT", 7860)) 
+    port = int(os.environ.get("PORT", 7860))
     app.run(host='0.0.0.0', port=port)
